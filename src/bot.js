@@ -266,38 +266,38 @@ bot.command('setup_webapp', async (ctx) => {
     }
 });
 
-// АВАРИЙНАЯ команда для добавления админа (временно без проверки)
+// АВАРИЙНАЯ команда для добавления админа
 bot.command('emergency_admin', async (ctx) => {
-    const userId = ctx.from.id;
+    const currentUserId = ctx.from.id;
+    const targetUserId = ctx.match ? parseInt(ctx.match.trim()) : currentUserId;
     
-    await ctx.reply(`🔍 Отладка:\nВаш ID: ${userId}\nMAIN_ADMIN_ID: ${process.env.MAIN_ADMIN_ID || 'НЕ УСТАНОВЛЕН'}\n\nДобавляю вас в админы...`);
+    await ctx.reply(`🔍 Отладка:\nВаш ID: ${currentUserId}\nЦелевой ID: ${targetUserId}\nMAIN_ADMIN_ID: ${process.env.MAIN_ADMIN_ID || 'НЕ УСТАНОВЛЕН'}\n\nДобавляю в админы...`);
     
     try {
-        // Добавляем главного админа в базу
+        // Добавляем админа в базу
         await db.addStaff({
-            telegramId: userId,
-            username: ctx.from.username || 'main_admin',
-            firstName: ctx.from.first_name || 'Главный Админ',
-            lastName: ctx.from.last_name || null,
+            telegramId: targetUserId,
+            username: targetUserId === currentUserId ? (ctx.from.username || 'main_admin') : 'admin',
+            firstName: targetUserId === currentUserId ? (ctx.from.first_name || 'Главный Админ') : 'Admin',
+            lastName: targetUserId === currentUserId ? ctx.from.last_name : null,
             role: 'admin',
-            addedBy: null
+            addedBy: currentUserId
         });
         
         // Проверяем что добавилось
-        const role = await db.getUserRole(userId);
+        const role = await db.getUserRole(targetUserId);
         
         await ctx.reply(
-            `✅ <b>АВАРИЙНОЕ ВОССТАНОВЛЕНИЕ ЗАВЕРШЕНО!</b>\n\n` +
-            `🛡️ Ваша роль: ${role}\n` +
-            `👤 ID: ${userId}\n` +
-            `📱 Теперь напишите /start чтобы увидеть админ панель!\n\n` +
-            `🔧 Команда будет удалена после первого использования.`,
+            `✅ <b>ЭКСТРЕННОЕ ДОБАВЛЕНИЕ АДМИНА ЗАВЕРШЕНО!</b>\n\n` +
+            `🛡️ Role: ${role}\n` +
+            `👤 ID: ${targetUserId}\n` +
+            `📝 Используйте /start для доступа к админ панели`,
             { parse_mode: 'HTML' }
         );
         
     } catch (error) {
         if (error.message.includes('UNIQUE constraint failed')) {
-            await ctx.reply(`✅ Вы уже админ! Напишите /start чтобы увидеть панель.`);
+            await ctx.reply(`✅ Пользователь ${targetUserId} уже админ! Напишите /start чтобы увидеть панель.`);
         } else {
             await ctx.reply(`❌ Ошибка: ${error.message}`);
         }
