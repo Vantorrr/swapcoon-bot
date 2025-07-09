@@ -4492,7 +4492,6 @@ async function setupMenuButton() {
 
 // Создаем Express сервер для webhook'ов
 const webhookApp = express();
-const path = require('path');
 const cors = require('cors');
 const RatesService = require('./services/RatesService');
 
