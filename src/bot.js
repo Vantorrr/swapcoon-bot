@@ -3097,6 +3097,286 @@ bot.on('callback_query:data', async (ctx) => {
             await ctx.reply(`❌ Ошибка при закрытии тикета: ${error.message}`);
         }
     }
+
+    // Кнопка "Оплачено" от клиента
+    if (data.startsWith('client_paid_')) {
+        const orderId = data.replace('client_paid_', '');
+        const clientName = ctx.from.first_name || ctx.from.username || `ID: ${userId}`;
+        
+        await ctx.answerCallbackQuery('✅ Подтверждение получено!');
+        
+        try {
+            // Получаем информацию о заявке
+            const order = await db.getOrderWithOperator(orderId);
+            if (!order) {
+                return ctx.reply('❌ Заявка не найдена');
+            }
+
+            // Уведомляем оператора
+            const operatorMessage = 
+                `💰 <b>КЛИЕНТ ПОДТВЕРДИЛ ОПЛАТУ</b>\n\n` +
+                `🎫 Заявка #${orderId}\n` +
+                `👤 Клиент: ${clientName}\n` +
+                `💳 ${order.from_amount} ${order.from_currency}\n` +
+                `⏰ Время: ${new Date().toLocaleString('ru-RU')}\n\n` +
+                `🔍 <b>Проверьте поступление платежа</b>\n` +
+                `✅ Если средства получены - подтвердите транзакцию\n` +
+                `❌ Если средства не поступили - уточните у клиента`;
+
+            const operatorKeyboard = new InlineKeyboard()
+                .text('✅ Подтвердить получение', `operator_confirm_${orderId}`)
+                .text('❌ Средства не получены', `operator_not_received_${orderId}`)
+                .row()
+                .text('💬 Написать клиенту', `operator_chat_${orderId}`);
+
+            if (order.operator_id) {
+                await bot.api.sendMessage(order.operator_id, operatorMessage, {
+                    parse_mode: 'HTML',
+                    reply_markup: operatorKeyboard
+                });
+            }
+
+            // Обновляем статус заявки
+            await db.updateOrderStatus(orderId, 'payment_pending');
+
+            // Редактируем сообщение клиента
+            await ctx.editMessageText(
+                ctx.callbackQuery.message.text + 
+                `\n\n✅ <b>ПОДТВЕРЖДЕНИЕ ПОЛУЧЕНО</b>\n` +
+                `⏰ Время: ${new Date().toLocaleString('ru-RU')}\n` +
+                `🔍 Оператор проверяет поступление платежа...`,
+                {
+                    parse_mode: 'HTML',
+                    reply_markup: new InlineKeyboard()
+                        .text('💬 Связаться с оператором', `client_chat_${orderId}`)
+                }
+            );
+
+            console.log(`💰 Клиент ${userId} подтвердил оплату заявки ${orderId}`);
+
+        } catch (error) {
+            console.error(`❌ Ошибка обработки подтверждения оплаты:`, error);
+            await ctx.reply('❌ Ошибка обработки. Обратитесь к оператору.');
+        }
+    }
+
+    // Кнопка "Связаться с оператором" от клиента
+    if (data.startsWith('client_chat_')) {
+        const orderId = data.replace('client_chat_', '');
+        const clientName = ctx.from.first_name || ctx.from.username || `ID: ${userId}`;
+        
+        await ctx.answerCallbackQuery('💬 Связываемся с оператором...');
+        
+        try {
+            // Получаем информацию о заявке
+            const order = await db.getOrderWithOperator(orderId);
+            if (!order) {
+                return ctx.reply('❌ Заявка не найдена');
+            }
+
+            if (!order.operator_id) {
+                return ctx.reply(
+                    `⚠️ <b>Оператор еще не назначен</b>\n\n` +
+                    `🕐 Пожалуйста, подождите назначения оператора\n` +
+                    `📞 Или обратитесь в поддержку: /support`,
+                    { parse_mode: 'HTML' }
+                );
+            }
+
+            // Создаем чат-контекст
+            chatContexts.set(userId, {
+                type: 'client',
+                orderId: orderId,
+                operatorId: order.operator_id,
+                clientId: userId
+            });
+
+            // Уведомляем оператора о желании клиента связаться
+            const operatorMessage = 
+                `💬 <b>КЛИЕНТ ХОЧЕТ СВЯЗАТЬСЯ</b>\n\n` +
+                `🎫 Заявка #${orderId}\n` +
+                `👤 Клиент: ${clientName}\n` +
+                `💬 Клиент готов к общению\n\n` +
+                `📝 Напишите сообщение ответом на это уведомление`;
+
+            await bot.api.sendMessage(order.operator_id, operatorMessage, {
+                parse_mode: 'HTML',
+                reply_markup: new InlineKeyboard()
+                    .text('💬 Ответить клиенту', `operator_chat_${orderId}`)
+            });
+
+            // Уведомляем клиента
+            await ctx.reply(
+                `💬 <b>Чат с оператором активирован</b>\n\n` +
+                `🎫 Заявка #${orderId}\n` +
+                `👨‍💼 Оператор уведомлен о вашем запросе\n\n` +
+                `📝 Напишите ваше сообщение, и оператор его получит`,
+                {
+                    parse_mode: 'HTML',
+                    reply_markup: new InlineKeyboard()
+                        .text('💬 Ответить оператору', `client_chat_${orderId}`)
+                }
+            );
+
+                         console.log(`💬 Клиент ${userId} запросил чат с оператором по заявке ${orderId}`);
+
+        } catch (error) {
+            console.error(`❌ Ошибка запроса чата с оператором:`, error);
+            await ctx.reply('❌ Ошибка связи с оператором. Попробуйте позже.');
+        }
+    }
+
+    // Оператор подтверждает получение платежа
+    if (data.startsWith('operator_confirm_')) {
+        const orderId = data.replace('operator_confirm_', '');
+        const operatorName = ctx.from.first_name || ctx.from.username || `ID: ${userId}`;
+        
+        await ctx.answerCallbackQuery('✅ Платеж подтвержден!');
+        
+        try {
+            // Получаем информацию о заявке
+            const order = await db.getOrderWithClient(orderId);
+            if (!order) {
+                return ctx.reply('❌ Заявка не найдена');
+            }
+
+            // Обновляем статус заявки
+            await db.updateOrderStatusWithMessage(orderId, 'processing', userId, `Платеж подтвержден оператором ${operatorName}`);
+
+            // Уведомляем клиента
+            const clientMessage = 
+                `✅ <b>ПЛАТЕЖ ПОДТВЕРЖДЕН</b>\n\n` +
+                `🎫 Заявка #${orderId}\n` +
+                `💰 ${order.from_amount} ${order.from_currency}\n` +
+                `👨‍💼 Оператор: ${operatorName}\n` +
+                `⏰ Время: ${new Date().toLocaleString('ru-RU')}\n\n` +
+                `🚀 Обработка вашей заявки начата!\n` +
+                `💸 Средства будут отправлены в ближайшее время`;
+
+            await bot.api.sendMessage(order.user_id, clientMessage, {
+                parse_mode: 'HTML',
+                reply_markup: new InlineKeyboard()
+                    .text('💬 Связаться с оператором', `client_chat_${orderId}`)
+            });
+
+            // Редактируем сообщение оператора
+            await ctx.editMessageText(
+                ctx.callbackQuery.message.text + 
+                `\n\n✅ <b>ПЛАТЕЖ ПОДТВЕРЖДЕН</b>\n` +
+                `👨‍💼 Оператор: ${operatorName}\n` +
+                `⏰ Время: ${new Date().toLocaleString('ru-RU')}`,
+                {
+                    parse_mode: 'HTML',
+                    reply_markup: new InlineKeyboard()
+                        .text('📤 Отправить средства', `operator_send_${orderId}`)
+                        .text('💬 Написать клиенту', `operator_chat_${orderId}`)
+                }
+            );
+
+            console.log(`✅ Оператор ${userId} подтвердил платеж по заявке ${orderId}`);
+
+        } catch (error) {
+            console.error(`❌ Ошибка подтверждения платежа:`, error);
+            await ctx.reply('❌ Ошибка обработки. Попробуйте позже.');
+        }
+    }
+
+    // Оператор сообщает что средства не получены
+    if (data.startsWith('operator_not_received_')) {
+        const orderId = data.replace('operator_not_received_', '');
+        const operatorName = ctx.from.first_name || ctx.from.username || `ID: ${userId}`;
+        
+        await ctx.answerCallbackQuery('❌ Уведомление отправлено');
+        
+        try {
+            // Получаем информацию о заявке
+            const order = await db.getOrderWithClient(orderId);
+            if (!order) {
+                return ctx.reply('❌ Заявка не найдена');
+            }
+
+            // Уведомляем клиента
+            const clientMessage = 
+                `⚠️ <b>СРЕДСТВА НЕ ПОЛУЧЕНЫ</b>\n\n` +
+                `🎫 Заявка #${orderId}\n` +
+                `💳 ${order.from_amount} ${order.from_currency}\n` +
+                `👨‍💼 Оператор: ${operatorName}\n\n` +
+                `❗ Платеж не поступил на наши реквизиты\n\n` +
+                `🔍 <b>Проверьте:</b>\n` +
+                `• Правильность суммы\n` +
+                `• Правильность реквизитов\n` +
+                `• Статус платежа в вашем банке\n\n` +
+                `💬 Свяжитесь с оператором для уточнения`;
+
+            await bot.api.sendMessage(order.user_id, clientMessage, {
+                parse_mode: 'HTML',
+                reply_markup: new InlineKeyboard()
+                    .text('💬 Связаться с оператором', `client_chat_${orderId}`)
+                    .text('✅ Повторно подтвердить', `client_paid_${orderId}`)
+            });
+
+            // Редактируем сообщение оператора
+            await ctx.editMessageText(
+                ctx.callbackQuery.message.text + 
+                `\n\n❌ <b>СРЕДСТВА НЕ ПОЛУЧЕНЫ</b>\n` +
+                `👨‍💼 Оператор: ${operatorName}\n` +
+                `⏰ Время: ${new Date().toLocaleString('ru-RU')}\n` +
+                `📝 Клиент уведомлен`,
+                {
+                    parse_mode: 'HTML',
+                    reply_markup: new InlineKeyboard()
+                        .text('💬 Написать клиенту', `operator_chat_${orderId}`)
+                }
+            );
+
+            console.log(`❌ Оператор ${userId} сообщил о неполучении средств по заявке ${orderId}`);
+
+        } catch (error) {
+            console.error(`❌ Ошибка уведомления о неполучении:`, error);
+            await ctx.reply('❌ Ошибка обработки. Попробуйте позже.');
+        }
+    }
+
+    // Чат оператора с клиентом
+    if (data.startsWith('operator_chat_')) {
+        const orderId = data.replace('operator_chat_', '');
+        
+        await ctx.answerCallbackQuery('💬 Чат активирован');
+        
+        try {
+            // Получаем информацию о заявке
+            const order = await db.getOrderWithClient(orderId);
+            if (!order) {
+                return ctx.reply('❌ Заявка не найдена');
+            }
+
+            // Создаем чат-контекст для оператора
+            chatContexts.set(userId, {
+                type: 'operator',
+                orderId: orderId,
+                clientId: order.user_id,
+                operatorId: userId
+            });
+
+            await ctx.reply(
+                `💬 <b>Чат с клиентом активирован</b>\n\n` +
+                `🎫 Заявка #${orderId}\n` +
+                `👤 Клиент: ${order.client_name || `ID: ${order.user_id}`}\n\n` +
+                `📝 Напишите сообщение, и клиент его получит`,
+                {
+                    parse_mode: 'HTML',
+                    reply_markup: new InlineKeyboard()
+                        .text('📞 Завершить чат', `operator_end_chat_${orderId}`)
+                }
+            );
+
+            console.log(`💬 Оператор ${userId} активировал чат с клиентом по заявке ${orderId}`);
+
+        } catch (error) {
+            console.error(`❌ Ошибка активации чата:`, error);
+            await ctx.reply('❌ Ошибка активации чата. Попробуйте позже.');
+        }
+    }
 });
 
 // Обработчик данных из WebApp
