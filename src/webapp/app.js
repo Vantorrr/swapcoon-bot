@@ -658,15 +658,59 @@ function updateProfileDisplay() {
     const avatarImg = document.getElementById('avatar-image');
     if (avatarImg) {
         if (telegramUser?.photo_url) {
+            console.log('🖼️ Используем аватар из Telegram:', telegramUser.photo_url);
             avatarImg.src = telegramUser.photo_url;
         } else if (userProfile?.avatar) {
+            console.log('🖼️ Используем аватар из профиля:', userProfile.avatar);
             avatarImg.src = userProfile.avatar;
         } else {
-            avatarImg.src = '../assets/images/logo.png';
+            console.log('🖼️ Используем аватар по умолчанию');
+            // Создаем аватар с инициалами пользователя
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 100;
+            canvas.height = 100;
+            
+            // Фон градиентом
+            const gradient = ctx.createLinearGradient(0, 0, 100, 100);
+            gradient.addColorStop(0, '#007AFF');
+            gradient.addColorStop(1, '#5856D6');
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 100, 100);
+            
+            // Инициалы
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 40px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            const initials = firstName.charAt(0) + (lastName ? lastName.charAt(0) : '');
+            ctx.fillText(initials.toUpperCase(), 50, 50);
+            
+            avatarImg.src = canvas.toDataURL();
         }
         
         avatarImg.onerror = () => {
-            avatarImg.src = '../assets/images/logo.png';
+            console.log('❌ Ошибка загрузки аватара, создаем аватар с инициалами');
+            // Создаем аватар с инициалами при ошибке
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 100;
+            canvas.height = 100;
+            
+            ctx.fillStyle = '#6B7280';
+            ctx.fillRect(0, 0, 100, 100);
+            
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 40px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            const initials = firstName.charAt(0) + (lastName ? lastName.charAt(0) : '');
+            ctx.fillText(initials.toUpperCase(), 50, 50);
+            
+            avatarImg.src = canvas.toDataURL();
         };
     }
     
@@ -680,11 +724,22 @@ function updateProfileDisplay() {
         if (profileVolume) profileVolume.textContent = `$${formatNumber(stats.totalVolume || 0)}`;
     }
     
-    // Уровень пользователя (если данные загружены)
-    if (userProfile) {
-        const stats = userProfile.stats || {};
-        const level = userProfile.level || { level: 'NEWBIE', name: 'Новичок', color: '#6B7280' };
-        updateLevelDisplay(level, stats);
+    // Уровень пользователя (всегда показываем, даже для новых)
+    const stats = userProfile?.stats || { ordersCount: 0, totalVolume: 0 };
+    let level = userProfile?.level;
+    
+    // Если нет уровня, устанавливаем новичка
+    if (!level) {
+        level = { 
+            level: 'NEWBIE', 
+            name: 'Новичок', 
+            color: '#6B7280',
+            benefits: ['Доступ к базовым функциям', 'Поддержка 24/7']
+        };
+        console.log('👶 Установлен уровень новичка для пользователя', currentUserId);
+    }
+    
+    updateLevelDisplay(level, stats);
         
         // Реферальная статистика
         const referralStats = userProfile.referralStats || {};
@@ -706,32 +761,62 @@ function updateProfileDisplay() {
 
 // Обновление отображения уровня
 function updateLevelDisplay(level, stats) {
-    // В заголовке
-    document.getElementById('user-level').innerHTML = `<span class="level-badge" style="background: ${level.color}">${level.level}</span>`;
+    console.log('📊 Обновляем отображение уровня:', level, stats);
     
-    // В профиле
-    document.getElementById('level-indicator').innerHTML = `<span class="level-text">${level.level}</span>`;
-    document.getElementById('current-level').innerHTML = `
-        <span class="level-badge" style="background: ${level.color}">${level.level}</span>
-        <span class="level-name">${level.name}</span>
-    `;
+    // В заголовке (если элемент существует)
+    const userLevelEl = document.getElementById('user-level');
+    if (userLevelEl) {
+        userLevelEl.innerHTML = `<span class="level-badge" style="background: ${level.color}">${level.level}</span>`;
+    }
+    
+    // В профиле (если элементы существуют)
+    const levelIndicator = document.getElementById('level-indicator');
+    if (levelIndicator) {
+        levelIndicator.innerHTML = `<span class="level-text">${level.level}</span>`;
+    }
+    
+    const currentLevelEl = document.getElementById('current-level');
+    if (currentLevelEl) {
+        currentLevelEl.innerHTML = `
+            <span class="level-badge" style="background: ${level.color}">${level.level}</span>
+            <span class="level-name">${level.name}</span>
+        `;
+    }
     
     // Прогресс до следующего уровня
     const progress = calculateLevelProgress(level.level, stats);
-    document.getElementById('level-progress-fill').style.width = `${progress.percentage}%`;
-    document.getElementById('progress-description').textContent = progress.description;
-    document.getElementById('profile-level-progress').textContent = `${progress.percentage}%`;
+    
+    const progressFill = document.getElementById('level-progress-fill');
+    if (progressFill) {
+        progressFill.style.width = `${progress.percentage}%`;
+    }
+    
+    const progressDesc = document.getElementById('progress-description');
+    if (progressDesc) {
+        progressDesc.textContent = progress.description;
+    }
+    
+    const profileProgress = document.getElementById('profile-level-progress');
+    if (profileProgress) {
+        profileProgress.textContent = `${progress.percentage}%`;
+    }
     
     // Следующий уровень
-    document.getElementById('next-level').innerHTML = `<span>Следующий: ${progress.nextLevel}</span>`;
+    const nextLevelEl = document.getElementById('next-level');
+    if (nextLevelEl) {
+        nextLevelEl.innerHTML = `<span>Следующий: ${progress.nextLevel}</span>`;
+    }
     
     // Преимущества
-    const benefits = level.benefits || [];
+    const benefits = level.benefits || ['Доступ к базовым функциям', 'Поддержка 24/7'];
     const benefitsList = benefits.map(benefit => `<li>${benefit}</li>`).join('');
-    document.getElementById('level-benefits').innerHTML = `
-        <h4>Ваши преимущества:</h4>
-        <ul>${benefitsList}</ul>
-    `;
+    const levelBenefits = document.getElementById('level-benefits');
+    if (levelBenefits) {
+        levelBenefits.innerHTML = `
+            <h4>Ваши преимущества:</h4>
+            <ul>${benefitsList}</ul>
+        `;
+    }
 }
 
 // Расчет прогресса уровня
