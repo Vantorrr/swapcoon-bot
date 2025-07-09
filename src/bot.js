@@ -4712,105 +4712,41 @@ webhookApp.listen(port, () => {
     console.log(`🔗 Webhook сервер запущен на порту ${port}`);
 });
 
-// Секретная команда для перезапуска бота (только для главного админа)
+// Секретная команда для перезапуска бота (ОТКЛЮЧЕНА ДЛЯ RAILWAY)
 bot.command('phoenix_restart', async (ctx) => {
     const userId = ctx.from.id;
     console.log(`🔍 Phoenix restart запрос от ${userId}`);
     
     try {
         const userRole = await db.getUserRole(userId);
-        console.log(`🔍 Роль пользователя ${userId}: ${userRole}`);
         
         if (userRole !== 'admin') {
-            console.log(`❌ Доступ запрещен для ${userId} - роль: ${userRole}`);
-            // Отправляем ответ для отладки
             await ctx.reply('🔒 Команда недоступна');
             return;
         }
         
-        console.log(`✅ Админ ${userId} инициирует Phoenix Restart`);
+        // ОТКЛЮЧЕНО ДЛЯ RAILWAY
+        await ctx.reply(
+            `⚠️ <b>КОМАНДА ОТКЛЮЧЕНА</b>\n\n` +
+            `🚫 Phoenix restart отключен на Railway\n` +
+            `💡 Используйте Railway dashboard для перезапуска\n\n` +
+            `🔗 https://railway.app/dashboard`,
+            { parse_mode: 'HTML' }
+        );
+        
     } catch (error) {
         console.error(`❌ Ошибка проверки роли для ${userId}:`, error);
         await ctx.reply('❌ Ошибка проверки прав доступа');
-        return;
     }
-    
-    const keyboard = new InlineKeyboard()
-        .text('🔄 Да, перезапустить', 'confirm_restart')
-        .text('❌ Отмена', 'cancel_restart');
-    
-    await ctx.reply(
-        `🔥 <b>PHOENIX RESTART</b>\n\n` +
-        `⚠️ Вы уверены, что хотите перезапустить бота?\n\n` +
-        `🔄 Это займет ~30 секунд\n` +
-        `📢 Все админы получат уведомление\n` +
-        `🛑 Активные операции будут сохранены`,
-        {
-            parse_mode: 'HTML',
-            reply_markup: keyboard
-        }
-    );
 });
 
-// Обработчик подтверждения перезапуска
+// Обработчики отключены для Railway
 bot.callbackQuery('confirm_restart', async (ctx) => {
-    await ctx.answerCallbackQuery();
-    
-    const userId = ctx.from.id;
-    const userRole = await db.getUserRole(userId);
-    
-    if (userRole !== 'admin') return;
-    
-    await ctx.editMessageText(
-        `🔄 <b>ПЕРЕЗАПУСК НАЧАТ!</b>\n\n` +
-        `🚀 Останавливаем бота...\n` +
-        `⏳ Ожидайте ~30 секунд\n\n` +
-        `🔔 Все админы получат уведомление о перезапуске`,
-        { parse_mode: 'HTML' }
-    );
-    
-    // Уведомляем всех админов о перезапуске
-    try {
-        const adminIds = await db.getAdminIds();
-        const restartMessage = 
-            `🔄 <b>ПЛАНОВЫЙ ПЕРЕЗАПУСК БОТА</b>\n\n` +
-            `👤 Инициатор: ${ctx.from.first_name || ctx.from.username}\n` +
-            `⏰ Время: ${new Date().toLocaleString('ru-RU')}\n\n` +
-            `🔧 Обновляем систему...\n` +
-            `⏳ Время простоя: ~30 секунд\n\n` +
-            `🚀 Скоро вернемся с улучшениями!`;
-            
-        for (const adminId of adminIds) {
-            try {
-                if (adminId !== userId) { // Не отправляем инициатору
-                    await bot.api.sendMessage(adminId, restartMessage, {
-                        parse_mode: 'HTML'
-                    });
-                }
-            } catch (error) {
-                console.log(`Не удалось уведомить админа ${adminId} о перезапуске`);
-            }
-        }
-    } catch (error) {
-        console.log('Ошибка уведомления о перезапуске:', error);
-    }
-    
-    // Ждем 3 секунды и перезапускаем
-    setTimeout(() => {
-        console.log('\n🔄 Выполняем Phoenix Restart...');
-        process.exit(0); // PM2 или nodemon автоматически перезапустят
-    }, 3000);
+    await ctx.answerCallbackQuery('Команда отключена для Railway');
 });
 
-// Обработчик отмены перезапуска
 bot.callbackQuery('cancel_restart', async (ctx) => {
-    await ctx.answerCallbackQuery('Перезапуск отменен');
-    
-    await ctx.editMessageText(
-        `❌ <b>Перезапуск отменен</b>\n\n` +
-        `🤖 Бот продолжает работать в штатном режиме`,
-        { parse_mode: 'HTML' }
-    );
+    await ctx.answerCallbackQuery('Команда отключена для Railway');
 });
 
 // Запуск бота
