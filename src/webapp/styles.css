@@ -147,7 +147,8 @@ body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    max-width: 480px;
+    width: 100%;
+    max-width: 100vw;
     margin: 0 auto;
     background-color: var(--surface-color);
     transition: opacity 0.3s ease;
@@ -173,6 +174,9 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    max-width: 480px;
+    margin: 0 auto;
+    width: 100%;
 }
 
 .header-left h1 {
@@ -202,7 +206,10 @@ body {
 .main-content {
     flex: 1;
     padding: var(--spacing-md);
-    padding-bottom: 80px; /* Отступ для навигации */
+    max-width: 480px;
+    margin: 0 auto;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 /* Screens */
@@ -890,17 +897,17 @@ body {
 
 /* Bottom Navigation */
 .bottom-nav {
-    position: fixed;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 100%;
-    max-width: 480px;
-    background: var(--surface-color);
+    background-color: var(--surface-color);
     border-top: 1px solid var(--border-color);
+    padding: var(--spacing-xs) 0;
     display: flex;
-    padding: var(--spacing-sm) 0;
-    z-index: 1000;
+    justify-content: space-around;
+    position: sticky;
+    bottom: 0;
+    z-index: 100;
+    max-width: 480px;
+    margin: 0 auto;
+    width: 100%;
 }
 
 .nav-item {
@@ -1125,25 +1132,123 @@ body {
 }
 
 /* Responsive Design */
-@media (max-width: 375px) {
-    .services-grid {
-        grid-template-columns: 1fr;
+@media (max-width: 480px) {
+    .main-content {
+        padding: var(--spacing-sm);
     }
     
-    .referral-stats {
-        grid-template-columns: 1fr;
+    .header {
+        padding: var(--spacing-xs) var(--spacing-sm) var(--spacing-sm);
+    }
+    
+    .calculator-card {
+        margin: var(--spacing-sm) 0;
+    }
+    
+    .services-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: var(--spacing-sm);
+    }
+    
+    .service-card {
+        padding: var(--spacing-sm);
+    }
+    
+    .metrics-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: var(--spacing-sm);
     }
 }
 
-/* Dark Mode Support */
-@media (prefers-color-scheme: dark) {
-    :root {
-        --background-color: #1C1C1E;
-        --surface-color: #2C2C2E;
-        --text-primary: #FFFFFF;
-        --text-secondary: #98989D;
-        --text-tertiary: #48484A;
-        --border-color: #38383A;
+@media (max-width: 375px) {
+    .main-content {
+        padding: var(--spacing-xs);
+    }
+    
+    .services-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-xs);
+    }
+    
+    .referral-stats {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+    
+    .currency-input {
+        padding: var(--spacing-sm);
+    }
+    
+    .currency-input input {
+        font-size: var(--font-sm);
+    }
+    
+    .header-content {
+        padding: 0 var(--spacing-xs);
+    }
+}
+
+@media (max-width: 320px) {
+    .main-content {
+        padding: var(--spacing-xs);
+    }
+    
+    .referral-stats {
+        flex-direction: column;
+        gap: var(--spacing-xs);
+    }
+    
+    .referral-stat {
+        min-width: auto;
+        flex: 1;
+    }
+    
+    .currency-select {
+        min-width: 80px;
+    }
+    
+    .exchange-info {
+        padding: var(--spacing-sm);
+    }
+    
+    .primary-button {
+        padding: var(--spacing-sm);
+        font-size: var(--font-sm);
+    }
+}
+
+/* Landscape orientation adjustments */
+@media (max-height: 600px) and (orientation: landscape) {
+    .header {
+        padding: var(--spacing-xs) var(--spacing-md) var(--spacing-xs);
+    }
+    
+    .bottom-nav {
+        padding: var(--spacing-xs) 0 env(safe-area-inset-bottom, var(--spacing-xs));
+    }
+    
+    .main-content {
+        padding: var(--spacing-sm) var(--spacing-md);
+    }
+}
+
+/* Safe area for devices with notches */
+@supports (padding: max(0px)) {
+    .header {
+        padding-left: max(var(--spacing-md), env(safe-area-inset-left));
+        padding-right: max(var(--spacing-md), env(safe-area-inset-right));
+        padding-top: max(var(--spacing-sm), env(safe-area-inset-top));
+    }
+    
+    .main-content {
+        padding-left: max(var(--spacing-md), env(safe-area-inset-left));
+        padding-right: max(var(--spacing-md), env(safe-area-inset-right));
+    }
+    
+    .bottom-nav {
+        padding-left: max(0px, env(safe-area-inset-left));
+        padding-right: max(0px, env(safe-area-inset-right));
+        padding-bottom: max(var(--spacing-xs), env(safe-area-inset-bottom));
     }
 }
 
@@ -1197,8 +1302,6 @@ body {
     font-weight: 500;
     margin-bottom: 2px;
 }
-
-
 
 /* Общий стиль для user-level (для других мест) */
 .user-level {
@@ -1474,8 +1577,6 @@ body {
     border: 3px solid rgba(255, 255, 255, 0.2);
     object-fit: cover;
 }
-
-
 
 .profile-details {
     flex: 1;
