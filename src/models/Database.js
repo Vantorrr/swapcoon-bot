@@ -532,6 +532,28 @@ class Database {
         });
     }
 
+    // Получение списка всех администраторов для уведомлений
+    async getAdminIds() {
+        return new Promise((resolve, reject) => {
+            this.db.all(`
+                SELECT telegram_id FROM staff 
+                WHERE role = 'admin' AND is_active = 1
+            `, (err, rows) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    const adminIds = rows.map(row => row.telegram_id);
+                    // Если нет админов в базе, используем MAIN_ADMIN_ID из переменных
+                    if (adminIds.length === 0 && process.env.MAIN_ADMIN_ID) {
+                        adminIds.push(parseInt(process.env.MAIN_ADMIN_ID));
+                    }
+                    console.log(`👥 Найдено админов для уведомлений: ${adminIds.length}`, adminIds);
+                    resolve(adminIds);
+                }
+            });
+        });
+    }
+
     // Создание уведомления
     async createNotification(notificationData) {
         return new Promise((resolve, reject) => {

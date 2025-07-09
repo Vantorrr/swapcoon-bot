@@ -87,7 +87,7 @@ function initEventListeners() {
     document.getElementById('create-order-button').addEventListener('click', createOrder);
     
     // Поиск валют
-    document.getElementById('currency-search').addEventListener('input', filterCurrencies);
+    // Поиск валют удален
     
     // Адрес кошелька
     document.getElementById('wallet-address').addEventListener('input', validateWalletAddress);
@@ -322,8 +322,6 @@ function openCurrencyModal(type) {
     currentCurrencyType = type;
     updateCurrencyList();
     document.getElementById('currency-modal').classList.add('active');
-    document.getElementById('currency-search').value = '';
-    document.getElementById('currency-search').focus();
 }
 
 // Закрытие модала валют
@@ -392,15 +390,7 @@ function selectCurrency(currency) {
 }
 
 // Фильтрация валют
-function filterCurrencies() {
-    const search = document.getElementById('currency-search').value.toLowerCase();
-    const items = document.querySelectorAll('.currency-item');
-    
-    items.forEach(item => {
-        const text = item.textContent.toLowerCase();
-        item.style.display = text.includes(search) ? 'flex' : 'none';
-    });
-}
+// Функция поиска валют удалена
 
 // Переход к оформлению заявки
 function proceedToOrder() {
