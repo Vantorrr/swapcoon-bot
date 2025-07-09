@@ -266,6 +266,48 @@ bot.command('setup_webapp', async (ctx) => {
     }
 });
 
+// АВАРИЙНАЯ команда для добавления админа (только для главного админа)
+bot.command('emergency_admin', async (ctx) => {
+    const userId = ctx.from.id;
+    const mainAdminId = process.env.MAIN_ADMIN_ID ? parseInt(process.env.MAIN_ADMIN_ID) : 8141463258;
+    
+    // Только для главного админа из переменных окружения
+    if (userId !== mainAdminId) {
+        return ctx.reply('❌ Эта команда доступна только главному администратору');
+    }
+    
+    try {
+        // Добавляем главного админа в базу
+        await db.addStaff({
+            telegramId: userId,
+            username: ctx.from.username || 'main_admin',
+            firstName: ctx.from.first_name || 'Главный Админ',
+            lastName: ctx.from.last_name || null,
+            role: 'admin',
+            addedBy: null
+        });
+        
+        // Проверяем что добавилось
+        const role = await db.getUserRole(userId);
+        
+        await ctx.reply(
+            `✅ <b>АВАРИЙНОЕ ВОССТАНОВЛЕНИЕ ЗАВЕРШЕНО!</b>\n\n` +
+            `🛡️ Ваша роль: ${role}\n` +
+            `👤 ID: ${userId}\n` +
+            `📱 Теперь напишите /start чтобы увидеть админ панель!\n\n` +
+            `🔧 Команда будет удалена после первого использования.`,
+            { parse_mode: 'HTML' }
+        );
+        
+    } catch (error) {
+        if (error.message.includes('UNIQUE constraint failed')) {
+            await ctx.reply(`✅ Вы уже админ! Напишите /start чтобы увидеть панель.`);
+        } else {
+            await ctx.reply(`❌ Ошибка: ${error.message}`);
+        }
+    }
+});
+
 // Команда для быстрой статистики дня
 bot.command('daily_stats', async (ctx) => {
     const userId = ctx.from.id;
