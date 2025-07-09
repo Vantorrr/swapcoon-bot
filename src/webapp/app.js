@@ -9,6 +9,9 @@ let currentCalculation = null;
 let userProfile = null;
 let charts = {};
 let favoriteCurrencies = [];
+let currentBank = null;
+let currentNetwork = null;
+let pendingCurrencySelection = null;
 
 // Функции для работы с избранными валютами
 function loadFavorites() {
@@ -534,16 +537,89 @@ function getCurrencyName(currency) {
 
 // Выбор валюты
 function selectCurrency(currency) {
-    if (currentCurrencyType === 'from') {
+    // Сохраняем тип валюты и валюту для дальнейшей обработки
+    pendingCurrencySelection = {
+        type: currentCurrencyType,
+        currency: currency
+    };
+    
+    // Если это рубли - показываем выбор банка
+    if (currency === 'RUB') {
+        closeCurrencyModal();
+        openBankModal();
+        return;
+    }
+    
+    // Если это USDT - показываем выбор сети
+    if (currency === 'USDT') {
+        closeCurrencyModal();
+        openNetworkModal();
+        return;
+    }
+    
+    // Для остальных валют - обычная логика
+    finalizeCurrencySelection(currency);
+}
+
+// Завершение выбора валюты
+function finalizeCurrencySelection(currency, additionalInfo = null) {
+    const currencyType = pendingCurrencySelection?.type || currentCurrencyType;
+    
+    if (currencyType === 'from') {
         fromCurrency = currency;
-        document.querySelector('#from-currency .currency-code').textContent = currency;
+        let displayText = currency;
+        if (additionalInfo) {
+            displayText += ` (${additionalInfo})`;
+        }
+        document.querySelector('#from-currency .currency-code').textContent = displayText;
     } else {
         toCurrency = currency;
-        document.querySelector('#to-currency .currency-code').textContent = currency;
+        let displayText = currency;
+        if (additionalInfo) {
+            displayText += ` (${additionalInfo})`;
+        }
+        document.querySelector('#to-currency .currency-code').textContent = displayText;
     }
+    
+    // Сбрасываем состояние
+    pendingCurrencySelection = null;
     
     closeCurrencyModal();
     calculateExchange();
+}
+
+// Модальные окна банков
+function openBankModal() {
+    document.getElementById('bank-modal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeBankModal() {
+    document.getElementById('bank-modal').style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+function selectBank(bank) {
+    currentBank = bank;
+    finalizeCurrencySelection('RUB', bank);
+    closeBankModal();
+}
+
+// Модальные окна сетей
+function openNetworkModal() {
+    document.getElementById('network-modal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeNetworkModal() {
+    document.getElementById('network-modal').style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+function selectNetwork(network) {
+    currentNetwork = network;
+    finalizeCurrencySelection('USDT', network);
+    closeNetworkModal();
 }
 
 // Фильтрация валют
@@ -1659,6 +1735,18 @@ function showScreen(screenId) {
     if (targetScreen) {
         targetScreen.classList.add('active');
         
+        // Сбрасываем скролл к началу экрана
+        setTimeout(() => {
+            targetScreen.scrollTop = 0;
+            // Также сбрасываем скролл основного контейнера
+            const mainContent = document.querySelector('.main-content');
+            if (mainContent) {
+                mainContent.scrollTop = 0;
+            }
+            // И скролл всего окна
+            window.scrollTo(0, 0);
+        }, 10);
+        
         // Дополнительная логика для конкретных экранов
         if (screenId === 'history-screen') {
             loadHistory();
@@ -1769,14 +1857,33 @@ function getStatusText(status) {
     return statuses[status] || status;
 }
 
-// Связь с оператором
+// Связь с оператором (общая функция)
 function contactOperator() {
-    // Создаем заявку через API (работает и в Telegram и в браузере)
-    createSupportTicket();
+    createSupportTicket('Помощь оператора', 'Пользователь запросил помощь через WebApp');
 }
 
-// Создание заявки в поддержку (для браузера)
-async function createSupportTicket() {
+// Обмен наличных
+function requestCashExchange() {
+    createSupportTicket('Обмен наличных', 'Заявка на обмен физических денег в офисах. Клиент интересуется обменом наличных валют.');
+}
+
+// Обмен без AML
+function requestNoAMLExchange() {
+    createSupportTicket('Обмен без AML', 'Заявка на быстрый обмен без AML проверки. Клиент хочет выполнить обмен без детальной проверки адресов.');
+}
+
+// Банковские карты
+function requestBankCards() {
+    createSupportTicket('Банковские карты', 'Заявка на обмен с банковскими картами. Клиент интересуется пополнением или выводом средств на банковские карты.');
+}
+
+// OTC торговля
+function requestOTCTrading() {
+    createSupportTicket('OTC торговля', 'Заявка на OTC торговлю большими объемами. Клиент интересуется обменом крупных сумм с индивидуальными условиями.');
+}
+
+// Создание заявки в поддержку с темой
+async function createSupportTicket(subject = 'Помощь оператора', message = 'Пользователь запросил помощь через WebApp') {
     try {
         if (!currentUserId) {
             showNotification('Ошибка: пользователь не авторизован', 'error');
@@ -1793,7 +1900,8 @@ async function createSupportTicket() {
             body: JSON.stringify({
                 userId: currentUserId,
                 source: tg ? 'webapp_telegram' : 'webapp_browser',
-                message: 'Пользователь запросил помощь через WebApp',
+                subject: subject,
+                message: message,
                 timestamp: new Date().toISOString()
             })
         });

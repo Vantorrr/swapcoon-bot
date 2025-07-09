@@ -341,9 +341,9 @@ app.put('/api/profile/:userId/settings', async (req, res) => {
 // API для создания тикета поддержки
 app.post('/api/support-ticket', async (req, res) => {
     try {
-        const { userId, source, message, timestamp } = req.body;
+        const { userId, source, subject, message, timestamp } = req.body;
         
-        console.log(`🎫 Создание тикета поддержки от пользователя ${userId}`);
+        console.log(`🎫 Создание тикета поддержки от пользователя ${userId} по теме: ${subject}`);
         
         // Получаем данные пользователя
         const user = await db.getUser(userId);
@@ -352,8 +352,18 @@ app.post('/api/support-ticket', async (req, res) => {
         // Создаем тикет в базе (если есть такая таблица)
         const ticketId = `SUPPORT-${Date.now()}`;
         
+        // Определяем эмодзи по теме
+        const getSubjectEmoji = (subject) => {
+            const subjectLower = subject.toLowerCase();
+            if (subjectLower.includes('наличн')) return '💵';
+            if (subjectLower.includes('aml')) return '🛡️';
+            if (subjectLower.includes('карт')) return '💳';
+            if (subjectLower.includes('otc')) return '📈';
+            return '🆘';
+        };
+        
         // Уведомляем администраторов
-        const supportMessage = `🆘 <b>Запрос поддержки</b>\n\n` +
+        const supportMessage = `${getSubjectEmoji(subject)} <b>${subject}</b>\n\n` +
             `🎫 ID: ${ticketId}\n` +
             `👤 Пользователь: ${userName}\n` +
             `📱 Источник: ${source}\n` +
@@ -392,7 +402,7 @@ app.post('/api/support-ticket', async (req, res) => {
         res.json({ 
             success: true, 
             message: 'Тикет создан! Мы свяжемся с вами в ближайшее время.',
-            data: { ticketId, timestamp }
+            data: { ticketId, timestamp, subject }
         });
         
     } catch (error) {

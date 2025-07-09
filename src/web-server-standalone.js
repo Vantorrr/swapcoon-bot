@@ -170,6 +170,36 @@ app.get('/api/news', async (req, res) => {
     }
 });
 
+// API для создания тикета поддержки
+app.post('/api/support-ticket', async (req, res) => {
+    try {
+        const { userId, source, subject, message, timestamp } = req.body;
+        
+        console.log(`🎫 Создание тикета поддержки от пользователя ${userId} по теме: ${subject}`);
+        
+        // Создаем тикет в базе (если есть такая таблица)
+        const ticketId = `SUPPORT-${Date.now()}`;
+        
+        // В standalone версии просто логируем тикет
+        console.log(`📋 Тикет ${ticketId}:`);
+        console.log(`   👤 Пользователь: ${userId}`);
+        console.log(`   📱 Источник: ${source}`);
+        console.log(`   🏷️ Тема: ${subject}`);
+        console.log(`   💬 Сообщение: ${message}`);
+        console.log(`   ⏰ Время: ${new Date(timestamp).toLocaleString('ru-RU')}`);
+        
+        res.json({ 
+            success: true, 
+            message: 'Тикет создан! Мы свяжемся с вами в ближайшее время.',
+            data: { ticketId, timestamp, subject }
+        });
+        
+    } catch (error) {
+        console.error('❌ Ошибка создания тикета поддержки:', error);
+        res.status(500).json({ success: false, error: 'Ошибка создания тикета поддержки' });
+    }
+});
+
 // Запуск сервера
 app.listen(PORT, () => {
     console.log(`🌐 Standalone веб-сервер запущен на порту ${PORT}`);
