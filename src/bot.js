@@ -4492,7 +4492,168 @@ async function setupMenuButton() {
 
 // Создаем Express сервер для webhook'ов
 const webhookApp = express();
+const path = require('path');
+const cors = require('cors');
+const RatesService = require('./services/RatesService');
+
+// Инициализация сервисов для веб-приложения
+const ratesService = new RatesService();
+
+// Middleware
+webhookApp.use(cors());
 webhookApp.use(express.json());
+
+// Настройка статических файлов для веб-приложения
+webhookApp.use(express.static(path.join(__dirname, 'webapp')));
+webhookApp.use('/assets', express.static(path.join(__dirname, '..', 'assets')));
+
+// Основной маршрут для мини-приложения
+webhookApp.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'webapp', 'index.html'));
+});
+
+// API для получения курсов валют
+webhookApp.get('/api/rates', async (req, res) => {
+    try {
+        const rates = await ratesService.getRates();
+        res.json({ 
+            success: true, 
+            data: rates,
+            lastUpdate: ratesService.getLastUpdateTime(),
+            source: 'live_api'
+        });
+    } catch (error) {
+        console.error('Ошибка получения курсов:', error);
+        res.status(500).json({ success: false, error: 'Ошибка получения курсов' });
+    }
+});
+
+// API для AML проверки
+webhookApp.post('/api/aml-check', async (req, res) => {
+    try {
+        const { address, currency, userId } = req.body;
+        
+        const amlResult = await amlService.checkAddress(address, currency);
+        
+        res.json({ success: true, data: amlResult });
+    } catch (error) {
+        console.error('Ошибка AML проверки:', error);
+        res.status(500).json({ success: false, error: 'Ошибка AML проверки' });
+    }
+});
+
+// API для создания заявки
+webhookApp.post('/api/create-order', async (req, res) => {
+    try {
+        const {
+            userId,
+            fromCurrency,
+            toCurrency,
+            fromAmount,
+            toAmount,
+            fromAddress,
+            toAddress,
+            amlResult,
+            exchangeRate,
+            fee
+        } = req.body;
+
+        console.log('🔄 Создание заявки:', { userId, fromCurrency, toCurrency, fromAmount, toAmount });
+
+        // Создаем заявку в базе данных
+        const order = await db.createOrder({
+            userId,
+            fromCurrency,
+            toCurrency,
+            fromAmount,
+            toAmount,
+            fromAddress,
+            toAddress,
+            exchangeRate: exchangeRate || (toAmount / fromAmount),
+            fee: fee || 0,
+            amlStatus: amlResult?.status || 'clean',
+            status: 'pending'
+        });
+
+        console.log('✅ Заявка создана:', order);
+
+        res.json({ success: true, data: order });
+    } catch (error) {
+        console.error('❌ Ошибка создания заявки:', error);
+        res.status(500).json({ success: false, error: 'Ошибка создания заявки: ' + error.message });
+    }
+});
+
+// API для получения истории пользователя
+webhookApp.get('/api/history/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const history = await db.getUserHistory(userId);
+        
+        res.json({ success: true, data: history });
+    } catch (error) {
+        console.error('Ошибка получения истории:', error);
+        res.status(500).json({ success: false, error: 'Ошибка получения истории' });
+    }
+});
+
+// API для получения профиля пользователя
+webhookApp.get('/api/profile/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        
+        // Получаем базовую информацию пользователя
+        const user = await db.getUser(userId);
+        if (!user) {
+            return res.status(404).json({ success: false, error: 'Пользователь не найден' });
+        }
+        
+        // Получаем статистику
+        const stats = await db.getUserStats ? await db.getUserStats(userId) : {};
+        const referralStats = await db.getReferralStats ? await db.getReferralStats(userId) : {};
+        const achievements = await db.getUserAchievements ? await db.getUserAchievements(userId) : [];
+        
+        const profile = {
+            ...user,
+            stats,
+            referralStats,
+            achievements,
+            avatar: `https://t.me/i/userpic/320/${user.username || user.telegram_id}.jpg`
+        };
+        
+        res.json({ success: true, data: profile });
+    } catch (error) {
+        console.error('Ошибка получения профиля:', error);
+        res.status(500).json({ success: false, error: 'Ошибка получения профиля' });
+    }
+});
+
+// API для новостей
+webhookApp.get('/api/news', async (req, res) => {
+    try {
+        const news = [
+            {
+                id: 1,
+                title: 'Система работает!',
+                description: 'Все функции обмена валют доступны',
+                date: new Date().toISOString(),
+                type: 'info'
+            },
+            {
+                id: 2,
+                title: 'Безопасность превыше всего',
+                description: 'AML проверка защищает ваши операции',
+                date: new Date(Date.now() - 86400000).toISOString(),
+                type: 'security'
+            }
+        ];
+        
+        res.json({ success: true, data: news });
+    } catch (error) {
+        console.error('Ошибка получения новостей:', error);
+        res.status(500).json({ success: false, error: 'Ошибка получения новостей' });
+    }
+});
 
 // Webhook endpoint для получения уведомлений от Telegram
 webhookApp.post('/webhook/telegram', async (req, res) => {
@@ -4541,8 +4702,9 @@ webhookApp.post('/webhook/support-ticket', async (req, res) => {
 });
 
 // Запуск webhook сервера
-webhookApp.listen(3001, () => {
-    console.log('🔗 Webhook сервер запущен на порту 3001');
+const port = process.env.PORT || 3001;
+webhookApp.listen(port, () => {
+    console.log(`🔗 Webhook сервер запущен на порту ${port}`);
 });
 
 // Секретная команда для перезапуска бота (только для главного админа)

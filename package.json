@@ -4,7 +4,7 @@
   "description": "Telegram bot with mini app for currency exchange",
   "main": "src/bot.js",
   "scripts": {
-    "start": "node src/web-server-standalone.js",
+    "start": "node src/bot.js",
     "bot": "node src/bot.js",
     "dev": "nodemon src/bot.js",
     "web": "node src/web-server-standalone.js",
