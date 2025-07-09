@@ -212,29 +212,9 @@ app.post('/api/support-ticket', async (req, res) => {
             `💬 Сообщение: ${message}\n\n` +
             `➡️ Свяжитесь с пользователем: /user ${userId}`;
 
-        // Пытаемся отправить уведомление через webhook
-        try {
-            // Отправляем уведомление на localhost:3001 (где работает бот)
-            const response = await axios.post('http://localhost:3001/webhook/support-ticket', {
-                ticketId,
-                userId,
-                userName,
-                subject,
-                message: supportMessage,
-                timestamp
-            }, {
-                timeout: 3000,
-                headers: { 'Content-Type': 'application/json' }
-            }).catch(() => null);
-            
-            if (response && response.status === 200) {
-                console.log('📨 Уведомление отправлено в бот');
-            } else {
-                console.log('⚠️ Бот недоступен, уведомление не отправлено');
-            }
-        } catch (webhookError) {
-            console.log('⚠️ Не удалось отправить webhook:', webhookError.message);
-        }
+        // В standalone режиме просто логируем - бот и веб-сервер запускаются отдельно
+        console.log('📋 Тикет создан для standalone режима');
+        console.log('⚠️ Для полноценных уведомлений используйте основной режим с ботом');
         
         res.json({ 
             success: true, 
