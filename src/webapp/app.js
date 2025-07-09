@@ -127,50 +127,80 @@ function initEventListeners() {
 
 // Загрузка начальных данных
 async function loadInitialData() {
+    console.log('🚀 Начинаем загрузку начальных данных...');
+    showNotification('Загружаем данные приложения...', 'info');
+    
+    // Загружаем курсы валют (критически важно)
     try {
-        showNotification('Загружаем актуальные курсы валют...', 'info');
-        
-        // Загружаем курсы валют
         await loadExchangeRates();
-        
-        // Загружаем профиль пользователя (если есть ID)
-        if (currentUserId) {
+        console.log('✅ Курсы валют загружены');
+    } catch (error) {
+        console.error('❌ Ошибка загрузки курсов:', error);
+        console.log('ℹ️ Используем тестовые курсы');
+    }
+    
+    // Загружаем профиль пользователя (не критично)
+    if (currentUserId) {
+        try {
             await loadUserProfile();
-            await loadNews();
+            console.log('✅ Попытка загрузки профиля завершена');
+        } catch (error) {
+            console.error('❌ Ошибка загрузки профиля:', error);
         }
         
-        // Обновляем отображение профиля с данными из Telegram
-        updateProfileDisplay();
-        
-        // Обновляем калькулятор
-        calculateExchange();
-        
-        // Загружаем сохраненные настройки (с небольшой задержкой)
-        setTimeout(() => {
-            loadSavedSettings();
-        }, 500);
-        
-        // Скрываем загрузочный экран
-        setTimeout(() => {
-            document.getElementById('loading-screen').style.opacity = '0';
-            setTimeout(() => {
-                document.getElementById('loading-screen').style.display = 'none';
-                document.getElementById('app').classList.remove('hidden');
-            }, 500);
-        }, 1500);
-        
-        showNotification('Приложение готово к работе!', 'success');
-        
-    } catch (error) {
-        console.error('❌ Ошибка загрузки данных:', error);
-        showNotification('Ошибка загрузки данных. Попробуйте позже.', 'error');
-        
-        // Все равно показываем приложение с тестовыми данными
-        setTimeout(() => {
-            document.getElementById('loading-screen').style.display = 'none';
-            document.getElementById('app').classList.remove('hidden');
-        }, 2000);
+        // Загружаем новости (не критично)
+        try {
+            await loadNews();
+            console.log('✅ Новости загружены');
+        } catch (error) {
+            console.error('❌ Ошибка загрузки новостей:', error);
+        }
     }
+    
+    // Обновляем отображение профиля с данными из Telegram
+    try {
+        updateProfileDisplay();
+        console.log('✅ Профиль обновлен');
+    } catch (error) {
+        console.error('❌ Ошибка обновления профиля:', error);
+    }
+    
+    // Обновляем калькулятор
+    try {
+        calculateExchange();
+        console.log('✅ Калькулятор инициализирован');
+    } catch (error) {
+        console.error('❌ Ошибка инициализации калькулятора:', error);
+    }
+    
+    // Загружаем сохраненные настройки (не критично)
+    setTimeout(() => {
+        try {
+            loadSavedSettings();
+            console.log('✅ Настройки загружены');
+        } catch (error) {
+            console.error('❌ Ошибка загрузки настроек:', error);
+        }
+    }, 500);
+    
+    // Скрываем загрузочный экран через фиксированное время
+    console.log('🎬 Скрываем загрузочный экран...');
+    setTimeout(() => {
+        const loadingScreen = document.getElementById('loading-screen');
+        const app = document.getElementById('app');
+        
+        if (loadingScreen) {
+            loadingScreen.style.opacity = '0';
+            setTimeout(() => {
+                loadingScreen.style.display = 'none';
+                if (app) {
+                    app.classList.remove('hidden');
+                }
+                console.log('🎉 Приложение полностью загружено!');
+                showNotification('Приложение готово к работе!', 'success');
+            }, 300);
+        }
+    }, 1200); // Сократили время загрузки
 }
 
 // Загрузка курсов валют
@@ -621,12 +651,13 @@ async function loadUserProfile() {
         
         if (data.success) {
             userProfile = data.data;
-            updateProfileDisplay();
-            updateHeaderLevel();
             console.log('✅ Профиль пользователя загружен');
+        } else {
+            console.log('ℹ️ Профиль не найден, создается новый пользователь');
         }
     } catch (error) {
         console.error('❌ Ошибка загрузки профиля:', error);
+        console.log('ℹ️ Продолжаем без профиля пользователя');
     }
 }
 
@@ -740,16 +771,19 @@ function updateProfileDisplay() {
     }
     
     updateLevelDisplay(level, stats);
-        
-        // Реферальная статистика
+    
+    // Реферальная статистика (только если есть userProfile)
+    if (userProfile) {
         const referralStats = userProfile.referralStats || {};
         const referralCount = document.getElementById('referral-count');
         const referralEarnings = document.getElementById('referral-earnings');
         
         if (referralCount) referralCount.textContent = referralStats.total_referrals || 0;
         if (referralEarnings) referralEarnings.textContent = `$${formatNumber(referralStats.total_commission || 0)}`;
-        
-        // Реферальная ссылка
+    }
+    
+    // Реферальная ссылка (всегда показываем, если есть currentUserId)
+    if (currentUserId) {
         const referralLinkInput = document.getElementById('referral-link-input');
         if (referralLinkInput) {
             const botUsername = 'swapcoon_bot'; // Или получить из env
