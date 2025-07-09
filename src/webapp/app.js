@@ -41,9 +41,6 @@ function initTelegramWebApp() {
         console.log('✅ Telegram Web App инициализировано');
         console.log('👤 User ID:', currentUserId);
         console.log('👤 User data:', tg.initDataUnsafe?.user);
-        
-        // Сразу обновляем отображение профиля с данными из Telegram
-        updateProfileDisplay();
     } else {
         console.log('⚠️ Telegram Web App недоступно, режим разработки');
         currentUserId = 123456789; // Тестовый ID для разработки
@@ -141,6 +138,9 @@ async function loadInitialData() {
             await loadUserProfile();
             await loadNews();
         }
+        
+        // Обновляем отображение профиля с данными из Telegram
+        updateProfileDisplay();
         
         // Обновляем калькулятор
         calculateExchange();
@@ -651,8 +651,12 @@ function updateProfileDisplay() {
     const fullName = `${firstName} ${lastName}`.trim();
     const username = telegramUser?.username || userProfile?.username || currentUserId;
     
-    document.getElementById('profile-name').textContent = fullName;
-    document.getElementById('profile-username').textContent = `@${username}`;
+    // Обновляем профиль (если элементы существуют)
+    const profileName = document.getElementById('profile-name');
+    const profileUsername = document.getElementById('profile-username');
+    
+    if (profileName) profileName.textContent = fullName;
+    if (profileUsername) profileUsername.textContent = `@${username}`;
     
     // Обновляем имя в заголовке
     const headerUserName = document.getElementById('header-user-name');
@@ -676,24 +680,38 @@ function updateProfileDisplay() {
         };
     }
     
-    // Статистика в профиле
-    const stats = userProfile.stats || {};
-    document.getElementById('profile-orders').textContent = stats.ordersCount || 0;
-    document.getElementById('profile-volume').textContent = `$${formatNumber(stats.totalVolume || 0)}`;
+    // Статистика в профиле (если userProfile загружен и элементы существуют)
+    if (userProfile) {
+        const stats = userProfile.stats || {};
+        const profileOrders = document.getElementById('profile-orders');
+        const profileVolume = document.getElementById('profile-volume');
+        
+        if (profileOrders) profileOrders.textContent = stats.ordersCount || 0;
+        if (profileVolume) profileVolume.textContent = `$${formatNumber(stats.totalVolume || 0)}`;
+    }
     
-    // Уровень пользователя
-    const level = userProfile.level || { level: 'NEWBIE', name: 'Новичок', color: '#6B7280' };
-    updateLevelDisplay(level, stats);
-    
-    // Реферальная статистика
-    const referralStats = userProfile.referralStats || {};
-    document.getElementById('referral-count').textContent = referralStats.total_referrals || 0;
-    document.getElementById('referral-earnings').textContent = `$${formatNumber(referralStats.total_commission || 0)}`;
-    
-    // Реферальная ссылка
-    const botUsername = 'swapcoon_bot'; // Или получить из env
-    const referralLink = `https://t.me/${botUsername}?start=${currentUserId}`;
-    document.getElementById('referral-link-input').value = referralLink;
+    // Уровень пользователя (если данные загружены)
+    if (userProfile) {
+        const stats = userProfile.stats || {};
+        const level = userProfile.level || { level: 'NEWBIE', name: 'Новичок', color: '#6B7280' };
+        updateLevelDisplay(level, stats);
+        
+        // Реферальная статистика
+        const referralStats = userProfile.referralStats || {};
+        const referralCount = document.getElementById('referral-count');
+        const referralEarnings = document.getElementById('referral-earnings');
+        
+        if (referralCount) referralCount.textContent = referralStats.total_referrals || 0;
+        if (referralEarnings) referralEarnings.textContent = `$${formatNumber(referralStats.total_commission || 0)}`;
+        
+        // Реферальная ссылка
+        const referralLinkInput = document.getElementById('referral-link-input');
+        if (referralLinkInput) {
+            const botUsername = 'swapcoon_bot'; // Или получить из env
+            const referralLink = `https://t.me/${botUsername}?start=${currentUserId}`;
+            referralLinkInput.value = referralLink;
+        }
+    }
 }
 
 // Обновление отображения уровня
