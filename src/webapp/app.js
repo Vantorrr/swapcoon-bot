@@ -653,19 +653,88 @@ function displayAMLResult(result) {
         icon = 'fas fa-exclamation-triangle';
         message = 'Требуется ручная проверка';
     }
-    
-    amlResult.innerHTML = `
-        <div class="aml-result ${resultClass}">
-            <i class="${icon}"></i>
-            <strong>${message}</strong>
-            <p>Риск: ${result.risk} (${result.score}/100)</p>
-            ${result.reasons.length > 0 ? `<p>Причины: ${result.reasons.join(', ')}</p>` : ''}
-        </div>
-    `;
+
+    // Если есть детальный отчет, показываем его
+    if (result.detailedReport && result.connections) {
+        const majorConnections = result.connections.filter(c => c.percent >= 1.0);
+        const minorConnections = result.connections.filter(c => c.percent < 1.0);
+        
+        let majorConnectionsHtml = majorConnections.map(conn => {
+            const riskClass = conn.risk === 'high' ? 'high-risk' : conn.risk === 'medium' ? 'medium-risk' : 'low-risk';
+            return `<div class="connection-item ${riskClass}">
+                        <span class="connection-name">• ${conn.name}</span>
+                        <span class="connection-percent">${conn.percent}%</span>
+                    </div>`;
+        }).join('');
+
+        let minorConnectionsHtml = '';
+        if (minorConnections.length > 0) {
+            const minorList = minorConnections.map(conn => conn.name).join(', ');
+            minorConnectionsHtml = `
+                <div class="minor-connections">
+                    <p class="minor-header">Менее 1.0%:</p>
+                    <p class="minor-list">${minorList}</p>
+                </div>
+            `;
+        }
+
+        // Определяем цвет для уровня риска
+        let riskColor = '#10B981'; // зеленый
+        let riskIcon = '🟢';
+        if (result.score > 80) {
+            riskColor = '#EF4444'; // красный
+            riskIcon = '🔴';
+        } else if (result.score > 50) {
+            riskColor = '#F59E0B'; // желтый
+            riskIcon = '🟡';
+        }
+
+        amlResult.innerHTML = `
+            <div class="aml-detailed-result ${resultClass}">
+                <div class="aml-header">
+                    <i class="${icon}"></i>
+                    <strong>${message}</strong>
+                </div>
+                
+                <div class="aml-detailed-report">
+                    <div class="address-info">
+                        🔵 <strong>Адрес:</strong> <code class="address-code">${result.address || 'N/A'}</code>
+                    </div>
+                    
+                    <div class="blockchain-info">
+                        ⛓️ <strong>Блокчейн:</strong> ${result.blockchain || 'Unknown'}
+                    </div>
+                    
+                    <div class="connections-section">
+                        <h4>Связи адреса:</h4>
+                        <div class="connections-list">
+                            ${majorConnectionsHtml}
+                        </div>
+                        ${minorConnectionsHtml}
+                    </div>
+                    
+                    <div class="risk-summary" style="border-left: 4px solid ${riskColor};">
+                        📈 <strong>Уровень риска:</strong> 
+                        <span style="color: ${riskColor};">${result.score > 80 ? 'Высокий' : result.score > 50 ? 'Средний' : 'Низкий'} (${result.score}%) ${riskIcon}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else {
+        // Простое отображение для обратной совместимости
+        amlResult.innerHTML = `
+            <div class="aml-result ${resultClass}">
+                <i class="${icon}"></i>
+                <strong>${message}</strong>
+                <p>Риск: ${result.risk} (${result.score}/100)</p>
+                ${result.reasons.length > 0 ? `<p>Причины: ${result.reasons.join(', ')}</p>` : ''}
+            </div>
+        `;
+    }
     
     if (result.status === 'rejected') {
         amlResult.innerHTML += `
-            <div style="margin-top: 10px;">
+            <div style="margin-top: 15px;">
                 <button class="secondary-button" onclick="contactOperator()">
                     <i class="fas fa-phone"></i> Связаться с оператором
                 </button>

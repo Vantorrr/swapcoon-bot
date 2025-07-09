@@ -103,6 +103,10 @@ class AMLService {
         const addressHash = this.simpleHash(address);
         const riskScore = addressHash % 100;
 
+        // Генерируем детальные связи адреса
+        const connections = this.generateDetailedConnections(addressHash);
+        const blockchain = this.detectBlockchain(address, currency);
+
         let status = 'approved';
         let risk = 'low';
         const reasons = [];
@@ -112,7 +116,7 @@ class AMLService {
             status = 'rejected';
             risk = 'high';
             reasons.push('Адрес в черном списке');
-        } else if (riskScore > 60) {
+        } else if (riskScore > 50) {
             status = 'manual_review';
             risk = 'medium';
             reasons.push('Требуется ручная проверка');
@@ -134,13 +138,118 @@ class AMLService {
             risk: risk,
             score: riskScore,
             reasons: reasons,
+            address: address,
+            blockchain: blockchain,
+            connections: connections,
             details: {
                 sanctions: riskScore > 90,
                 blacklist: riskScore > 85,
                 mixer: riskScore > 70,
                 exchange: riskScore > 30
             },
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            detailedReport: this.generateDetailedReport(address, blockchain, connections, riskScore)
+        };
+    }
+
+    // Генерация детальных связей адреса
+    generateDetailedConnections(hash) {
+        const baseCategories = [
+            { name: 'Биржа', basePercent: 45, risk: 'low' },
+            { name: 'Судебные разбирательства', basePercent: 8, risk: 'high' },
+            { name: 'Санкции', basePercent: 5, risk: 'high' },
+            { name: 'Горячий кошелек', basePercent: 12, risk: 'medium' },
+            { name: 'Биржа с высоким риском', basePercent: 3, risk: 'high' },
+            { name: 'Мост', basePercent: 7, risk: 'low' },
+            { name: 'Гемблинг', basePercent: 4, risk: 'medium' },
+            { name: 'Провайдер криптоплатежей', basePercent: 6, risk: 'low' },
+            { name: 'Миксер', basePercent: 2, risk: 'high' },
+            { name: 'DEX', basePercent: 5, risk: 'low' }
+        ];
+
+        const minorCategories = [
+            'Неизвестный сервис', 'Лендинг', 'Юрисдикция с высоким риском',
+            'Украденные средства', 'P2P-биржа', 'Смарт-контракт',
+            'Неопределено', 'Протокол приватности', 'Скам',
+            'Конфискованные средства', 'Крипто-банкомат', 'Финансирование терроризма',
+            'Майнинговый пул', 'Вымогательство'
+        ];
+
+        // Генерируем основные категории с вариациями
+        const connections = baseCategories.map(category => {
+            const variation = (hash % 41) - 20; // -20 до +20
+            let percent = Math.max(0, category.basePercent + variation);
+            
+            return {
+                name: category.name,
+                percent: parseFloat(percent.toFixed(1)),
+                risk: category.risk
+            };
+        });
+
+        // Добавляем случайные минорные категории
+        const numMinor = 3 + (hash % 5); // 3-7 минорных категорий
+        for (let i = 0; i < numMinor; i++) {
+            const categoryIndex = (hash + i) % minorCategories.length;
+            connections.push({
+                name: minorCategories[categoryIndex],
+                percent: parseFloat((Math.random() * 0.8 + 0.1).toFixed(1)), // 0.1-0.9%
+                risk: Math.random() > 0.7 ? 'high' : 'medium'
+            });
+        }
+
+        // Нормализуем проценты чтобы сумма была ~100%
+        const total = connections.reduce((sum, conn) => sum + conn.percent, 0);
+        const factor = 100 / total;
+        
+        connections.forEach(conn => {
+            conn.percent = parseFloat((conn.percent * factor).toFixed(1));
+        });
+
+        // Сортируем по убыванию процента
+        return connections.sort((a, b) => b.percent - a.percent);
+    }
+
+    // Определение блокчейна по адресу
+    detectBlockchain(address, currency) {
+        const blockchains = {
+            'BTC': 'Bitcoin (BTC)',
+            'ETH': 'Ethereum (ETH)',
+            'USDT': address.startsWith('T') ? 'Tron (TRX)' : 'Ethereum (ETH)',
+            'USDC': 'Ethereum (ETH)',
+            'TRX': 'Tron (TRX)',
+            'BNB': 'BNB Smart Chain (BSC)',
+            'SOL': 'Solana (SOL)',
+            'ADA': 'Cardano (ADA)',
+            'DOT': 'Polkadot (DOT)',
+            'MATIC': 'Polygon (MATIC)',
+            'AVAX': 'Avalanche (AVAX)'
+        };
+
+        return blockchains[currency.toUpperCase()] || `${currency.toUpperCase()} Network`;
+    }
+
+    // Генерация детального отчета
+    generateDetailedReport(address, blockchain, connections, riskScore) {
+        const majorConnections = connections.filter(c => c.percent >= 1.0);
+        const minorConnections = connections.filter(c => c.percent < 1.0);
+
+        let riskLevel = 'Низкий';
+        let riskEmoji = '🟢';
+        
+        if (riskScore > 80) {
+            riskLevel = 'Высокий';
+            riskEmoji = '🔴';
+        } else if (riskScore > 50) {
+            riskLevel = 'Средний';
+            riskEmoji = '🟡';
+        }
+
+        return {
+            header: `🔵 Адрес: ${address}\n\n⛓️ Блокчейн: ${blockchain}\n\nСвязи адреса:`,
+            majorConnections: majorConnections,
+            minorConnections: minorConnections,
+            footer: `📈 Уровень риска: ${riskLevel} (${riskScore}%) ${riskEmoji}`
         };
     }
 

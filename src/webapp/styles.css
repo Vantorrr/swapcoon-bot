@@ -612,6 +612,191 @@ body {
     border: 1px solid rgba(255, 59, 48, 0.3);
 }
 
+/* Детальный AML отчет */
+.aml-detailed-result {
+    margin-top: var(--spacing-lg);
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-lg);
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-md);
+}
+
+.aml-detailed-result.success {
+    border-left: 4px solid var(--success-color);
+}
+
+.aml-detailed-result.warning {
+    border-left: 4px solid var(--warning-color);
+}
+
+.aml-detailed-result.error {
+    border-left: 4px solid var(--error-color);
+}
+
+.aml-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 2px solid var(--border-color);
+}
+
+.aml-header i {
+    font-size: 1.5rem;
+}
+
+.aml-detailed-report {
+    line-height: 1.6;
+    color: var(--text-color);
+}
+
+.address-info, .blockchain-info {
+    margin-bottom: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: var(--radius-md);
+    border-left: 4px solid var(--primary-color);
+}
+
+.address-code {
+    background: var(--bg-secondary);
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+    font-size: var(--font-xs);
+    word-break: break-all;
+    color: var(--primary-color);
+    border: 1px solid var(--border-color);
+}
+
+.connections-section {
+    margin: var(--spacing-lg) 0;
+    padding: var(--spacing-md);
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+}
+
+.connections-section h4 {
+    margin: 0 0 var(--spacing-md) 0;
+    color: var(--text-color);
+    font-size: var(--font-md);
+    font-weight: 600;
+}
+
+.connections-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.connection-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--surface-color);
+    border-radius: var(--radius-sm);
+    border-left: 4px solid var(--success-color);
+    box-shadow: var(--shadow-sm);
+    transition: all 0.2s ease;
+}
+
+.connection-item:hover {
+    transform: translateX(2px);
+    box-shadow: var(--shadow-md);
+}
+
+.connection-item.high-risk {
+    border-left-color: var(--error-color);
+    background: linear-gradient(90deg, rgba(255, 59, 48, 0.05) 0%, var(--surface-color) 20%);
+}
+
+.connection-item.medium-risk {
+    border-left-color: var(--warning-color);
+    background: linear-gradient(90deg, rgba(255, 149, 0, 0.05) 0%, var(--surface-color) 20%);
+}
+
+.connection-item.low-risk {
+    border-left-color: var(--success-color);
+    background: linear-gradient(90deg, rgba(52, 199, 89, 0.05) 0%, var(--surface-color) 20%);
+}
+
+.connection-name {
+    flex: 1;
+    font-weight: 500;
+    color: var(--text-color);
+    font-size: var(--font-sm);
+}
+
+.connection-percent {
+    font-weight: 700;
+    color: var(--text-primary);
+    font-size: var(--font-md);
+    min-width: 60px;
+    text-align: right;
+}
+
+.minor-connections {
+    margin-top: var(--spacing-lg);
+    padding: var(--spacing-md);
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    border: 1px dashed var(--border-color);
+}
+
+.minor-header {
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin: 0 0 var(--spacing-sm) 0;
+    font-size: var(--font-sm);
+}
+
+.minor-list {
+    color: var(--text-secondary);
+    margin: 0;
+    font-size: var(--font-sm);
+    line-height: 1.5;
+}
+
+.risk-summary {
+    margin-top: var(--spacing-lg);
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: var(--surface-color);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    font-size: var(--font-md);
+    font-weight: 600;
+}
+
+/* Адаптивные стили для детального AML отчета */
+@media (max-width: 480px) {
+    .aml-detailed-result {
+        padding: var(--spacing-md);
+        margin-top: var(--spacing-md);
+    }
+    
+    .connection-item {
+        padding: var(--spacing-xs) var(--spacing-sm);
+    }
+    
+    .connection-percent {
+        font-size: var(--font-sm);
+        min-width: 50px;
+    }
+    
+    .address-code {
+        font-size: 0.75rem;
+        padding: 2px 6px;
+    }
+    
+    .address-info, .blockchain-info {
+        padding: var(--spacing-sm);
+    }
+}
+
 /* History */
 .history-content {
     display: flex;
