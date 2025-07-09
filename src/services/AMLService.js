@@ -136,11 +136,14 @@ class AMLService {
         return {
             status: status,
             risk: risk,
-            score: riskScore,
+            riskScore: riskScore, // Изменил с score на riskScore для совместимости
             reasons: reasons,
             address: address,
             blockchain: blockchain,
-            connections: connections,
+            connections: connections.map(conn => ({
+                category: conn.name,
+                percentage: conn.percent
+            })),
             details: {
                 sanctions: riskScore > 90,
                 blacklist: riskScore > 85,
@@ -152,58 +155,58 @@ class AMLService {
         };
     }
 
-    // Генерация детальных связей адреса
+    // Генерация детальных связей адреса как в профессиональных AML сервисах
     generateDetailedConnections(hash) {
-        const baseCategories = [
-            { name: 'Биржа', basePercent: 45, risk: 'low' },
-            { name: 'Судебные разбирательства', basePercent: 8, risk: 'high' },
-            { name: 'Санкции', basePercent: 5, risk: 'high' },
-            { name: 'Горячий кошелек', basePercent: 12, risk: 'medium' },
-            { name: 'Биржа с высоким риском', basePercent: 3, risk: 'high' },
-            { name: 'Мост', basePercent: 7, risk: 'low' },
-            { name: 'Гемблинг', basePercent: 4, risk: 'medium' },
-            { name: 'Провайдер криптоплатежей', basePercent: 6, risk: 'low' },
-            { name: 'Миксер', basePercent: 2, risk: 'high' },
-            { name: 'DEX', basePercent: 5, risk: 'low' }
-        ];
-
-        const minorCategories = [
-            'Неизвестный сервис', 'Лендинг', 'Юрисдикция с высоким риском',
-            'Украденные средства', 'P2P-биржа', 'Смарт-контракт',
-            'Неопределено', 'Протокол приватности', 'Скам',
-            'Конфискованные средства', 'Крипто-банкомат', 'Финансирование терроризма',
-            'Майнинговый пул', 'Вымогательство'
-        ];
-
-        // Генерируем основные категории с вариациями
-        const connections = baseCategories.map(category => {
-            const variation = (hash % 41) - 20; // -20 до +20
-            let percent = Math.max(0, category.basePercent + variation);
-            
-            return {
-                name: category.name,
-                percent: parseFloat(percent.toFixed(1)),
-                risk: category.risk
-            };
+        const connections = [];
+        
+        // Основная категория (обычно биржа) - 80-95%
+        const mainCategories = ['Биржа', 'Горячий кошелек', 'Биржа с высоким риском'];
+        const mainCategory = mainCategories[hash % mainCategories.length];
+        const mainPercent = 80 + (hash % 16); // 80-95%
+        
+        connections.push({
+            name: mainCategory,
+            percent: parseFloat(mainPercent.toFixed(1)),
+            risk: mainCategory.includes('высоким риском') ? 'high' : 'medium'
         });
 
-        // Добавляем случайные минорные категории
-        const numMinor = 3 + (hash % 5); // 3-7 минорных категорий
-        for (let i = 0; i < numMinor; i++) {
-            const categoryIndex = (hash + i) % minorCategories.length;
-            connections.push({
-                name: minorCategories[categoryIndex],
-                percent: parseFloat((Math.random() * 0.8 + 0.1).toFixed(1)), // 0.1-0.9%
-                risk: Math.random() > 0.7 ? 'high' : 'medium'
-            });
+        // Средние категории - 0.2-10%
+        const mediumCategories = [
+            'Судебные разбирательства', 'Санкции', 'Остатки', 
+            'Мост', 'Гемблинг', 'Прочее', 'Провайдер криптоплатежей'
+        ];
+        
+        let remainingPercent = 100 - mainPercent;
+        
+        for (let i = 0; i < 4 && remainingPercent > 0.5; i++) {
+            const category = mediumCategories[i];
+            const percent = Math.min(remainingPercent * (0.1 + Math.random() * 0.4), remainingPercent - 0.3);
+            
+            if (percent >= 0.2) {
+                connections.push({
+                    name: category,
+                    percent: parseFloat(percent.toFixed(1)),
+                    risk: ['Судебные разбирательства', 'Санкции'].includes(category) ? 'high' : 'medium'
+                });
+                remainingPercent -= percent;
+            }
         }
 
-        // Нормализуем проценты чтобы сумма была ~100%
-        const total = connections.reduce((sum, conn) => sum + conn.percent, 0);
-        const factor = 100 / total;
-        
-        connections.forEach(conn => {
-            conn.percent = parseFloat((conn.percent * factor).toFixed(1));
+        // Минорные категории (менее 0.1%)
+        const minorCategories = [
+            'Неизвестный сервис', 'Лендинг', 'DEX', 'Юрисдикция с высоким риском',
+            'Украденные средства', 'P2P-биржа', 'Смарт-контракт', 'Неопределено',
+            'Протокол приватности', 'Скам', 'Конфискованные средства', 
+            'Крипто-банкомат', 'Финансирование терроризма', 'Майнинговый пул', 'Вымогательство'
+        ];
+
+        // Добавляем все минорные категории для полноты отчета
+        minorCategories.forEach(category => {
+            connections.push({
+                name: category,
+                percent: parseFloat((Math.random() * 0.09 + 0.01).toFixed(3)), // 0.01-0.1%
+                risk: ['Украденные средства', 'Скам', 'Финансирование терроризма', 'Вымогательство'].includes(category) ? 'high' : 'medium'
+            });
         });
 
         // Сортируем по убыванию процента

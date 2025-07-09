@@ -3977,26 +3977,59 @@ async function notifyWebsiteActivity(activityType, data) {
                 
                 let connectionsText = '';
                 if (connections.length > 0) {
-                    const mainConnections = connections.filter(c => c.percentage >= 1);
-                    const minorConnections = connections.filter(c => c.percentage < 1);
+                    // Основные связи (1% и выше)
+                    const mainConnections = connections.filter(c => c.percentage >= 1.0);
+                    // Минорные связи (менее 1%)
+                    const minorConnections = connections.filter(c => c.percentage < 1.0 && c.percentage >= 0.1);
+                    // Очень малые связи (менее 0.1%)
+                    const tinyConnections = connections.filter(c => c.percentage < 0.1);
                     
-                    connectionsText = '\n\n🔗 <b>Связи адреса:</b>\n';
-                    mainConnections.forEach(conn => {
-                        connectionsText += `• ${conn.category} - ${conn.percentage}%\n`;
-                    });
+                    connectionsText = '\n\n<b>Связи адреса:</b>\n';
                     
-                    if (minorConnections.length > 0) {
-                        connectionsText += `\n📊 <b>Менее 1%:</b> ${minorConnections.map(c => c.category).join(', ')}`;
+                    // Основные связи
+                    if (mainConnections.length > 0) {
+                        mainConnections.forEach(conn => {
+                            connectionsText += `  •   ${conn.category} - ${conn.percentage}%\n`;
+                        });
                     }
+                    
+                    // Минорные связи
+                    if (minorConnections.length > 0) {
+                        minorConnections.forEach(conn => {
+                            connectionsText += `  •   ${conn.category} - ${conn.percentage}%\n`;
+                        });
+                    }
+                    
+                    // Очень малые связи (менее 0.1%)
+                    if (tinyConnections.length > 0) {
+                        connectionsText += `\n<b>Менее 0.1%:</b>\n`;
+                        tinyConnections.forEach(conn => {
+                            connectionsText += `  •   ${conn.category}\n`;
+                        });
+                    }
+                } else {
+                    // Если нет детальных данных, показываем базовую информацию
+                    connectionsText = '\n\n<b>Связи адреса:</b>\n' +
+                        `  •   Анализ данных недоступен\n`;
                 }
                 
-                message = `🛡️ <b>AML ПРОВЕРКА ЗАВЕРШЕНА</b>\n\n` +
-                         `🔵 <b>Адрес:</b> <code>${data.address}</code>\n` +
+                // Большой индикатор риска для привлечения внимания
+                let topIndicator = '';
+                if (riskScore >= 80) {
+                    topIndicator = '🔴⚠️ <b>ВЫСОКИЙ РИСК!</b> ⚠️🔴';
+                } else if (riskScore >= 50) {
+                    topIndicator = '🟡⚠️ <b>СРЕДНИЙ РИСК</b> ⚠️🟡';
+                } else {
+                    topIndicator = '🟢✅ <b>НИЗКИЙ РИСК</b> ✅🟢';
+                }
+
+                message = `${topIndicator}\n\n` +
+                         `🔵 <b>Адрес:</b> <code>${data.address}</code>\n\n` +
                          `⛓️ <b>Блокчейн:</b> ${blockchain}\n` +
-                         `${connectionsText}\n` +
-                         `${riskIcon} <b>Уровень риска:</b> ${riskLevel} (${riskScore}%)\n` +
+                         `${connectionsText}\n\n` +
+                         `📈 <b>Уровень риска:</b> ${riskLevel} (${riskScore.toFixed(1)}%)\n\n` +
                          `⏰ <b>Время:</b> ${new Date().toLocaleString('ru-RU')}\n\n` +
-                         `#aml #детальный_отчет`;
+                         `#aml #риск_${riskLevel.toLowerCase()}`;
                 break;
         }
         
