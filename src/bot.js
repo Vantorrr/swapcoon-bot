@@ -3064,6 +3064,39 @@ bot.on('callback_query:data', async (ctx) => {
             );
         }
     }
+
+    // Закрытие тикета поддержки
+    if (data.startsWith('close_ticket_')) {
+        const userRole = await db.getUserRole(userId);
+        if (userRole !== 'admin' && userRole !== 'operator') {
+            return ctx.answerCallbackQuery('❌ Нет прав');
+        }
+        
+        const ticketId = data.replace('close_ticket_', '');
+        const adminName = ctx.from.first_name || ctx.from.username || `ID: ${userId}`;
+        
+        await ctx.answerCallbackQuery('✅ Тикет закрыт!');
+        
+        try {
+            // Редактируем сообщение, добавляя статус "ЗАКРЫТ"
+            const closedMessage = ctx.callbackQuery.message.text + 
+                `\n\n🔒 <b>ТИКЕТ ЗАКРЫТ</b>\n` +
+                `👤 Закрыл: ${adminName}\n` +
+                `⏰ Время: ${new Date().toLocaleString('ru-RU')}`;
+            
+            await ctx.editMessageText(closedMessage, {
+                parse_mode: 'HTML',
+                reply_markup: new InlineKeyboard()
+                    .text('✅ Тикет закрыт', 'noop')
+            });
+            
+            console.log(`🎫 Тикет ${ticketId} закрыт пользователем ${userId} (${adminName})`);
+            
+        } catch (error) {
+            console.error(`❌ Ошибка закрытия тикета ${ticketId}:`, error.message);
+            await ctx.reply(`❌ Ошибка при закрытии тикета: ${error.message}`);
+        }
+    }
 });
 
 // Обработчик данных из WebApp
