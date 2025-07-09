@@ -531,7 +531,7 @@ class Database {
             const { telegramId, username, firstName, lastName, role, addedBy } = staffData;
             
             this.db.run(`
-                INSERT OR REPLACE INTO staff 
+                INSERT OR IGNORE INTO staff 
                 (telegram_id, username, first_name, last_name, role, is_active, added_by, updated_at)
                 VALUES (?, ?, ?, ?, ?, 1, ?, CURRENT_TIMESTAMP)
             `, [telegramId, username, firstName, lastName, role, addedBy], function(err) {

@@ -315,41 +315,36 @@ bot.command('setup_webapp', async (ctx) => {
     }
 });
 
-// АВАРИЙНАЯ команда для добавления админа
+// АВАРИЙНАЯ команда для добавления админа (с сохранением всех админов)
 bot.command('emergency_admin', async (ctx) => {
     const currentUserId = ctx.from.id;
     const targetUserId = ctx.match ? parseInt(ctx.match.trim()) : currentUserId;
     
-    await ctx.reply(`🔍 Отладка:\nВаш ID: ${currentUserId}\nЦелевой ID: ${targetUserId}\nMAIN_ADMIN_ID: ${process.env.MAIN_ADMIN_ID || 'НЕ УСТАНОВЛЕН'}\n\nДобавляю в админы...`);
+    await ctx.reply(`🔍 Экстренное добавление админа ${targetUserId}...\n🔄 Восстанавливаю всех админов из переменных...`);
     
     try {
-        // Добавляем админа в базу
-        await db.addStaff({
-            telegramId: targetUserId,
-            username: targetUserId === currentUserId ? (ctx.from.username || 'main_admin') : 'admin',
-            firstName: targetUserId === currentUserId ? (ctx.from.first_name || 'Главный Админ') : 'Admin',
-            lastName: targetUserId === currentUserId ? ctx.from.last_name : null,
-            role: 'admin',
-            addedBy: currentUserId
-        });
+        // Сначала полностью переинициализируем персонал из переменных среды
+        await db.initializeAllStaff();
         
-        // Проверяем что добавилось
-        const role = await db.getUserRole(targetUserId);
+        // Затем добавляем текущего пользователя если его нет в переменных
+        await db.addStaffFromEnv(targetUserId, `emergency_${targetUserId}`, 'Emergency Admin', 'admin');
+        
+        // Показываем итоговый список всех админов
+        const staffList = await db.getStaffList();
+        const admins = staffList.filter(s => s.role === 'admin');
         
         await ctx.reply(
-            `✅ <b>ЭКСТРЕННОЕ ДОБАВЛЕНИЕ АДМИНА ЗАВЕРШЕНО!</b>\n\n` +
-            `🛡️ Role: ${role}\n` +
-            `👤 ID: ${targetUserId}\n` +
-            `📝 Используйте /start для доступа к админ панели`,
+            `✅ <b>ЭКСТРЕННОЕ ВОССТАНОВЛЕНИЕ ЗАВЕРШЕНО!</b>\n\n` +
+            `👑 <b>Все админы (${admins.length}):</b>\n` +
+            admins.map(a => `• ${a.telegram_id} - ${a.first_name}`).join('\n') + '\n\n' +
+            `🛡️ Ваша роль: ${await db.getUserRole(targetUserId)}\n` +
+            `📝 Используйте /start для доступа к панели`,
             { parse_mode: 'HTML' }
         );
         
     } catch (error) {
-        if (error.message.includes('UNIQUE constraint failed')) {
-            await ctx.reply(`✅ Пользователь ${targetUserId} уже админ! Напишите /start чтобы увидеть панель.`);
-        } else {
-            await ctx.reply(`❌ Ошибка: ${error.message}`);
-        }
+        console.error('❌ Ошибка emergency_admin:', error);
+        await ctx.reply(`❌ Ошибка: ${error.message}\n\n🔧 Попробуйте /reinit_staff`);
     }
 });
 
