@@ -122,7 +122,9 @@ app.post('/api/create-order', async (req, res) => {
             toAmount,
             fromAddress,
             toAddress,
-            amlResult
+            amlResult,
+            exchangeRate,
+            fee
         } = req.body;
 
         // Создаем заявку в базе данных
@@ -134,7 +136,9 @@ app.post('/api/create-order', async (req, res) => {
             toAmount,
             fromAddress,
             toAddress,
-            amlStatus: amlResult.status,
+            exchangeRate: exchangeRate || (toAmount / fromAmount),
+            fee: fee || 0,
+            amlStatus: amlResult?.status || 'clean',
             status: 'pending'
         });
 

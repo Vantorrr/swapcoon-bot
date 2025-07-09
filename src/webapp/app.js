@@ -775,6 +775,8 @@ async function createOrder() {
                 toAmount: currentCalculation.toAmount,
                 fromAddress: '', // Будет заполнено оператором
                 toAddress: address,
+                exchangeRate: currentCalculation.exchangeRate,
+                fee: currentCalculation.fee,
                 amlResult: currentAMLResult
             })
         });
