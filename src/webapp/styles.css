@@ -2151,18 +2151,12 @@ input:checked + .slider:before {
     background-repeat: no-repeat;
     background-position: right var(--spacing-sm) center;
     background-size: 16px;
-    transition: all 0.3s ease;
-}
-
-.setting-item select:hover {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb), 0.1);
+    padding-right: calc(var(--spacing-md) + 24px);
 }
 
 .setting-item select:focus {
-    outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb), 0.2);
+    outline: none;
 }
 
 .setting-item select option {
@@ -2658,5 +2652,383 @@ input:checked + .slider:before {
     
     .bottom-nav {
         padding-bottom: max(var(--spacing-sm), env(safe-area-inset-bottom));
+    }
+}
+
+/* BANK & NETWORK SELECTION */
+.bank-list, .network-list {
+    padding: var(--spacing-md);
+    max-height: 70vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+    border-radius: var(--radius-lg);
+}
+
+.bank-item, .network-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+    background: var(--surface-color);
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.bank-item:hover, .network-item:hover {
+    border-color: var(--primary-color);
+    background: linear-gradient(135deg, rgba(0, 122, 255, 0.05), rgba(0, 122, 255, 0.02));
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 15px 35px rgba(0, 122, 255, 0.3);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.bank-item:active, .network-item:active {
+    transform: translateY(0);
+    box-shadow: var(--shadow-md);
+}
+
+.bank-logo, .network-logo {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    background: var(--background-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 700;
+    flex-shrink: 0;
+    border: 2px solid var(--border-color);
+    transition: all 0.3s ease;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+.bank-item:hover .bank-logo, .network-item:hover .network-logo {
+    border-color: var(--primary-color);
+    background: var(--primary-color);
+    color: white;
+    transform: scale(1.1);
+}
+
+.bank-info, .network-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.bank-info h4, .network-info h4 {
+    font-size: var(--font-md);
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.bank-info p, .network-info p {
+    font-size: var(--font-sm);
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.network-fee {
+    font-size: var(--font-xs);
+    color: var(--primary-color);
+    font-weight: 600;
+    background: rgba(0, 122, 255, 0.1);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    align-self: flex-start;
+    margin-top: var(--spacing-xs);
+}
+
+/* Добавляем анимацию волны при клике */
+.bank-item::before, .network-item::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(0, 122, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+    z-index: 0;
+}
+
+.bank-item:active::before, .network-item:active::before {
+    width: 300px;
+    height: 300px;
+}
+
+/* НАСТОЯЩИЕ БРЕНДОВЫЕ ИКОНКИ БАНКОВ */
+.bank-logo[data-bank="СБП"] {
+    background: linear-gradient(135deg, #FF6B35, #FF4500);
+    border-color: #FF6B35;
+}
+.bank-logo[data-bank="СБП"]::before {
+    content: 'СБП';
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.bank-logo[data-bank="Сбербанк"] {
+    background: linear-gradient(135deg, #21a038, #00C851);
+    border-color: #21a038;
+}
+.bank-logo[data-bank="Сбербанк"]::before {
+    content: 'С';
+    font-size: 22px;
+    font-weight: 900;
+}
+
+.bank-logo[data-bank="Т банк"] {
+    background: linear-gradient(135deg, #FFCB05, #FFA000);
+    border-color: #FFCB05;
+    color: #333;
+}
+.bank-logo[data-bank="Т банк"]::before {
+    content: 'Т';
+    font-size: 22px;
+    font-weight: 900;
+    color: #333;
+    text-shadow: none;
+}
+
+.bank-logo[data-bank="Альфа"] {
+    background: linear-gradient(135deg, #EF3124, #D32F2F);
+    border-color: #EF3124;
+}
+.bank-logo[data-bank="Альфа"]::before {
+    content: 'А';
+    font-size: 22px;
+    font-weight: 900;
+}
+
+.bank-logo[data-bank="ВТБ"] {
+    background: linear-gradient(135deg, #0066CC, #2196F3);
+    border-color: #0066CC;
+}
+.bank-logo[data-bank="ВТБ"]::before {
+    content: 'ВТБ';
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.bank-logo[data-bank="Райффайзенбанк"] {
+    background: linear-gradient(135deg, #FFED00, #FFD54F);
+    border-color: #FFED00;
+    color: #333;
+}
+.bank-logo[data-bank="Райффайзенбанк"]::before {
+    content: 'R';
+    font-size: 22px;
+    font-weight: 900;
+    color: #333;
+    text-shadow: none;
+}
+
+.bank-logo[data-bank="Промсвязьбанк"] {
+    background: linear-gradient(135deg, #0066FF, #1976D2);
+    border-color: #0066FF;
+}
+.bank-logo[data-bank="Промсвязьбанк"]::before {
+    content: 'ПСБ';
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.bank-logo[data-bank="Озон банк"] {
+    background: linear-gradient(135deg, #005BFF, #3F51B5);
+    border-color: #005BFF;
+}
+.bank-logo[data-bank="Озон банк"]::before {
+    content: 'O';
+    font-size: 22px;
+    font-weight: 900;
+}
+
+.bank-logo[data-bank="МТС банк"] {
+    background: linear-gradient(135deg, #E31E24, #F44336);
+    border-color: #E31E24;
+}
+.bank-logo[data-bank="МТС банк"]::before {
+    content: 'MТС';
+    font-size: 14px;
+    font-weight: 800;
+}
+
+/* КРАСИВЫЕ ИКОНКИ КРИПТОСЕТЕЙ */
+.network-logo[data-network="TRC20"] {
+    background: linear-gradient(135deg, #FF073A, #E91E63);
+    border-color: #FF073A;
+}
+.network-logo[data-network="TRC20"]::before {
+    content: 'TRX';
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.network-logo[data-network="BEP20"] {
+    background: linear-gradient(135deg, #F3BA2F, #FFC107);
+    border-color: #F3BA2F;
+    color: #333;
+}
+.network-logo[data-network="BEP20"]::before {
+    content: 'BSC';
+    font-size: 14px;
+    font-weight: 800;
+    color: #333;
+    text-shadow: none;
+}
+
+.network-logo[data-network="ERC20"] {
+    background: linear-gradient(135deg, #627EEA, #3F51B5);
+    border-color: #627EEA;
+}
+.network-logo[data-network="ERC20"]::before {
+    content: 'ETH';
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.network-logo[data-network="Polygon"] {
+    background: linear-gradient(135deg, #8247E5, #9C27B0);
+    border-color: #8247E5;
+}
+.network-logo[data-network="Polygon"]::before {
+    content: 'POL';
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.bank-logo, .network-logo, .bank-info, .network-info {
+    position: relative;
+    z-index: 1;
+}
+
+/* Специальные цвета для банков */
+.bank-item[data-bank="СБП"] .bank-logo {
+    background: linear-gradient(135deg, #FF6B35, #F7931E);
+    color: white;
+    border-color: #FF6B35;
+    box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+    animation: pulse-lightning 2s infinite;
+}
+
+@keyframes pulse-lightning {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); box-shadow: 0 6px 20px rgba(255, 107, 53, 0.5); }
+}
+
+.bank-item[data-bank="Сбербанк"] .bank-logo {
+    background: linear-gradient(135deg, #21a038, #16a085);
+    color: white;
+    border-color: #21a038;
+    box-shadow: 0 4px 15px rgba(33, 160, 56, 0.3);
+}
+
+.bank-item[data-bank="Тинькофф"] .bank-logo {
+    background: linear-gradient(135deg, #ffcb05, #f39c12);
+    color: white;
+    border-color: #ffcb05;
+    box-shadow: 0 4px 15px rgba(255, 203, 5, 0.3);
+}
+
+.bank-item[data-bank="Альфа-Банк"] .bank-logo {
+    background: linear-gradient(135deg, #ef212d, #c0392b);
+    color: white;
+    border-color: #ef212d;
+    box-shadow: 0 4px 15px rgba(239, 33, 45, 0.3);
+}
+
+.bank-item[data-bank="ВТБ"] .bank-logo {
+    background: linear-gradient(135deg, #004de6, #3498db);
+    color: white;
+    border-color: #004de6;
+    box-shadow: 0 4px 15px rgba(0, 77, 230, 0.3);
+}
+
+.bank-item[data-bank="Райффайзенбанк"] .bank-logo {
+    background: linear-gradient(135deg, #FFED00, #FFC72C);
+    color: #333;
+    border-color: #FFED00;
+    box-shadow: 0 4px 15px rgba(255, 237, 0, 0.3);
+    font-weight: 700;
+}
+
+.bank-item[data-bank="Промсвязьбанк"] .bank-logo {
+    background: linear-gradient(135deg, #0056B3, #1E88E5);
+    color: white;
+    border-color: #0056B3;
+    box-shadow: 0 4px 15px rgba(0, 86, 179, 0.3);
+}
+
+.bank-item[data-bank="Озон банк"] .bank-logo {
+    background: linear-gradient(135deg, #005BFF, #8B5CF6);
+    color: white;
+    border-color: #005BFF;
+    box-shadow: 0 4px 15px rgba(0, 91, 255, 0.3);
+}
+
+.bank-item[data-bank="МТС банк"] .bank-logo {
+    background: linear-gradient(135deg, #E31E24, #FF4757);
+    color: white;
+    border-color: #E31E24;
+    box-shadow: 0 4px 15px rgba(227, 30, 36, 0.3);
+}
+
+/* Специальные цвета для сетей */
+.network-item[data-network="TRC20"] .network-logo {
+    background: linear-gradient(135deg, #ff060a, #e74c3c);
+    color: white;
+    border-color: #ff060a;
+}
+
+.network-item[data-network="BEP20"] .network-logo {
+    background: linear-gradient(135deg, #f3ba2f, #f39c12);
+    color: white;
+    border-color: #f3ba2f;
+}
+
+.network-item[data-network="ERC20"] .network-logo {
+    background: linear-gradient(135deg, #627eea, #3498db);
+    color: white;
+    border-color: #627eea;
+}
+
+.network-item[data-network="Polygon"] .network-logo {
+    background: linear-gradient(135deg, #8247e5, #9b59b6);
+    color: white;
+    border-color: #8247e5;
+}
+
+/* Responsive для мобильных */
+@media (max-width: 480px) {
+    .bank-item, .network-item {
+        padding: var(--spacing-md);
+        gap: var(--spacing-sm);
+    }
+    
+    .bank-logo, .network-logo {
+        width: 40px;
+        height: 40px;
+        font-size: var(--font-lg);
+    }
+    
+    .bank-info h4, .network-info h4 {
+        font-size: var(--font-sm);
+    }
+    
+    .bank-info p, .network-info p {
+        font-size: var(--font-xs);
     }
 } 

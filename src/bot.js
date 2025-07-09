@@ -3703,6 +3703,19 @@ bot.command('add_operator', async (ctx) => {
 bot.on('message', async (ctx) => {
     const userId = ctx.from.id;
     const messageText = ctx.message.text;
+    const userRole = await db.getUserRole(userId);
+    
+    // === СИСТЕМА РЕКВИЗИТОВ - ОБРАБОТКА ПЕРЕСЛАННЫХ СООБЩЕНИЙ ===
+    if (ctx.message.forward_from && (userRole === 'operator' || userRole === 'admin')) {
+        const handled = paymentSystem.handleForwardedMessage(ctx, chatContexts, paymentDetails, bot, db);
+        if (handled) return;
+    }
+    
+    // === СИСТЕМА РЕКВИЗИТОВ - ОБРАБОТКА ТЕКСТОВЫХ СООБЩЕНИЙ ===
+    if (messageText && (userRole === 'operator' || userRole === 'admin')) {
+        const handled = paymentSystem.handleOperatorMessage(ctx, chatContexts, paymentDetails, bot, db);
+        if (handled) return;
+    }
     
     // Проверяем контекст чата для операторов
     if (chatContexts.has(userId)) {
@@ -4053,6 +4066,270 @@ async function notifyWebsiteActivity(activityType, data) {
         console.error('Ошибка отправки уведомления об активности:', error);
     }
 }
+
+// === СИСТЕМА РЕКВИЗИТОВ ДЛЯ ОПЕРАТОРОВ ===
+
+// Конфигурация реквизитов
+const paymentDetails = {
+    crypto: {
+        'TRC20': {
+            name: 'TRC20 (Tron)',
+            address: 'THcSDj69NjoD9Ev53mK9cx3jF7AswMDtcW',
+            icon: '🔸',
+            fee: '$1',
+            description: 'Низкие комиссии в сети Tron'
+        },
+        'BEP20': {
+            name: 'BEP20 (BSC)',
+            address: '0x1d0aea9b2ba322de2e5a2e0745dd42a943320ea6',
+            icon: '🟡',
+            fee: '$2',
+            description: 'Binance Smart Chain'
+        },
+        'ERC20': {
+            name: 'ERC20 (Ethereum)',
+            address: '0x1d0aea9b2ba322de2e5a2e0745dd42a943320ea6',
+            icon: '⚪',
+            fee: '$15',
+            description: 'Основная сеть Ethereum'
+        },
+        'ByBit': {
+            name: 'ByBit ID',
+            address: '47028037',
+            icon: '💸',
+            fee: 'Без комиссии',
+            description: 'P2P торговля ByBit'
+        }
+    },
+    banks: {
+        'СБП': {
+            name: 'СБП',
+            card: '+7 (905) 123-45-67',
+            holder: 'АЛЕКСЕЙ ПЕТРОВ',
+            icon: '⚡',
+            description: 'Мгновенные переводы по номеру телефона'
+        },
+        'Сбербанк': {
+            name: 'Сбербанк',
+            card: '2202 2006 7890 1234',
+            holder: 'АЛЕКСЕЙ ПЕТРОВ',
+            icon: '🟢',
+            description: 'Крупнейший банк России'
+        },
+        'Тинькофф': {
+            name: 'Т-Банк',
+            card: '5536 9138 4567 8901',
+            holder: 'АЛЕКСЕЙ ПЕТРОВ',
+            icon: '🟡',
+            description: 'Лучший мобильный банк'
+        },
+        'Альфа-Банк': {
+            name: 'Альфа-Банк',
+            card: '4154 8127 2345 6789',
+            holder: 'АЛЕКСЕЙ ПЕТРОВ',
+            icon: '🔴',
+            description: 'Частный банк №1'
+        },
+        'ВТБ': {
+            name: 'ВТБ',
+            card: '4272 1234 5678 9012',
+            holder: 'АЛЕКСЕЙ ПЕТРОВ',
+            icon: '🔵',
+            description: 'Надежный государственный банк'
+        },
+        'Райффайзенбанк': {
+            name: 'Райффайзенбанк',
+            card: '5469 3456 7890 1234',
+            holder: 'АЛЕКСЕЙ ПЕТРОВ',
+            icon: '🟨',
+            description: 'Европейское качество сервиса'
+        },
+        'Промсвязьбанк': {
+            name: 'Промсвязьбанк',
+            card: '5559 4567 8901 2345',
+            holder: 'АЛЕКСЕЙ ПЕТРОВ',
+            icon: '🟦',
+            description: 'Корпоративный банк России'
+        },
+        'Озон банк': {
+            name: 'Озон Банк',
+            card: '2204 5678 9012 3456',
+            holder: 'АЛЕКСЕЙ ПЕТРОВ',
+            icon: '🟣',
+            description: 'Инновационный экосистемный банк'
+        },
+        'МТС банк': {
+            name: 'МТС Банк',
+            card: '5486 6789 0123 4567',
+            holder: 'АЛЕКСЕЙ ПЕТРОВ',
+            icon: '🔴',
+            description: 'Банк с телеком-возможностями'
+        }
+    }
+};
+
+// Команда панели оператора
+bot.callbackQuery('open_operator_panel', async (ctx) => {
+    const userId = ctx.from.id;
+    const userRole = await db.getUserRole(userId);
+    
+    if (userRole !== 'operator' && userRole !== 'admin') {
+        return ctx.answerCallbackQuery('❌ У вас нет доступа к панели оператора');
+    }
+    
+    await ctx.answerCallbackQuery();
+    
+    const keyboard = new InlineKeyboard()
+        .text('📋 Активные заявки', 'view_active_orders')
+        .text('💳 Отправить реквизиты', 'send_payment_details')
+        .row()
+        .text('📊 Статистика', 'operator_stats')
+        .text('⚙️ Настройки', 'operator_settings')
+        .row()
+        .text('🔙 Назад', 'back_to_main');
+    
+    await ctx.editMessageText(
+        `👨‍💼 <b>Панель оператора</b>\n\n` +
+        `🆔 Ваш ID: <code>${userId}</code>\n` +
+        `📝 Роль: ${userRole === 'admin' ? 'Администратор' : 'Оператор'}\n\n` +
+        `Выберите действие:`,
+        {
+            parse_mode: 'HTML',
+            reply_markup: keyboard
+        }
+    );
+});
+
+// Главное меню отправки реквизитов
+bot.callbackQuery('send_payment_details', async (ctx) => {
+    const userId = ctx.from.id;
+    const userRole = await db.getUserRole(userId);
+    
+    if (userRole !== 'operator' && userRole !== 'admin') {
+        return ctx.answerCallbackQuery('❌ У вас нет доступа');
+    }
+    
+    await ctx.answerCallbackQuery();
+    
+    const keyboard = new InlineKeyboard()
+        .text('💰 Криптовалюты', 'details_crypto')
+        .text('🏦 Банковские карты', 'details_banks')
+        .row()
+        .text('📜 Все реквизиты', 'details_all')
+        .row()
+        .text('🔙 Назад', 'open_operator_panel');
+    
+    await ctx.editMessageText(
+        `💳 <b>Отправка реквизитов</b>\n\n` +
+        `Выберите тип реквизитов для отправки клиенту:\n\n` +
+        `💰 <b>Криптовалюты</b> - адреса кошельков\n` +
+        `🏦 <b>Банковские карты</b> - реквизиты карт\n` +
+        `📜 <b>Все реквизиты</b> - полный список`,
+        {
+            parse_mode: 'HTML',
+            reply_markup: keyboard
+        }
+    );
+});
+
+// Выбор криптовалютных реквизитов
+bot.callbackQuery('details_crypto', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    
+    const keyboard = new InlineKeyboard();
+    
+    // Добавляем кнопки для каждого криптоадреса
+    Object.keys(paymentDetails.crypto).forEach(key => {
+        const detail = paymentDetails.crypto[key];
+        keyboard.text(`${detail.icon} ${detail.name}`, `send_crypto_${key}`).row();
+    });
+    
+    keyboard.text('🔙 Назад', 'send_payment_details');
+    
+    await ctx.editMessageText(
+        `💰 <b>Криптовалютные адреса</b>\n\n` +
+        `Выберите адрес для отправки клиенту:\n\n` +
+        Object.keys(paymentDetails.crypto).map(key => {
+            const detail = paymentDetails.crypto[key];
+            return `${detail.icon} <b>${detail.name}</b>\n` +
+                   `   Адрес: <code>${detail.address}</code>\n` +
+                   `   Комиссия: ${detail.fee}`;
+        }).join('\n\n'),
+        {
+            parse_mode: 'HTML',
+            reply_markup: keyboard
+        }
+    );
+});
+
+// Выбор банковских реквизитов
+bot.callbackQuery('details_banks', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    
+    const keyboard = new InlineKeyboard();
+    
+    // Добавляем кнопки для каждого банка
+    Object.keys(paymentDetails.banks).forEach(key => {
+        const detail = paymentDetails.banks[key];
+        keyboard.text(`${detail.icon} ${detail.name}`, `send_bank_${key}`).row();
+    });
+    
+    keyboard.text('🔙 Назад', 'send_payment_details');
+    
+    await ctx.editMessageText(
+        `🏦 <b>Банковские реквизиты</b>\n\n` +
+        `Выберите банк для отправки реквизитов:\n\n` +
+        Object.keys(paymentDetails.banks).map(key => {
+            const detail = paymentDetails.banks[key];
+            return `${detail.icon} <b>${detail.name}</b>\n` +
+                   `   Карта: <code>${detail.card}</code>\n` +
+                   `   Владелец: ${detail.holder}`;
+        }).join('\n\n'),
+        {
+            parse_mode: 'HTML',
+            reply_markup: keyboard
+        }
+    );
+});
+
+// Отправка всех реквизитов
+bot.callbackQuery('details_all', async (ctx) => {
+    chatContexts.set(ctx.from.id, {
+        action: 'send_all_details'
+    });
+    
+    await ctx.editMessageText(
+        `📜 <b>Отправка всех реквизитов</b>\n\n` +
+        `💬 Напишите ID клиента (или перешлите сообщение от клиента) для отправки всех реквизитов:`,
+        { parse_mode: 'HTML' }
+    );
+    
+    await ctx.answerCallbackQuery('Укажите ID клиента для отправки всех реквизитов');
+});
+
+// Кнопка "Назад в главное меню"
+bot.callbackQuery('back_to_main', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    
+    const userId = ctx.from.id;
+    const keyboard = await createMainKeyboard(userId);
+    
+    await ctx.editMessageText(
+        `🦝 <b>SwapCoon</b> - Главное меню\n\n` +
+        `Выберите действие:`,
+        {
+            parse_mode: 'HTML',
+            reply_markup: keyboard
+        }
+    );
+});
+
+// Импорт системы реквизитов
+const paymentSystem = require('./payment-details-system');
+
+// Инициализация динамических обработчиков
+paymentSystem.setupCryptoHandlers(bot, paymentDetails, chatContexts);
+paymentSystem.setupBankHandlers(bot, paymentDetails, chatContexts);
 
 // Экспорт функций для использования в веб-сервере
 module.exports = { bot, notifyOperators, notifyWebsiteActivity, db, googleSheetsManager, amlService, crmService };

@@ -575,8 +575,6 @@
                         </div>
                     </div>
 
-
-
                     <!-- Действия -->
                     <div class="settings-actions">
                         <button class="primary-button" onclick="saveSettings()">
@@ -634,45 +632,73 @@
     <div id="bank-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Выберите банк</h3>
+                <h3>🌍 Банки мирового уровня</h3>
                 <button class="close-button" onclick="closeBankModal()">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             <div class="bank-list" id="bank-list">
-                <div class="bank-item" onclick="selectBank('Сбербанк')">
-                    <div class="bank-logo">🟢</div>
+                <div class="bank-item" data-bank="СБП" onclick="selectBank('СБП')">
+                    <div class="bank-logo" data-bank="СБП"></div>
+                    <div class="bank-info">
+                        <h4>СБП</h4>
+                        <p>Мгновенные переводы по номеру телефона</p>
+                    </div>
+                </div>
+                <div class="bank-item" data-bank="Сбербанк" onclick="selectBank('Сбербанк')">
+                    <div class="bank-logo" data-bank="Сбербанк"></div>
                     <div class="bank-info">
                         <h4>Сбербанк</h4>
-                        <p>Быстрые переводы по СБП</p>
+                        <p>Крупнейший банк России</p>
                     </div>
                 </div>
-                <div class="bank-item" onclick="selectBank('Тинькофф')">
-                    <div class="bank-logo">🟡</div>
+                <div class="bank-item" data-bank="Т банк" onclick="selectBank('Т банк')">
+                    <div class="bank-logo" data-bank="Т банк"></div>
                     <div class="bank-info">
-                        <h4>Тинькофф</h4>
-                        <p>Переводы без комиссии</p>
+                        <h4>Т-Банк</h4>
+                        <p>Лучший мобильный банк</p>
                     </div>
                 </div>
-                <div class="bank-item" onclick="selectBank('Альфа-Банк')">
-                    <div class="bank-logo">🔴</div>
+                <div class="bank-item" data-bank="Альфа" onclick="selectBank('Альфа')">
+                    <div class="bank-logo" data-bank="Альфа"></div>
                     <div class="bank-info">
                         <h4>Альфа-Банк</h4>
-                        <p>СБП и карточные переводы</p>
+                        <p>Частный банк №1</p>
                     </div>
                 </div>
-                <div class="bank-item" onclick="selectBank('ВТБ')">
-                    <div class="bank-logo">🔵</div>
+                <div class="bank-item" data-bank="ВТБ" onclick="selectBank('ВТБ')">
+                    <div class="bank-logo" data-bank="ВТБ"></div>
                     <div class="bank-info">
                         <h4>ВТБ</h4>
-                        <p>Переводы через СБП</p>
+                        <p>Надежный государственный банк</p>
                     </div>
                 </div>
-                <div class="bank-item" onclick="selectBank('Газпромбанк')">
-                    <div class="bank-logo">⚫</div>
+                <div class="bank-item" data-bank="Райффайзенбанк" onclick="selectBank('Райффайзенбанк')">
+                    <div class="bank-logo" data-bank="Райффайзенбанк"></div>
                     <div class="bank-info">
-                        <h4>Газпромбанк</h4>
-                        <p>Классические переводы</p>
+                        <h4>Райффайзенбанк</h4>
+                        <p>Европейское качество сервиса</p>
+                    </div>
+                </div>
+                <div class="bank-item" data-bank="Промсвязьбанк" onclick="selectBank('Промсвязьбанк')">
+                    <div class="bank-logo" data-bank="Промсвязьбанк"></div>
+                    <div class="bank-info">
+                        <h4>Промсвязьбанк</h4>
+                        <p>Корпоративный банк России</p>
+                    </div>
+                </div>
+                <div class="bank-item" data-bank="Озон банк" onclick="selectBank('Озон банк')">
+                    <div class="bank-logo" data-bank="Озон банк"></div>
+                    <div class="bank-info">
+                        <h4>Озон Банк</h4>
+                        <p>Инновационный экосистемный банк</p>
+                    </div>
+                </div>
+                <div class="bank-item" data-bank="МТС банк" onclick="selectBank('МТС банк')">
+                    <div class="bank-logo" data-bank="МТС банк"></div>
+                    <div class="bank-info">
+                        <h4>МТС Банк</h4>
+                        <p>Банк с телеком-возможностями</p>
                     </div>
                 </div>
             </div>
@@ -689,35 +715,35 @@
                 </button>
             </div>
             <div class="network-list" id="network-list">
-                <div class="network-item" onclick="selectNetwork('TRC20')">
-                    <div class="network-logo">🔸</div>
+                <div class="network-item" data-network="TRC20" onclick="selectNetwork('TRC20')">
+                    <div class="network-logo" data-network="TRC20"></div>
                     <div class="network-info">
                         <h4>TRC20 (Tron)</h4>
                         <p>Низкие комиссии ~$1</p>
                         <span class="network-fee">Комиссия: $1</span>
                     </div>
                 </div>
-                <div class="network-item" onclick="selectNetwork('BEP20')">
-                    <div class="network-logo">🟡</div>
+                <div class="network-item" data-network="BEP20" onclick="selectNetwork('BEP20')">
+                    <div class="network-logo" data-network="BEP20"></div>
                     <div class="network-info">
                         <h4>BEP20 (BSC)</h4>
                         <p>Средние комиссии ~$2</p>
                         <span class="network-fee">Комиссия: $2</span>
                     </div>
                 </div>
-                <div class="network-item" onclick="selectNetwork('ERC20')">
-                    <div class="network-logo">🔷</div>
+                <div class="network-item" data-network="ERC20" onclick="selectNetwork('ERC20')">
+                    <div class="network-logo" data-network="ERC20"></div>
                     <div class="network-info">
                         <h4>ERC20 (Ethereum)</h4>
                         <p>Высокие комиссии ~$15</p>
                         <span class="network-fee">Комиссия: $15</span>
                     </div>
                 </div>
-                <div class="network-item" onclick="selectNetwork('POLYGON')">
-                    <div class="network-logo">🟣</div>
+                <div class="network-item" data-network="Polygon" onclick="selectNetwork('Polygon')">
+                    <div class="network-logo" data-network="Polygon"></div>
                     <div class="network-info">
-                        <h4>Polygon</h4>
-                        <p>Очень низкие комиссии ~$0.1</p>
+                        <h4>Polygon (MATIC)</h4>
+                        <p>Минимальные комиссии ~$0.1</p>
                         <span class="network-fee">Комиссия: $0.1</span>
                     </div>
                 </div>
