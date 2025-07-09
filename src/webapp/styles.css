@@ -1212,9 +1212,15 @@ body {
     margin-bottom: 2px;
 }
 
-.user-level {
+.header .user-level {
     display: flex;
     justify-content: flex-end;
+    margin-bottom: 0;
+}
+
+/* Общий стиль для user-level (для других мест) */
+.user-level {
+    margin-bottom: var(--spacing-xs);
 }
 
 .level-badge {
