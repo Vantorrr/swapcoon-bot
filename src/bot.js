@@ -77,37 +77,16 @@ async function createMainKeyboard(userId) {
     // Проверяем роль пользователя и добавляем соответствующие кнопки
     try {
         const userRole = await db.getUserRole(userId);
-        console.log(`🔍 Проверка прав для ${userId}: роль = "${userRole}"`);
         
-        // ВРЕМЕННЫЙ ОБХОД: Если пользователь главный админ - даем админ права
-        const mainAdminId = process.env.MAIN_ADMIN_ID ? parseInt(process.env.MAIN_ADMIN_ID) : 8141463258;
-        if (userId === mainAdminId) {
-            console.log(`🛡️ ВРЕМЕННЫЙ ДОСТУП: Главный админ обнаружен (${userId})`);
-            keyboard.text('🛡️ Админ панель', 'open_admin_panel')
-                .text('👨‍💼 Панель оператора', 'open_operator_panel')
-                .row();
-        } else if (userRole === 'admin') {
-            console.log('🛡️ Добавляем кнопки админа');
+        if (userRole === 'admin') {
             keyboard.text('🛡️ Админ панель', 'open_admin_panel')
                 .text('👨‍💼 Панель оператора', 'open_operator_panel')
                 .row();
         } else if (userRole === 'operator') {
-            console.log('👨‍💼 Добавляем кнопки оператора');
             keyboard.text('👨‍💼 Панель оператора', 'open_operator_panel').row();
-        } else {
-            console.log('👤 Обычный пользователь, админ кнопки не добавляем');
         }
     } catch (error) {
         console.log('⚠️ Ошибка проверки роли пользователя:', error.message);
-        
-        // ВРЕМЕННЫЙ ОБХОД НА СЛУЧАЙ ОШИБКИ
-        const mainAdminId = process.env.MAIN_ADMIN_ID ? parseInt(process.env.MAIN_ADMIN_ID) : 8141463258;
-        if (userId === mainAdminId) {
-            console.log(`🛡️ АВАРИЙНЫЙ ДОСТУП: Добавляем админ кнопки для главного админа (${userId})`);
-            keyboard.text('🛡️ Админ панель', 'open_admin_panel')
-                .text('👨‍💼 Панель оператора', 'open_operator_panel')
-                .row();
-        }
     }
     
     keyboard.text('📞 Связаться с оператором', 'contact_operator')
