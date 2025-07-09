@@ -269,13 +269,15 @@ async function loadExchangeRates() {
 // Тестовые курсы для разработки
 function getTestRates() {
     return [
-        { currency: 'BTC', buy: 95000, sell: 96000, lastUpdate: new Date().toISOString() },
-        { currency: 'ETH', buy: 3500, sell: 3520, lastUpdate: new Date().toISOString() },
-        { currency: 'USDT', buy: 1.0, sell: 1.02, lastUpdate: new Date().toISOString() },
-        { currency: 'USDC', buy: 1.0, sell: 1.02, lastUpdate: new Date().toISOString() },
-        { currency: 'USD', buy: 1.0, sell: 1.0, lastUpdate: new Date().toISOString() },
-        { currency: 'EUR', buy: 0.92, sell: 0.94, lastUpdate: new Date().toISOString() },
-        { currency: 'RUB', buy: 100, sell: 102, lastUpdate: new Date().toISOString() }
+        { currency: 'BTC', buy: 95000, sell: 96000, lastUpdate: new Date().toISOString(), type: 'crypto' },
+        { currency: 'ETH', buy: 3500, sell: 3520, lastUpdate: new Date().toISOString(), type: 'crypto' },
+        { currency: 'USDT', buy: 1.0, sell: 1.02, lastUpdate: new Date().toISOString(), type: 'crypto' },
+        { currency: 'USDC', buy: 1.0, sell: 1.02, lastUpdate: new Date().toISOString(), type: 'crypto' },
+        { currency: 'USD', buy: 1.0, sell: 1.0, lastUpdate: new Date().toISOString(), type: 'fiat' },
+        { currency: 'EUR', buy: 0.92, sell: 0.94, lastUpdate: new Date().toISOString(), type: 'fiat' },
+        { currency: 'RUB', buy: 0.0098, sell: 0.0102, lastUpdate: new Date().toISOString(), type: 'fiat' },
+        { currency: 'ARS', buy: 0.00098, sell: 0.00102, lastUpdate: new Date().toISOString(), type: 'fiat' },
+        { currency: 'BRL', buy: 0.194, sell: 0.206, lastUpdate: new Date().toISOString(), type: 'fiat' }
     ];
 }
 
