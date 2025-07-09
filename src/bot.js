@@ -3687,12 +3687,36 @@ async function notifyWebsiteActivity(activityType, data) {
                 break;
                 
             case 'aml_check':
-                message = `🛡️ <b>AML проверка с сайта</b>\n\n` +
-                         `Адрес: <code>${data.address}</code>\n` +
-                         `Валюта: ${data.currency}\n` +
-                         `Результат: ${getAMLStatusEmoji(data.result)} ${data.result}\n` +
-                         `Время: ${new Date().toLocaleString('ru-RU')}\n\n` +
-                         `#aml #сайт`;
+                // Получаем детальную информацию из AML сервиса
+                const detailedAML = data.detailedResult || {};
+                const connections = detailedAML.connections || [];
+                const blockchain = detailedAML.blockchain || data.currency;
+                const riskScore = detailedAML.riskScore || 0;
+                const riskLevel = riskScore <= 50 ? 'Низкий' : riskScore <= 80 ? 'Средний' : 'Высокий';
+                const riskIcon = riskScore <= 50 ? '🟢' : riskScore <= 80 ? '🟡' : '🔴';
+                
+                let connectionsText = '';
+                if (connections.length > 0) {
+                    const mainConnections = connections.filter(c => c.percentage >= 1);
+                    const minorConnections = connections.filter(c => c.percentage < 1);
+                    
+                    connectionsText = '\n\n🔗 <b>Связи адреса:</b>\n';
+                    mainConnections.forEach(conn => {
+                        connectionsText += `• ${conn.category} - ${conn.percentage}%\n`;
+                    });
+                    
+                    if (minorConnections.length > 0) {
+                        connectionsText += `\n📊 <b>Менее 1%:</b> ${minorConnections.map(c => c.category).join(', ')}`;
+                    }
+                }
+                
+                message = `🛡️ <b>AML ПРОВЕРКА ЗАВЕРШЕНА</b>\n\n` +
+                         `🔵 <b>Адрес:</b> <code>${data.address}</code>\n` +
+                         `⛓️ <b>Блокчейн:</b> ${blockchain}\n` +
+                         `${connectionsText}\n` +
+                         `${riskIcon} <b>Уровень риска:</b> ${riskLevel} (${riskScore}%)\n` +
+                         `⏰ <b>Время:</b> ${new Date().toLocaleString('ru-RU')}\n\n` +
+                         `#aml #детальный_отчет`;
                 break;
         }
         

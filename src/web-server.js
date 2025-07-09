@@ -94,15 +94,14 @@ app.post('/api/aml-check', async (req, res) => {
         
         const amlResult = await amlService.checkAddress(address, currency);
         
-        // Уведомляем об AML проверке (только если есть предупреждения)
-        if (amlResult.status !== 'clean') {
-            await notifyWebsiteActivity('aml_check', {
-                address,
-                currency,
-                result: amlResult.status,
-                userId: userId || 'anonymous'
-            });
-        }
+        // Уведомляем об AML проверке (всегда, если проверка проводилась)
+        await notifyWebsiteActivity('aml_check', {
+            address,
+            currency,
+            result: amlResult.status,
+            detailedResult: amlResult, // Передаем полный результат
+            userId: userId || 'anonymous'
+        });
         
         res.json({ success: true, data: amlResult });
     } catch (error) {
