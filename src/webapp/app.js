@@ -369,10 +369,22 @@ function updateCurrencyList() {
         item.className = 'currency-item';
         item.onclick = () => selectCurrency(rate.currency);
         
-        const changePercent = Math.random() * 10 - 5; // Фиктивное изменение
+        const changePercent = rate.change24h || 0;
         const changeClass = changePercent > 0 ? 'positive' : 'negative';
         const changeIcon = changePercent > 0 ? '+' : '';
         
+        // Форматируем цену в зависимости от типа валюты
+        let priceDisplay;
+        if (rate.type === 'fiat' && rate.currency !== 'USD') {
+            priceDisplay = `$${rate.price.toFixed(4)}`;
+        } else if (rate.price >= 1000) {
+            priceDisplay = `$${rate.price.toLocaleString()}`;
+        } else if (rate.price >= 1) {
+            priceDisplay = `$${rate.price.toFixed(2)}`;
+        } else {
+            priceDisplay = `$${rate.price.toFixed(6)}`;
+        }
+
         item.innerHTML = `
             <div class="currency-info">
                 <div class="currency-icon">${rate.currency.substr(0, 2)}</div>
@@ -382,7 +394,7 @@ function updateCurrencyList() {
                 </div>
             </div>
             <div class="currency-rate">
-                <div class="currency-price">$${rate.sell.toFixed(2)}</div>
+                <div class="currency-price">${priceDisplay}</div>
                 <div class="currency-change ${changeClass}">${changeIcon}${Math.abs(changePercent).toFixed(1)}%</div>
             </div>
         `;
@@ -398,9 +410,17 @@ function getCurrencyName(currency) {
         'ETH': 'Ethereum',
         'USDT': 'Tether',
         'USDC': 'USD Coin',
+        'BNB': 'Binance Coin',
+        'SOL': 'Solana',
+        'ADA': 'Cardano',
+        'DOT': 'Polkadot',
+        'MATIC': 'Polygon',
+        'AVAX': 'Avalanche',
         'USD': 'US Dollar',
         'EUR': 'Euro',
-        'RUB': 'Russian Ruble'
+        'RUB': 'Russian Ruble',
+        'UAH': 'Ukrainian Hryvnia',
+        'KZT': 'Kazakhstani Tenge'
     };
     return names[currency] || currency;
 }

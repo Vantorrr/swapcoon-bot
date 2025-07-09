@@ -3,9 +3,13 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const { bot, notifyOperators, notifyWebsiteActivity, db, googleSheetsManager, amlService, crmService } = require('./bot');
+const RatesService = require('./services/RatesService');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Инициализация сервиса курсов
+const ratesService = new RatesService();
 
 // Middleware
 app.use(cors());
@@ -21,8 +25,13 @@ app.get('/', (req, res) => {
 // API для получения курсов валют
 app.get('/api/rates', async (req, res) => {
     try {
-        const rates = await googleSheetsManager.getRates();
-        res.json({ success: true, data: rates });
+        const rates = await ratesService.getRates();
+        res.json({ 
+            success: true, 
+            data: rates,
+            lastUpdate: ratesService.getLastUpdateTime(),
+            source: 'live_api'
+        });
     } catch (error) {
         console.error('Ошибка получения курсов:', error);
         res.status(500).json({ success: false, error: 'Ошибка получения курсов' });
@@ -59,8 +68,7 @@ app.post('/api/calculate', async (req, res) => {
     try {
         const { fromCurrency, toCurrency, amount, userId } = req.body;
         
-        const rates = await googleSheetsManager.getRates();
-        const calculation = calculateExchange(rates, fromCurrency, toCurrency, amount);
+        const calculation = await ratesService.getExchangeRate(fromCurrency, toCurrency, amount);
         
         // Уведомляем о запросе курса (только для больших сумм)
         if (amount >= 1000) {
