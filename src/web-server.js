@@ -450,6 +450,27 @@ app.listen(PORT, async () => {
         bot.start();
         console.log('✅ Telegram бот запущен');
         
+        // Настраиваем Menu Button для WebApp
+        setTimeout(async () => {
+            try {
+                const webappUrl = process.env.WEBAPP_URL;
+                if (webappUrl && webappUrl.startsWith('https://')) {
+                    await bot.api.setChatMenuButton({
+                        menu_button: {
+                            type: 'web_app',
+                            text: '🚀 Открыть SwapCoon',
+                            web_app: {
+                                url: webappUrl
+                            }
+                        }
+                    });
+                    console.log('✅ Menu Button настроена для WebApp');
+                }
+            } catch (menuError) {
+                console.log('⚠️ Не удалось настроить Menu Button:', menuError.message);
+            }
+        }, 2000);
+        
         // Инициализируем Google Sheets
         if (googleSheetsManager) {
             console.log('📊 Инициализация Google Sheets...');

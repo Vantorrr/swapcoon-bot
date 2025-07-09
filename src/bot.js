@@ -194,6 +194,49 @@ bot.command('weblogs', async (ctx) => {
     });
 });
 
+// Команда настройки WebApp (только для админов)
+bot.command('setup_webapp', async (ctx) => {
+    const userId = ctx.from.id;
+    const userRole = await db.getUserRole(userId);
+    
+    if (userRole !== 'admin') {
+        return ctx.reply('❌ Эта команда доступна только администраторам');
+    }
+    
+    try {
+        const webappUrl = process.env.WEBAPP_URL;
+        if (!webappUrl) {
+            return ctx.reply('❌ WEBAPP_URL не настроен в переменных окружения');
+        }
+        
+        if (!webappUrl.startsWith('https://')) {
+            return ctx.reply('❌ WEBAPP_URL должен использовать HTTPS');
+        }
+        
+        // Настраиваем Menu Button
+        await bot.api.setChatMenuButton({
+            menu_button: {
+                type: 'web_app',
+                text: '🚀 Открыть SwapCoon',
+                web_app: {
+                    url: webappUrl
+                }
+            }
+        });
+        
+        await ctx.reply(
+            `✅ <b>WebApp успешно настроен!</b>\n\n` +
+            `🌐 URL: ${webappUrl}\n` +
+            `📱 Menu Button активирована\n\n` +
+            `Теперь у всех пользователей появится кнопка "🚀 Открыть SwapCoon" возле поля ввода сообщения!`,
+            { parse_mode: 'HTML' }
+        );
+        
+    } catch (error) {
+        await ctx.reply(`❌ Ошибка настройки WebApp: ${error.message}`);
+    }
+});
+
 // Команда для быстрой статистики дня
 bot.command('daily_stats', async (ctx) => {
     const userId = ctx.from.id;
@@ -261,6 +304,7 @@ bot.command('help', async (ctx) => {
             `/admin - Админ панель с полной статистикой\n` +
             `/operator - Панель оператора\n` +
             `/weblogs - Мониторинг активности сайта\n` +
+            `/setup_webapp - Настроить Menu Button для WebApp\n` +
             `/add_operator ID - Добавить оператора\n` +
             `/add_operator_forward - Добавить оператора (ответ на сообщение)\n\n`;
     }
@@ -3572,6 +3616,27 @@ process.on('SIGTERM', async () => {
     }, 3000);
 });
 
+// Функция настройки Menu Button
+async function setupMenuButton() {
+    try {
+        const webappUrl = process.env.WEBAPP_URL;
+        if (webappUrl && webappUrl.startsWith('https://')) {
+            await bot.api.setChatMenuButton({
+                menu_button: {
+                    type: 'web_app',
+                    text: '🚀 Открыть SwapCoon',
+                    web_app: {
+                        url: webappUrl
+                    }
+                }
+            });
+            console.log('✅ Menu Button настроена для WebApp');
+        }
+    } catch (error) {
+        console.log('⚠️ Не удалось настроить Menu Button:', error.message);
+    }
+}
+
 // Запуск бота
 if (require.main === module) {
     console.log('🚀 SwapCoon Bot запускается...');
@@ -3582,8 +3647,9 @@ if (require.main === module) {
     // Запускаем бота
     bot.start();
     
-    // Ждем немного для инициализации, затем отправляем уведомления
+    // Ждем немного для инициализации, затем настраиваем Menu Button и отправляем уведомления
     setTimeout(async () => {
+        await setupMenuButton();
         await sendStartupNotification();
     }, 2000);
 } 
