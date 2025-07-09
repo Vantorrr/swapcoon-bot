@@ -817,12 +817,6 @@ function updateProfileDisplay() {
 function updateLevelDisplay(level, stats) {
     console.log('📊 Обновляем отображение уровня:', level, stats);
     
-    // В заголовке (если элемент существует)
-    const userLevelEl = document.getElementById('user-level');
-    if (userLevelEl) {
-        userLevelEl.innerHTML = `<span class="level-badge" style="background: ${level.color}">${level.level}</span>`;
-    }
-    
     // В профиле (если элементы существуют)
     const levelIndicator = document.getElementById('level-indicator');
     if (levelIndicator) {
@@ -1409,16 +1403,7 @@ function filterHistory() {
     loadHistory();
 }
 
-// Обновление заголовка с уровнем
-function updateHeaderLevel() {
-    if (userProfile?.level) {
-        const levelBadge = document.querySelector('#user-level .level-badge');
-        if (levelBadge) {
-            levelBadge.textContent = userProfile.level.level;
-            levelBadge.style.background = userProfile.level.color;
-        }
-    }
-}
+
 
 // Переключение экранов с дополнительной логикой
 function showScreen(screenId) {

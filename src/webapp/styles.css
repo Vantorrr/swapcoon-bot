@@ -1198,11 +1198,7 @@ body {
     margin-bottom: 2px;
 }
 
-.header .user-level {
-    display: flex;
-    justify-content: flex-end;
-    margin-bottom: 0;
-}
+
 
 /* Общий стиль для user-level (для других мест) */
 .user-level {
