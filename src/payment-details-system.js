@@ -90,9 +90,12 @@ async function sendCryptoDetailsToClient(ctx, clientId, detail, bot) {
         const message = 
             `💳 <b>Реквизиты для пополнения</b>\n\n` +
             `${detail.icon} <b>${detail.name}</b>\n\n` +
-            `📍 <b>Адрес:</b>\n<code>${detail.address}</code>\n\n` +
+            `📍 <b>Адрес для копирования:</b>\n<code>${detail.address}</code>\n\n` +
             `💰 <b>Комиссия сети:</b> ${detail.fee}\n` +
             `📝 <b>Описание:</b> ${detail.description}\n\n` +
+            `📋 <b>Как скопировать:</b>\n` +
+            `• Нажмите на адрес выше\n` +
+            `• Адрес автоматически скопируется\n\n` +
             `⚠️ <b>Внимание:</b>\n` +
             `• Отправляйте только USDT в сети ${detail.name}\n` +
             `• Проверьте адрес перед отправкой\n` +
@@ -102,6 +105,12 @@ async function sendCryptoDetailsToClient(ctx, clientId, detail, bot) {
         await bot.api.sendMessage(clientId, message, { 
             parse_mode: 'HTML'
         });
+        
+        // Отправляем адрес отдельным сообщением для удобства копирования
+        await bot.api.sendMessage(clientId, 
+            `📋 <b>Адрес для копирования:</b>\n\n<code>${detail.address}</code>`, 
+            { parse_mode: 'HTML' }
+        );
         
         await ctx.reply(`✅ Реквизиты ${detail.name} отправлены клиенту ${clientId}`);
         
@@ -128,9 +137,12 @@ async function sendBankDetailsToClient(ctx, clientId, detail, bot) {
         const message = 
             `💳 <b>Банковские реквизиты</b>\n\n` +
             `${detail.icon} <b>${detail.name}</b>\n\n` +
-            `💳 <b>Номер карты:</b>\n<code>${detail.card}</code>\n\n` +
+            `💳 <b>Номер карты для копирования:</b>\n<code>${detail.card}</code>\n\n` +
             `👤 <b>Владелец:</b> ${detail.holder}\n` +
             `📝 <b>Описание:</b> ${detail.description}\n\n` +
+            `📋 <b>Как скопировать:</b>\n` +
+            `• Нажмите на номер карты выше\n` +
+            `• Номер автоматически скопируется\n\n` +
             `⚠️ <b>Инструкция:</b>\n` +
             `• Переводите точную сумму\n` +
             `• Сохраните чек об оплате\n` +
@@ -140,6 +152,12 @@ async function sendBankDetailsToClient(ctx, clientId, detail, bot) {
         await bot.api.sendMessage(clientId, message, { 
             parse_mode: 'HTML'
         });
+        
+        // Отправляем номер карты отдельным сообщением для удобства копирования
+        await bot.api.sendMessage(clientId, 
+            `💳 <b>Номер карты для копирования:</b>\n\n<code>${detail.card}</code>`, 
+            { parse_mode: 'HTML' }
+        );
         
         await ctx.reply(`✅ Банковские реквизиты ${detail.name} отправлены клиенту ${clientId}`);
         
@@ -185,15 +203,41 @@ async function sendAllDetailsToClient(ctx, clientId, paymentDetails, bot) {
         });
         
         message += `📢 <b>Дополнительные адреса по запросу</b>\n\n`;
+        message += `📋 <b>КАК КОПИРОВАТЬ:</b>\n`;
+        message += `• Нажмите на любой адрес/номер карты\n`;
+        message += `• Данные автоматически скопируются\n`;
+        message += `• Вставьте в приложение банка/кошелька\n\n`;
         message += `⚠️ <b>ВАЖНО:</b>\n`;
-        message += `• Адреса копируются коротким нажатием\n`;
         message += `• Проверяйте сеть перед отправкой\n`;
+        message += `• Переводите точную сумму\n`;
         message += `• Уведомляйте оператора о платеже\n\n`;
         message += `📞 Поддержка: @swapcoon_support`;
         
         await bot.api.sendMessage(clientId, message, { 
             parse_mode: 'HTML'
         });
+        
+        // Отправляем отдельные сообщения с каждым адресом для удобства копирования
+        await bot.api.sendMessage(clientId, 
+            `📋 <b>АДРЕСА ДЛЯ КОПИРОВАНИЯ:</b>`, 
+            { parse_mode: 'HTML' }
+        );
+        
+        // Отправляем каждый криптоадрес отдельно
+        for (const [key, detail] of Object.entries(paymentDetails.crypto)) {
+            await bot.api.sendMessage(clientId, 
+                `${detail.icon} <b>${detail.name}</b>\n<code>${detail.address}</code>`, 
+                { parse_mode: 'HTML' }
+            );
+        }
+        
+        // Отправляем каждую банковскую карту отдельно
+        for (const [key, detail] of Object.entries(paymentDetails.banks)) {
+            await bot.api.sendMessage(clientId, 
+                `${detail.icon} <b>${detail.name}</b>\n<code>${detail.card}</code>`, 
+                { parse_mode: 'HTML' }
+            );
+        }
         
         await ctx.reply(`✅ Все реквизиты отправлены клиенту ${clientId}`);
         

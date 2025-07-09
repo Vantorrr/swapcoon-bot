@@ -4536,10 +4536,24 @@ webhookApp.listen(3001, () => {
 // Секретная команда для перезапуска бота (только для главного админа)
 bot.command('phoenix_restart', async (ctx) => {
     const userId = ctx.from.id;
-    const userRole = await db.getUserRole(userId);
+    console.log(`🔍 Phoenix restart запрос от ${userId}`);
     
-    if (userRole !== 'admin') {
-        return; // Ничего не отвечаем, команда секретная
+    try {
+        const userRole = await db.getUserRole(userId);
+        console.log(`🔍 Роль пользователя ${userId}: ${userRole}`);
+        
+        if (userRole !== 'admin') {
+            console.log(`❌ Доступ запрещен для ${userId} - роль: ${userRole}`);
+            // Отправляем ответ для отладки
+            await ctx.reply('🔒 Команда недоступна');
+            return;
+        }
+        
+        console.log(`✅ Админ ${userId} инициирует Phoenix Restart`);
+    } catch (error) {
+        console.error(`❌ Ошибка проверки роли для ${userId}:`, error);
+        await ctx.reply('❌ Ошибка проверки прав доступа');
+        return;
     }
     
     const keyboard = new InlineKeyboard()
