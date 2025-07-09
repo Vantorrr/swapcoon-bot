@@ -1421,6 +1421,11 @@ function contactOperator() {
 // Создание заявки в поддержку (для браузера)
 async function createSupportTicket() {
     try {
+        if (!currentUserId) {
+            showNotification('Ошибка: пользователь не авторизован', 'error');
+            return;
+        }
+        
         showNotification('Создаем заявку в поддержку...', 'info');
         
         const response = await fetch('/api/support-ticket', {
@@ -1430,7 +1435,7 @@ async function createSupportTicket() {
             },
             body: JSON.stringify({
                 userId: currentUserId,
-                source: 'webapp_browser',
+                source: tg ? 'webapp_telegram' : 'webapp_browser',
                 message: 'Пользователь запросил помощь через WebApp',
                 timestamp: new Date().toISOString()
             })
@@ -1440,16 +1445,21 @@ async function createSupportTicket() {
         
         if (data.success) {
             showNotification('Заявка создана! Мы свяжемся с вами в ближайшее время.', 'success');
+            console.log('✅ Тикет поддержки создан:', data.data);
         } else {
             throw new Error(data.error || 'Ошибка создания заявки');
         }
         
     } catch (error) {
         console.error('❌ Ошибка создания заявки в поддержку:', error);
-        showNotification('Ошибка. Попробуйте написать нам: @SwapCoonSupport', 'error');
+        showNotification('Ошибка создания заявки. Пишите @SwapCoonSupport', 'error');
         
         // Откатываемся к старому способу
-        window.open('https://t.me/SwapCoonSupport', '_blank');
+        if (window && window.open) {
+            setTimeout(() => {
+                window.open('https://t.me/SwapCoonSupport', '_blank');
+            }, 1000);
+        }
     }
 }
 

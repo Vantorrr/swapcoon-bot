@@ -734,7 +734,17 @@ body {
     gap: var(--spacing-sm);
 }
 
-/* Удалено - дублирует код выше для referral-stats */
+.referral-stat-value {
+    font-size: var(--font-xl);
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: var(--spacing-xs);
+}
+
+.referral-stat-label {
+    font-size: var(--font-sm);
+    color: var(--text-secondary);
+}
 
 .referral-link {
     margin-bottom: var(--spacing-md);

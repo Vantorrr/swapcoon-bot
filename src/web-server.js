@@ -356,9 +356,20 @@ app.post('/api/support-ticket', async (req, res) => {
             
             for (const adminId of adminIds) {
                 try {
-                    // Здесь нужно подключить бота для отправки сообщений
-                    // await bot.api.sendMessage(adminId, supportMessage, { parse_mode: 'HTML' });
-                    console.log(`📨 Уведомление отправлено админу ${adminId}`);
+                    if (bot && bot.api) {
+                        await bot.api.sendMessage(adminId, supportMessage, { 
+                            parse_mode: 'HTML',
+                            reply_markup: {
+                                inline_keyboard: [[
+                                    { text: '💬 Написать пользователю', url: `tg://user?id=${userId}` },
+                                    { text: '✅ Закрыть тикет', callback_data: `close_ticket_${ticketId}` }
+                                ]]
+                            }
+                        });
+                        console.log(`📨 Уведомление отправлено админу ${adminId}`);
+                    } else {
+                        console.log(`⚠️ Бот не инициализирован для отправки уведомлений`);
+                    }
                 } catch (sendError) {
                     console.log(`⚠️ Не удалось уведомить админа ${adminId}:`, sendError.message);
                 }
