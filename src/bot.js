@@ -1,6 +1,7 @@
 require('dotenv').config();
 const { Bot, InlineKeyboard, webhookCallback } = require('grammy');
 const express = require('express');
+const { exec } = require('child_process');
 const Database = require('./models/Database');
 const GoogleSheetsManager = require('./services/GoogleSheetsManager');
 const AMLService = require('./services/AMLService');
@@ -4488,6 +4489,136 @@ async function setupMenuButton() {
         console.log('⚠️ Не удалось настроить Menu Button:', error.message);
     }
 }
+
+// Создаем Express сервер для webhook'ов
+const webhookApp = express();
+webhookApp.use(express.json());
+
+// Webhook endpoint для получения уведомлений от веб-сервера
+webhookApp.post('/webhook/support-ticket', async (req, res) => {
+    try {
+        const { ticketId, userId, userName, subject, message, timestamp } = req.body;
+        
+        console.log(`📨 Получен webhook тикета: ${ticketId} от ${userName}`);
+        
+        // Отправляем уведомление всем админам
+        const adminIds = await db.getAdminIds();
+        
+        for (const adminId of adminIds) {
+            try {
+                await bot.api.sendMessage(adminId, message, { 
+                    parse_mode: 'HTML',
+                    reply_markup: {
+                        inline_keyboard: [[
+                            { text: '💬 Написать пользователю', url: `tg://user?id=${userId}` },
+                            { text: '✅ Закрыть тикет', callback_data: `close_ticket_${ticketId}` }
+                        ]]
+                    }
+                });
+                console.log(`📨 Уведомление отправлено админу ${adminId}`);
+            } catch (sendError) {
+                console.log(`⚠️ Не удалось уведомить админа ${adminId}:`, sendError.message);
+            }
+        }
+        
+        res.json({ success: true, message: 'Уведомление отправлено' });
+    } catch (error) {
+        console.error('❌ Ошибка обработки webhook:', error);
+        res.status(500).json({ success: false, error: 'Ошибка обработки webhook' });
+    }
+});
+
+// Запуск webhook сервера
+webhookApp.listen(3001, () => {
+    console.log('🔗 Webhook сервер запущен на порту 3001');
+});
+
+// Секретная команда для перезапуска бота (только для главного админа)
+bot.command('phoenix_restart', async (ctx) => {
+    const userId = ctx.from.id;
+    const userRole = await db.getUserRole(userId);
+    
+    if (userRole !== 'admin') {
+        return; // Ничего не отвечаем, команда секретная
+    }
+    
+    const keyboard = new InlineKeyboard()
+        .text('🔄 Да, перезапустить', 'confirm_restart')
+        .text('❌ Отмена', 'cancel_restart');
+    
+    await ctx.reply(
+        `🔥 <b>PHOENIX RESTART</b>\n\n` +
+        `⚠️ Вы уверены, что хотите перезапустить бота?\n\n` +
+        `🔄 Это займет ~30 секунд\n` +
+        `📢 Все админы получат уведомление\n` +
+        `🛑 Активные операции будут сохранены`,
+        {
+            parse_mode: 'HTML',
+            reply_markup: keyboard
+        }
+    );
+});
+
+// Обработчик подтверждения перезапуска
+bot.callbackQuery('confirm_restart', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    
+    const userId = ctx.from.id;
+    const userRole = await db.getUserRole(userId);
+    
+    if (userRole !== 'admin') return;
+    
+    await ctx.editMessageText(
+        `🔄 <b>ПЕРЕЗАПУСК НАЧАТ!</b>\n\n` +
+        `🚀 Останавливаем бота...\n` +
+        `⏳ Ожидайте ~30 секунд\n\n` +
+        `🔔 Все админы получат уведомление о перезапуске`,
+        { parse_mode: 'HTML' }
+    );
+    
+    // Уведомляем всех админов о перезапуске
+    try {
+        const adminIds = await db.getAdminIds();
+        const restartMessage = 
+            `🔄 <b>ПЛАНОВЫЙ ПЕРЕЗАПУСК БОТА</b>\n\n` +
+            `👤 Инициатор: ${ctx.from.first_name || ctx.from.username}\n` +
+            `⏰ Время: ${new Date().toLocaleString('ru-RU')}\n\n` +
+            `🔧 Обновляем систему...\n` +
+            `⏳ Время простоя: ~30 секунд\n\n` +
+            `🚀 Скоро вернемся с улучшениями!`;
+            
+        for (const adminId of adminIds) {
+            try {
+                if (adminId !== userId) { // Не отправляем инициатору
+                    await bot.api.sendMessage(adminId, restartMessage, {
+                        parse_mode: 'HTML'
+                    });
+                }
+            } catch (error) {
+                console.log(`Не удалось уведомить админа ${adminId} о перезапуске`);
+            }
+        }
+    } catch (error) {
+        console.log('Ошибка уведомления о перезапуске:', error);
+    }
+    
+    // Ждем 3 секунды и перезапускаем
+    setTimeout(() => {
+        console.log('\n🔄 Выполняем Phoenix Restart...');
+        process.exit(0); // PM2 или nodemon автоматически перезапустят
+    }, 3000);
+});
+
+// Обработчик отмены перезапуска
+bot.callbackQuery('cancel_restart', async (ctx) => {
+    await ctx.answerCallbackQuery('Перезапуск отменен');
+    
+    await ctx.editMessageText(
+        `❌ <b>Перезапуск отменен</b>\n\n` +
+        `🤖 Бот продолжает работать в штатном режиме`,
+        { parse_mode: 'HTML' }
+    );
+});
 
 // Запуск бота
 if (require.main === module) {

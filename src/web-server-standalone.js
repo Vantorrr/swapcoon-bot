@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const axios = require('axios');
 const Database = require('./models/Database');
 const AMLService = require('./services/AMLService');
 const CRMService = require('./services/CRMService');
@@ -177,20 +178,67 @@ app.post('/api/support-ticket', async (req, res) => {
         
         console.log(`🎫 Создание тикета поддержки от пользователя ${userId} по теме: ${subject}`);
         
-        // Создаем тикет в базе (если есть такая таблица)
+        // Получаем данные пользователя
+        const user = await db.getUser(userId);
+        const userName = user?.first_name || user?.username || `ID: ${userId}`;
+        
+        // Создаем тикет в базе
         const ticketId = `SUPPORT-${Date.now()}`;
         
-        // В standalone версии просто логируем тикет
+        // Определяем эмодзи по теме
+        const getSubjectEmoji = (subject) => {
+            const subjectLower = subject.toLowerCase();
+            if (subjectLower.includes('наличн')) return '💵';
+            if (subjectLower.includes('aml')) return '🛡️';
+            if (subjectLower.includes('карт')) return '💳';
+            if (subjectLower.includes('otc')) return '📈';
+            return '🆘';
+        };
+
+        // Логируем тикет
         console.log(`📋 Тикет ${ticketId}:`);
-        console.log(`   👤 Пользователь: ${userId}`);
+        console.log(`   👤 Пользователь: ${userName}`);
         console.log(`   📱 Источник: ${source}`);
         console.log(`   🏷️ Тема: ${subject}`);
         console.log(`   💬 Сообщение: ${message}`);
         console.log(`   ⏰ Время: ${new Date(timestamp).toLocaleString('ru-RU')}`);
         
+        // Формируем сообщение для админов
+        const supportMessage = `${getSubjectEmoji(subject)} <b>${subject}</b>\n\n` +
+            `🎫 ID: ${ticketId}\n` +
+            `👤 Пользователь: ${userName}\n` +
+            `📱 Источник: ${source}\n` +
+            `⏰ Время: ${new Date(timestamp).toLocaleString('ru-RU')}\n` +
+            `💬 Сообщение: ${message}\n\n` +
+            `➡️ Свяжитесь с пользователем: /user ${userId}`;
+
+        // Пытаемся отправить уведомление через webhook
+        try {
+            // Отправляем уведомление на localhost:3001 (где работает бот)
+            const response = await axios.post('http://localhost:3001/webhook/support-ticket', {
+                ticketId,
+                userId,
+                userName,
+                subject,
+                message: supportMessage,
+                timestamp
+            }, {
+                timeout: 3000,
+                headers: { 'Content-Type': 'application/json' }
+            }).catch(() => null);
+            
+            if (response && response.status === 200) {
+                console.log('📨 Уведомление отправлено в бот');
+            } else {
+                console.log('⚠️ Бот недоступен, уведомление не отправлено');
+            }
+        } catch (webhookError) {
+            console.log('⚠️ Не удалось отправить webhook:', webhookError.message);
+        }
+        
         res.json({ 
             success: true, 
-            message: 'Тикет создан! Мы свяжемся с вами в ближайшее время.',
+            message: 'Заявка отправлена! Мы свяжемся с вами в ближайшее время.',
             data: { ticketId, timestamp, subject }
         });
         
