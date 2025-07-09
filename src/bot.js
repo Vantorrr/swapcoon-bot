@@ -339,13 +339,13 @@ bot.on('callback_query:data', async (ctx) => {
     console.log(`🔘 Получена кнопка: ${data} от пользователя ${userId}`);
     
     if (data === 'webapp_launch') {
-        await ctx.answerCallbackQuery();
-        const webappUrl = process.env.WEBAPP_URL;
-        
-        console.log(`🔍 Debug WEBAPP_URL: "${webappUrl}"`);
-        console.log(`🔍 All env vars:`, Object.keys(process.env).filter(key => key.includes('WEBAPP')));
-        
-        if (webappUrl && webappUrl.startsWith('https://')) {
+        try {
+            await ctx.answerCallbackQuery();
+            const webappUrl = process.env.WEBAPP_URL;
+            
+            console.log(`🔍 WEBAPP_URL check: ${webappUrl ? 'exists' : 'missing'}`);
+            
+            if (webappUrl && webappUrl.startsWith('https://')) {
             // Отправляем сообщение с WebApp кнопкой
             await ctx.reply(
                 '🚀 <b>Добро пожаловать в SwapCoon App!</b>\n\n' +
@@ -375,6 +375,10 @@ bot.on('callback_query:data', async (ctx) => {
                         .text('🏠 Назад к боту', 'back_to_main')
                 }
             );
+        }
+        } catch (error) {
+            console.error('❌ Ошибка в webapp_launch:', error);
+            await ctx.reply('❌ Ошибка открытия приложения. Попробуйте позже.');
         }
     }
     

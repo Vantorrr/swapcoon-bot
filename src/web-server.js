@@ -450,11 +450,13 @@ app.listen(PORT, async () => {
         bot.start();
         console.log('✅ Telegram бот запущен');
         
-        // Настраиваем Menu Button для WebApp
+        // Настраиваем Menu Button для WebApp (отложенно)
         setTimeout(async () => {
             try {
                 const webappUrl = process.env.WEBAPP_URL;
-                if (webappUrl && webappUrl.startsWith('https://')) {
+                console.log(`🔍 Setting up Menu Button with URL: ${webappUrl ? 'configured' : 'missing'}`);
+                
+                if (webappUrl && webappUrl.startsWith('https://') && bot && bot.api) {
                     await bot.api.setChatMenuButton({
                         menu_button: {
                             type: 'web_app',
@@ -465,11 +467,13 @@ app.listen(PORT, async () => {
                         }
                     });
                     console.log('✅ Menu Button настроена для WebApp');
+                } else {
+                    console.log('⚠️ Пропускаем настройку Menu Button (нет WEBAPP_URL или бот не готов)');
                 }
             } catch (menuError) {
                 console.log('⚠️ Не удалось настроить Menu Button:', menuError.message);
             }
-        }, 2000);
+        }, 5000);
         
         // Инициализируем Google Sheets
         if (googleSheetsManager) {
