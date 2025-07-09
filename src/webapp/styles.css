@@ -1475,20 +1475,7 @@ body {
     object-fit: cover;
 }
 
-.level-indicator {
-    position: absolute;
-    bottom: -8px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(255, 255, 255, 0.9);
-    color: var(--primary-color);
-    padding: var(--spacing-xs) var(--spacing-sm);
-    border-radius: var(--radius-md);
-    font-size: var(--font-xs);
-    font-weight: 600;
-    text-transform: uppercase;
-    white-space: nowrap;
-}
+
 
 .profile-details {
     flex: 1;

@@ -779,8 +779,17 @@ function updateProfileDisplay() {
     const stats = userProfile?.stats || { ordersCount: 0, totalVolume: 0 };
     let level = userProfile?.level;
     
-    // Если нет уровня, устанавливаем новичка
-    if (!level) {
+    // Проверка на админа - если админ, то показываем статус АДМИН
+    if (userProfile?.role === 'admin') {
+        level = {
+            level: 'АДМИН',
+            name: 'Администратор',
+            color: '#FF3B30',
+            benefits: ['Полный доступ к системе', 'Управление пользователями', 'Статистика и аналитика']
+        };
+        console.log('👨‍💼 Установлен статус администратора для пользователя', currentUserId);
+    } else if (!level) {
+        // Если нет уровня, устанавливаем новичка
         level = { 
             level: 'NEWBIE', 
             name: 'Новичок', 
@@ -818,10 +827,6 @@ function updateLevelDisplay(level, stats) {
     console.log('📊 Обновляем отображение уровня:', level, stats);
     
     // В профиле (если элементы существуют)
-    const levelIndicator = document.getElementById('level-indicator');
-    if (levelIndicator) {
-        levelIndicator.innerHTML = `<span class="level-text">${level.level}</span>`;
-    }
     
     const currentLevelEl = document.getElementById('current-level');
     if (currentLevelEl) {
@@ -893,6 +898,11 @@ function calculateLevelProgress(currentLevel, stats) {
             current = ordersCount;
             target = 100;
             break;
+        case 'АДМИН':
+            nextLevel = 'АДМИНИСТРАТОР';
+            requirement = '';
+            current = target = 1;
+            break;
         default:
             nextLevel = 'МАКСИМУМ';
             requirement = '';
@@ -900,9 +910,14 @@ function calculateLevelProgress(currentLevel, stats) {
     }
     
     percentage = Math.min(100, Math.round((current / target) * 100));
-    description = target > current ? 
-        `До следующего уровня: ${target - current} ${requirement}` : 
-        'Максимальный уровень достигнут!';
+    
+    if (currentLevel === 'АДМИН') {
+        description = 'Администратор системы - максимальные привилегии!';
+    } else {
+        description = target > current ? 
+            `До следующего уровня: ${target - current} ${requirement}` : 
+            'Максимальный уровень достигнут!';
+    }
     
     return { percentage, description, nextLevel };
 }
