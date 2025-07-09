@@ -4494,6 +4494,18 @@ async function setupMenuButton() {
 const webhookApp = express();
 webhookApp.use(express.json());
 
+// Webhook endpoint для получения уведомлений от Telegram
+webhookApp.post('/webhook/telegram', async (req, res) => {
+    try {
+        console.log('📨 Получен webhook от Telegram');
+        await bot.handleUpdate(req.body);
+        res.sendStatus(200);
+    } catch (error) {
+        console.error('❌ Ошибка обработки Telegram webhook:', error);
+        res.sendStatus(500);
+    }
+});
+
 // Webhook endpoint для получения уведомлений от веб-сервера
 webhookApp.post('/webhook/support-ticket', async (req, res) => {
     try {
@@ -4641,8 +4653,14 @@ if (require.main === module) {
     // Инициализируем Google Sheets
     initGoogleSheets();
     
-    // Запускаем бота
-    bot.start();
+    // Запускаем бота в webhook режиме для production
+    if (process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT_NAME) {
+        console.log('🌐 Запуск в webhook режиме (production)');
+        // В production не вызываем bot.start() - webhook обрабатывается через Express
+    } else {
+        console.log('🔄 Запуск в polling режиме (development)');
+        bot.start();
+    }
     
     // Ждем немного для инициализации, затем настраиваем Menu Button и отправляем уведомления
     setTimeout(async () => {
