@@ -194,6 +194,35 @@ bot.command('weblogs', async (ctx) => {
     });
 });
 
+// Команда проверки переменных (только для админов)
+bot.command('check_env', async (ctx) => {
+    const userId = ctx.from.id;
+    const userRole = await db.getUserRole(userId);
+    
+    if (userRole !== 'admin') {
+        return ctx.reply('❌ Эта команда доступна только администраторам');
+    }
+    
+    const webappUrl = process.env.WEBAPP_URL;
+    const botToken = process.env.BOT_TOKEN ? 'настроен' : 'отсутствует';
+    const adminId = process.env.MAIN_ADMIN_ID ? 'настроен' : 'отсутствует';
+    const port = process.env.PORT || '3000';
+    
+    await ctx.reply(
+        `🔍 <b>Проверка переменных окружения</b>\n\n` +
+        `🌐 <b>WEBAPP_URL:</b> ${webappUrl || 'НЕ НАСТРОЕНО'}\n` +
+        `🤖 <b>BOT_TOKEN:</b> ${botToken}\n` +
+        `👑 <b>MAIN_ADMIN_ID:</b> ${adminId}\n` +
+        `🚪 <b>PORT:</b> ${port}\n\n` +
+        `${webappUrl ? (webappUrl.startsWith('https://') ? '✅ URL корректный' : '❌ URL должен начинаться с https://') : '❌ WEBAPP_URL не настроен'}\n\n` +
+        `Railway переменные должны быть:\n` +
+        `• WEBAPP_URL = https://swapcoon-bot-production.up.railway.app\n` +
+        `• BOT_TOKEN = ваш_токен\n` +
+        `• MAIN_ADMIN_ID = ${userId}`,
+        { parse_mode: 'HTML' }
+    );
+});
+
 // Команда настройки WebApp (только для админов)
 bot.command('setup_webapp', async (ctx) => {
     const userId = ctx.from.id;
