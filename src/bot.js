@@ -4821,16 +4821,22 @@ if (require.main === module) {
         // Инициализируем Google Sheets
         initGoogleSheets();
         
-        // Запускаем бота в webhook режиме для production
-        if (process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT_NAME) {
-            console.log('🌐 Запуск в webhook режиме (production)');
-            // Инициализируем бота для webhook режима
-            await bot.init();
-            console.log('✅ Бот инициализирован для webhook режима');
-        } else {
-            console.log('🔄 Запуск в polling режиме (development)');
-            bot.start();
+        // ВРЕМЕННО: Всегда используем polling режим пока не исправим webhook
+        console.log('🔄 АВАРИЙНЫЙ РЕЖИМ: Запуск в polling режиме');
+        
+        // Добавляем админов в базу если их нет
+        try {
+            const adminIds = [8141463258, 461759951, 280417617];
+            for (const adminId of adminIds) {
+                await db.addStaff(adminId, 'admin');
+            }
+            await db.addStaff(7692725312, 'operator');
+            console.log('✅ Персонал добавлен в базу данных');
+        } catch (error) {
+            console.log('⚠️ Ошибка добавления персонала:', error.message);
         }
+        
+        bot.start();
         
         // Ждем немного для инициализации, затем настраиваем Menu Button и отправляем уведомления
         setTimeout(async () => {
