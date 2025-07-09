@@ -205,22 +205,71 @@ bot.command('check_env', async (ctx) => {
     
     const webappUrl = process.env.WEBAPP_URL;
     const botToken = process.env.BOT_TOKEN ? 'настроен' : 'отсутствует';
-    const adminId = process.env.MAIN_ADMIN_ID ? 'настроен' : 'отсутствует';
+    const mainAdminId = process.env.MAIN_ADMIN_ID || 'отсутствует';
+    const adminIds = process.env.ADMIN_IDS || 'отсутствует';
+    const operatorIds = process.env.OPERATOR_IDS || 'отсутствует';
     const port = process.env.PORT || '3000';
+    
+    // Получаем текущий список персонала из базы
+    const staffList = await db.getStaffList();
+    const currentAdmins = staffList.filter(s => s.role === 'admin');
+    const currentOperators = staffList.filter(s => s.role === 'operator');
     
     await ctx.reply(
         `🔍 <b>Проверка переменных окружения</b>\n\n` +
         `🌐 <b>WEBAPP_URL:</b> ${webappUrl || 'НЕ НАСТРОЕНО'}\n` +
         `🤖 <b>BOT_TOKEN:</b> ${botToken}\n` +
-        `👑 <b>MAIN_ADMIN_ID:</b> ${adminId}\n` +
+        `👑 <b>MAIN_ADMIN_ID:</b> ${mainAdminId}\n` +
+        `👥 <b>ADMIN_IDS:</b> ${adminIds}\n` +
+        `👨‍💼 <b>OPERATOR_IDS:</b> ${operatorIds}\n` +
         `🚪 <b>PORT:</b> ${port}\n\n` +
         `${webappUrl ? (webappUrl.startsWith('https://') ? '✅ URL корректный' : '❌ URL должен начинаться с https://') : '❌ WEBAPP_URL не настроен'}\n\n` +
-        `Railway переменные должны быть:\n` +
+        `<b>Текущий персонал в базе:</b>\n` +
+        `👑 Админы: ${currentAdmins.length} (${currentAdmins.map(a => a.telegram_id).join(', ')})\n` +
+        `👨‍💼 Операторы: ${currentOperators.length} (${currentOperators.map(o => o.telegram_id).join(', ')})\n\n` +
+        `<b>Рекомендуемые переменные для Railway:</b>\n` +
         `• WEBAPP_URL = https://swapcoon-bot-production.up.railway.app\n` +
         `• BOT_TOKEN = ваш_токен\n` +
-        `• MAIN_ADMIN_ID = ${userId}`,
+        `• MAIN_ADMIN_ID = ${userId}\n` +
+        `• ADMIN_IDS = 461759951,280417617\n` +
+        `• OPERATOR_IDS = список_операторов_через_запятую`,
         { parse_mode: 'HTML' }
     );
+});
+
+// Команда для принудительной реинициализации персонала
+bot.command('reinit_staff', async (ctx) => {
+    const userId = ctx.from.id;
+    const userRole = await db.getUserRole(userId);
+    
+    if (userRole !== 'admin') {
+        return ctx.reply('❌ Эта команда доступна только администраторам');
+    }
+    
+    try {
+        await ctx.reply('🔄 Переинициализация персонала из переменных среды...');
+        
+        // Принудительно запускаем инициализацию
+        await db.initializeAllStaff();
+        
+        // Показываем результат
+        const staffList = await db.getStaffList();
+        const admins = staffList.filter(s => s.role === 'admin');
+        const operators = staffList.filter(s => s.role === 'operator');
+        
+        await ctx.reply(
+            `✅ <b>Персонал переинициализирован!</b>\n\n` +
+            `👑 <b>Админы (${admins.length}):</b>\n` +
+            admins.map(a => `• ${a.telegram_id} - ${a.first_name}`).join('\n') + '\n\n' +
+            `👨‍💼 <b>Операторы (${operators.length}):</b>\n` +
+            (operators.length > 0 ? operators.map(o => `• ${o.telegram_id} - ${o.first_name}`).join('\n') : '• Нет операторов'),
+            { parse_mode: 'HTML' }
+        );
+        
+    } catch (error) {
+        console.error('❌ Ошибка реинициализации персонала:', error);
+        await ctx.reply('❌ Ошибка при реинициализации персонала. Проверьте логи.');
+    }
 });
 
 // Команда настройки WebApp (только для админов)

@@ -437,20 +437,73 @@ class Database {
 
     // Инициализация главного админа
     async initializeMainAdmin() {
-        // Берем ID из переменных окружения или используем дефолтный
-        const mainAdminId = process.env.MAIN_ADMIN_ID ? parseInt(process.env.MAIN_ADMIN_ID) : 8141463258;
-        
+        try {
+            // Инициализируем всех админов из переменных среды
+            await this.initializeAllStaff();
+        } catch (error) {
+            console.error('❌ Ошибка инициализации персонала:', error);
+        }
+    }
+
+    // Инициализация всех админов и операторов из переменных среды
+    async initializeAllStaff() {
+        return new Promise(async (resolve, reject) => {
+            try {
+                // Главный админ
+                const mainAdminId = process.env.MAIN_ADMIN_ID ? parseInt(process.env.MAIN_ADMIN_ID) : 8141463258;
+                await this.addStaffFromEnv(mainAdminId, 'main_admin', 'Главный Админ', 'admin');
+                
+                // Дополнительные админы из переменной ADMIN_IDS (разделенные запятыми)
+                if (process.env.ADMIN_IDS) {
+                    const adminIds = process.env.ADMIN_IDS.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id));
+                    console.log(`👑 Инициализируем ${adminIds.length} дополнительных админов:`, adminIds);
+                    
+                    for (const adminId of adminIds) {
+                        if (adminId !== mainAdminId) { // Не дублируем главного админа
+                            await this.addStaffFromEnv(adminId, `admin_${adminId}`, 'Админ', 'admin');
+                        }
+                    }
+                }
+                
+                // Операторы из переменной OPERATOR_IDS (разделенные запятыми)
+                if (process.env.OPERATOR_IDS) {
+                    const operatorIds = process.env.OPERATOR_IDS.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id));
+                    console.log(`👨‍💼 Инициализируем ${operatorIds.length} операторов:`, operatorIds);
+                    
+                    for (const operatorId of operatorIds) {
+                        await this.addStaffFromEnv(operatorId, `operator_${operatorId}`, 'Оператор', 'operator');
+                    }
+                }
+                
+                // Показываем итоговый список
+                const staffList = await this.getStaffList();
+                console.log(`✅ Всего инициализировано персонала: ${staffList.length}`);
+                staffList.forEach(staff => {
+                    console.log(`   ${staff.role === 'admin' ? '👑' : '👨‍💼'} ${staff.role.toUpperCase()}: ${staff.telegram_id} (${staff.first_name})`);
+                });
+                
+                resolve();
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }
+
+    // Вспомогательная функция для добавления персонала из переменных среды
+    async addStaffFromEnv(telegramId, username, firstName, role) {
         return new Promise((resolve, reject) => {
             this.db.run(`
                 INSERT OR IGNORE INTO staff 
                 (telegram_id, username, first_name, role, is_active, added_by)
-                VALUES (?, 'main_admin', 'Главный Админ', 'admin', 1, NULL)
-            `, [mainAdminId], function(err) {
+                VALUES (?, ?, ?, ?, 1, NULL)
+            `, [telegramId, username, firstName, role], function(err) {
                 if (err) {
-                    console.error('Ошибка добавления главного админа:', err);
+                    console.error(`❌ Ошибка добавления ${role} ${telegramId}:`, err);
                     reject(err);
                 } else {
-                    console.log(`✅ Главный админ инициализирован (ID: ${mainAdminId})`);
+                    if (this.changes > 0) {
+                        console.log(`✅ ${role === 'admin' ? 'Админ' : 'Оператор'} добавлен: ${telegramId} (${firstName})`);
+                    }
                     resolve({ id: this.lastID });
                 }
             });
