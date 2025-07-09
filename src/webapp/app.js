@@ -91,6 +91,22 @@ function initEventListeners() {
     // Адрес кошелька
     document.getElementById('wallet-address').addEventListener('input', validateWalletAddress);
     
+    // Обработчики настроек для немедленного применения
+    const themeSelect = document.getElementById('theme-select');
+    const languageSelect = document.getElementById('language-select');
+    
+    if (themeSelect) {
+        themeSelect.addEventListener('change', (e) => {
+            applyTheme(e.target.value);
+        });
+    }
+    
+    if (languageSelect) {
+        languageSelect.addEventListener('change', (e) => {
+            applyLanguage(e.target.value);
+        });
+    }
+    
     // Дашборд - переключение периодов
     const chartPeriods = document.querySelectorAll('.chart-period');
     chartPeriods.forEach(button => {
@@ -124,6 +140,11 @@ async function loadInitialData() {
         
         // Обновляем калькулятор
         calculateExchange();
+        
+        // Загружаем сохраненные настройки (с небольшой задержкой)
+        setTimeout(() => {
+            loadSavedSettings();
+        }, 500);
         
         // Скрываем загрузочный экран
         setTimeout(() => {
@@ -945,13 +966,166 @@ async function saveSettings() {
         const data = await response.json();
         
         if (data.success) {
-            showNotification('Настройки сохранены!', 'success');
+            // Сохраняем настройки локально
+            localStorage.setItem('userSettings', JSON.stringify(settings));
+            
+            // Применяем настройки
+            applyTheme(settings.theme);
+            applyLanguage(settings.language);
+            
+            showNotification('Настройки сохранены и применены!', 'success');
         } else {
             throw new Error(data.error);
         }
     } catch (error) {
         console.error('❌ Ошибка сохранения настроек:', error);
         showNotification('Ошибка сохранения настроек', 'error');
+    }
+}
+
+// Применение темы
+function applyTheme(theme) {
+    const root = document.documentElement;
+    
+    console.log(`🎨 Применение темы: ${theme}`);
+    
+    if (theme === 'dark') {
+        // Темная тема
+        root.style.setProperty('--background-color', '#000000');
+        root.style.setProperty('--surface-color', '#1C1C1E');
+        root.style.setProperty('--text-primary', '#FFFFFF');
+        root.style.setProperty('--text-secondary', '#8E8E93');
+        root.style.setProperty('--text-tertiary', '#48484A');
+        root.style.setProperty('--border-color', '#38383A');
+        
+        document.body.classList.add('dark-theme');
+    } else if (theme === 'light') {
+        // Светлая тема
+        root.style.setProperty('--background-color', '#F2F2F7');
+        root.style.setProperty('--surface-color', '#FFFFFF');
+        root.style.setProperty('--text-primary', '#000000');
+        root.style.setProperty('--text-secondary', '#8E8E93');
+        root.style.setProperty('--text-tertiary', '#C7C7CC');
+        root.style.setProperty('--border-color', '#E5E5EA');
+        
+        document.body.classList.remove('dark-theme');
+    } else {
+        // Авто тема (следует системной)
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        applyTheme(prefersDark ? 'dark' : 'light');
+    }
+    
+    // Обновляем цвета Telegram WebApp
+    if (tg) {
+        tg.setHeaderColor(theme === 'dark' ? '#1C1C1E' : '#007AFF');
+        tg.setBackgroundColor(theme === 'dark' ? '#000000' : '#F2F2F7');
+    }
+}
+
+// Применение языка
+function applyLanguage(language) {
+    console.log(`🌐 Применение языка: ${language}`);
+    
+    if (language === 'en') {
+        // Английские переводы
+        updateText('Главная', 'Main');
+        updateText('Дашборд', 'Dashboard');
+        updateText('История', 'History');
+        updateText('Профиль', 'Profile');
+        updateText('Настройки', 'Settings');
+        updateText('Обмен валют', 'Currency Exchange');
+        updateText('Сумма', 'Amount');
+        updateText('Продолжить', 'Continue');
+        updateText('Создать заявку', 'Create Order');
+        updateText('Сохранить настройки', 'Save Settings');
+        
+        // Обновляем плейсхолдеры
+        const amountInput = document.getElementById('from-amount');
+        if (amountInput) amountInput.placeholder = 'Enter amount';
+        
+    } else {
+        // Русские переводы (по умолчанию)
+        updateText('Main', 'Главная');
+        updateText('Dashboard', 'Дашборд');
+        updateText('History', 'История');
+        updateText('Profile', 'Профиль');
+        updateText('Settings', 'Настройки');
+        updateText('Currency Exchange', 'Обмен валют');
+        updateText('Amount', 'Сумма');
+        updateText('Continue', 'Продолжить');
+        updateText('Create Order', 'Создать заявку');
+        updateText('Save Settings', 'Сохранить настройки');
+        
+        const amountInput = document.getElementById('from-amount');
+        if (amountInput) amountInput.placeholder = 'Введите сумму';
+    }
+}
+
+// Обновление текста элементов
+function updateText(oldText, newText) {
+    const elements = document.querySelectorAll('*');
+    elements.forEach(element => {
+        if (element.children.length === 0 && element.textContent.trim() === oldText) {
+            element.textContent = newText;
+        }
+    });
+}
+
+// Загрузка сохраненных настроек
+function loadSavedSettings() {
+    try {
+        const savedSettings = localStorage.getItem('userSettings');
+        if (savedSettings) {
+            const settings = JSON.parse(savedSettings);
+            console.log('📋 Загружаем сохраненные настройки:', settings);
+            
+            // Применяем настройки безопасно
+            if (settings.theme) {
+                const themeSelect = document.getElementById('theme-select');
+                if (themeSelect) {
+                    themeSelect.value = settings.theme;
+                }
+                applyTheme(settings.theme);
+            }
+            
+            if (settings.language) {
+                const languageSelect = document.getElementById('language-select');
+                if (languageSelect) {
+                    languageSelect.value = settings.language;
+                }
+                applyLanguage(settings.language);
+            }
+            
+            if (settings.notifications_enabled !== undefined) {
+                const notificationsToggle = document.getElementById('notifications-enabled');
+                if (notificationsToggle) {
+                    notificationsToggle.checked = settings.notifications_enabled;
+                }
+            }
+            
+            if (settings.currency_preference) {
+                const currencySelect = document.getElementById('currency-preference');
+                if (currencySelect) {
+                    currencySelect.value = settings.currency_preference;
+                }
+            }
+            
+            if (settings.privacy_level) {
+                const privacySelect = document.getElementById('privacy-level');
+                if (privacySelect) {
+                    privacySelect.value = settings.privacy_level;
+                }
+            }
+            
+            if (settings.two_fa_enabled !== undefined) {
+                const twoFaToggle = document.getElementById('two-fa-enabled');
+                if (twoFaToggle) {
+                    twoFaToggle.checked = settings.two_fa_enabled;
+                }
+            }
+        }
+    } catch (error) {
+        console.error('❌ Ошибка загрузки настроек:', error);
     }
 }
 
