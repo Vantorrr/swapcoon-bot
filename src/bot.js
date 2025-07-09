@@ -2984,6 +2984,75 @@ bot.on('callback_query:data', async (ctx) => {
     }
 });
 
+// Обработчик данных из WebApp
+bot.on('message:web_app_data', async (ctx) => {
+    try {
+        const webAppData = ctx.message.web_app_data.data;
+        const userId = ctx.from.id;
+        const userData = await db.getUser(userId);
+        
+        console.log(`📱 WebApp данные от ${userId}:`, webAppData);
+        
+        // Парсим данные
+        const data = JSON.parse(webAppData);
+        
+        if (data.action === 'contact_support') {
+            console.log(`🆘 Запрос поддержки от пользователя ${userId}`);
+            
+            // Создаем тикет
+            const ticketId = `SUPPORT-${Date.now()}`;
+            const userName = userData?.first_name || userData?.username || `ID: ${userId}`;
+            
+            // Уведомляем администраторов
+            const supportMessage = `🆘 <b>Запрос поддержки из WebApp</b>\n\n` +
+                `🎫 ID: ${ticketId}\n` +
+                `👤 Пользователь: ${userName}\n` +
+                `📱 Источник: ${data.source}\n` +
+                `⏰ Время: ${new Date(data.timestamp).toLocaleString('ru-RU')}\n\n` +
+                `💬 Пользователь запросил помощь через WebApp\n\n` +
+                `➡️ Свяжитесь с пользователем: <a href="tg://user?id=${userId}">написать</a>`;
+            
+            // Отправляем уведомление всем администраторам
+            try {
+                const adminIds = await db.getAdminIds();
+                
+                for (const adminId of adminIds) {
+                    try {
+                        await bot.api.sendMessage(adminId, supportMessage, { 
+                            parse_mode: 'HTML',
+                            reply_markup: new InlineKeyboard()
+                                .text('💬 Написать пользователю', `contact_user_${userId}`)
+                                .text('🎫 Закрыть тикет', `close_ticket_${ticketId}`)
+                        });
+                        console.log(`📨 Уведомление отправлено админу ${adminId}`);
+                    } catch (sendError) {
+                        console.log(`⚠️ Не удалось уведомить админа ${adminId}:`, sendError.message);
+                    }
+                }
+            } catch (adminError) {
+                console.log('⚠️ Ошибка получения списка администраторов:', adminError.message);
+            }
+            
+            // Отвечаем пользователю
+            await ctx.reply(
+                `✅ <b>Запрос получен!</b>\n\n` +
+                `🎫 Номер тикета: ${ticketId}\n` +
+                `⏰ Время ответа: до 15 минут\n\n` +
+                `📞 Наш оператор свяжется с вами в ближайшее время!`,
+                { 
+                    parse_mode: 'HTML',
+                    reply_markup: new InlineKeyboard()
+                        .text('🏠 На главную', 'back_to_main')
+                }
+            );
+        }
+        
+    } catch (error) {
+        console.error('❌ Ошибка обработки WebApp данных:', error);
+        await ctx.reply('❌ Ошибка обработки запроса. Попробуйте позже.');
+    }
+});
+
 // Команда для получения реферальной ссылки
 bot.command('ref', async (ctx) => {
     const userId = ctx.from.id;

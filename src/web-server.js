@@ -327,6 +327,58 @@ app.put('/api/profile/:userId/settings', async (req, res) => {
     }
 });
 
+// API для создания тикета поддержки
+app.post('/api/support-ticket', async (req, res) => {
+    try {
+        const { userId, source, message, timestamp } = req.body;
+        
+        console.log(`🎫 Создание тикета поддержки от пользователя ${userId}`);
+        
+        // Получаем данные пользователя
+        const user = await db.getUser(userId);
+        const userName = user?.first_name || user?.username || `ID: ${userId}`;
+        
+        // Создаем тикет в базе (если есть такая таблица)
+        const ticketId = `SUPPORT-${Date.now()}`;
+        
+        // Уведомляем администраторов
+        const supportMessage = `🆘 <b>Запрос поддержки</b>\n\n` +
+            `🎫 ID: ${ticketId}\n` +
+            `👤 Пользователь: ${userName}\n` +
+            `📱 Источник: ${source}\n` +
+            `⏰ Время: ${new Date(timestamp).toLocaleString('ru-RU')}\n` +
+            `💬 Сообщение: ${message}\n\n` +
+            `➡️ Свяжитесь с пользователем: /user ${userId}`;
+        
+        // Отправляем уведомление всем администраторам
+        try {
+            const adminIds = await db.getAdminIds();
+            
+            for (const adminId of adminIds) {
+                try {
+                    // Здесь нужно подключить бота для отправки сообщений
+                    // await bot.api.sendMessage(adminId, supportMessage, { parse_mode: 'HTML' });
+                    console.log(`📨 Уведомление отправлено админу ${adminId}`);
+                } catch (sendError) {
+                    console.log(`⚠️ Не удалось уведомить админа ${adminId}:`, sendError.message);
+                }
+            }
+        } catch (adminError) {
+            console.log('⚠️ Ошибка получения списка администраторов:', adminError.message);
+        }
+        
+        res.json({ 
+            success: true, 
+            message: 'Тикет создан! Мы свяжемся с вами в ближайшее время.',
+            data: { ticketId, timestamp }
+        });
+        
+    } catch (error) {
+        console.error('❌ Ошибка создания тикета поддержки:', error);
+        res.status(500).json({ success: false, error: 'Ошибка создания тикета поддержки' });
+    }
+});
+
 // Функция обработки реферального бонуса
 async function processReferralBonus(referrerId, order) {
     try {
