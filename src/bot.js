@@ -342,6 +342,9 @@ bot.on('callback_query:data', async (ctx) => {
         await ctx.answerCallbackQuery();
         const webappUrl = process.env.WEBAPP_URL;
         
+        console.log(`🔍 Debug WEBAPP_URL: "${webappUrl}"`);
+        console.log(`🔍 All env vars:`, Object.keys(process.env).filter(key => key.includes('WEBAPP')));
+        
         if (webappUrl && webappUrl.startsWith('https://')) {
             // Отправляем сообщение с WebApp кнопкой
             await ctx.reply(
