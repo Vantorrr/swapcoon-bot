@@ -1040,7 +1040,6 @@ body {
     justify-content: space-between;
     padding: var(--spacing-md);
     border-radius: var(--radius-md);
-    cursor: pointer;
     transition: background-color 0.2s ease;
     margin-bottom: var(--spacing-xs);
 }
@@ -1053,7 +1052,62 @@ body {
     margin-bottom: 0;
 }
 
+.currency-section-header {
+    padding: var(--spacing-md) var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+}
+
+.currency-section-header h4 {
+    font-size: var(--font-sm);
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.currency-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.favorite-btn {
+    background: none;
+    border: none;
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--text-tertiary);
+    font-size: var(--font-md);
+    min-width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.favorite-btn:hover {
+    background: var(--border-color);
+    color: var(--warning-color);
+    transform: scale(1.1);
+}
+
+.favorite-btn.active {
+    color: #FFD700;
+}
+
+.favorite-btn.active:hover {
+    color: #FFA500;
+}
+
 .currency-info {
+    cursor: pointer;
+    flex: 1;
     display: flex;
     align-items: center;
     gap: var(--spacing-md);

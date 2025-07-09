@@ -27,7 +27,9 @@ class RatesService {
             'EUR': 0.92,
             'RUB': 95.0,
             'UAH': 37.0,
-            'KZT': 450.0
+            'KZT': 450.0,
+            'ARS': 1000.0, // Аргентинский песо
+            'BRL': 5.1     // Бразильский реал
         };
         
         this.initAutoUpdate();
@@ -159,7 +161,9 @@ class RatesService {
             { currency: 'USDC', buy: 0.995, sell: 1.005, price: 1.0, change24h: 0.0, lastUpdate: new Date().toISOString(), type: 'crypto' },
             { currency: 'USD', buy: 1.0, sell: 1.0, price: 1.0, change24h: 0, lastUpdate: new Date().toISOString(), type: 'fiat' },
             { currency: 'EUR', buy: 0.90, sell: 0.94, price: 0.92, change24h: 0, lastUpdate: new Date().toISOString(), type: 'fiat' },
-            { currency: 'RUB', buy: 0.0103, sell: 0.0109, price: 0.0106, change24h: 0, lastUpdate: new Date().toISOString(), type: 'fiat' }
+            { currency: 'RUB', buy: 0.0103, sell: 0.0109, price: 0.0106, change24h: 0, lastUpdate: new Date().toISOString(), type: 'fiat' },
+            { currency: 'ARS', buy: 0.00098, sell: 0.00102, price: 0.001, change24h: 0, lastUpdate: new Date().toISOString(), type: 'fiat' },
+            { currency: 'BRL', buy: 0.194, sell: 0.206, price: 0.20, change24h: 0, lastUpdate: new Date().toISOString(), type: 'fiat' }
         ];
     }
 

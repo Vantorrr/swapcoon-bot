@@ -8,11 +8,51 @@ let currentAMLResult = null;
 let currentCalculation = null;
 let userProfile = null;
 let charts = {};
+let favoriteCurrencies = [];
+
+// Функции для работы с избранными валютами
+function loadFavorites() {
+    try {
+        const saved = localStorage.getItem('favoriteCurrencies');
+        favoriteCurrencies = saved ? JSON.parse(saved) : ['BTC', 'USDT', 'RUB'];
+        console.log('✅ Избранные валюты загружены:', favoriteCurrencies);
+    } catch (error) {
+        console.error('❌ Ошибка загрузки избранных валют:', error);
+        favoriteCurrencies = ['BTC', 'USDT', 'RUB']; // По умолчанию
+    }
+}
+
+function saveFavorites() {
+    try {
+        localStorage.setItem('favoriteCurrencies', JSON.stringify(favoriteCurrencies));
+        console.log('✅ Избранные валюты сохранены:', favoriteCurrencies);
+    } catch (error) {
+        console.error('❌ Ошибка сохранения избранных валют:', error);
+    }
+}
+
+function toggleFavorite(currency) {
+    const index = favoriteCurrencies.indexOf(currency);
+    if (index === -1) {
+        favoriteCurrencies.push(currency);
+        showNotification(`${currency} добавлено в избранное ⭐️`, 'success');
+    } else {
+        favoriteCurrencies.splice(index, 1);
+        showNotification(`${currency} удалено из избранного`, 'info');
+    }
+    saveFavorites();
+    updateCurrencyList(); // Обновляем список
+}
+
+function isFavorite(currency) {
+    return favoriteCurrencies.includes(currency);
+}
 
 // Инициализация приложения
 document.addEventListener('DOMContentLoaded', function() {
     initTelegramWebApp();
     initEventListeners();
+    loadFavorites(); // Загружаем избранные валюты
     loadInitialData();
 });
 
@@ -364,43 +404,80 @@ function updateCurrencyList() {
     const currencyList = document.getElementById('currency-list');
     currencyList.innerHTML = '';
     
-    currentRates.forEach(rate => {
-        const item = document.createElement('div');
-        item.className = 'currency-item';
-        item.onclick = () => selectCurrency(rate.currency);
+    // Разделяем валюты на избранные и обычные
+    const favorites = currentRates.filter(rate => isFavorite(rate.currency));
+    const others = currentRates.filter(rate => !isFavorite(rate.currency));
+    
+    // Добавляем заголовок избранных (если есть)
+    if (favorites.length > 0) {
+        const favoritesHeader = document.createElement('div');
+        favoritesHeader.className = 'currency-section-header';
+        favoritesHeader.innerHTML = `
+            <h4><i class="fas fa-star" style="color: #FFD700;"></i> Избранные</h4>
+        `;
+        currencyList.appendChild(favoritesHeader);
         
-        const changePercent = rate.change24h || 0;
-        const changeClass = changePercent > 0 ? 'positive' : 'negative';
-        const changeIcon = changePercent > 0 ? '+' : '';
+        // Добавляем избранные валюты
+        favorites.forEach(rate => {
+            currencyList.appendChild(createCurrencyItem(rate, true));
+        });
         
-        // Форматируем цену в зависимости от типа валюты
-        let priceDisplay;
-        if (rate.type === 'fiat' && rate.currency !== 'USD') {
-            priceDisplay = `$${rate.price.toFixed(4)}`;
-        } else if (rate.price >= 1000) {
-            priceDisplay = `$${rate.price.toLocaleString()}`;
-        } else if (rate.price >= 1) {
-            priceDisplay = `$${rate.price.toFixed(2)}`;
-        } else {
-            priceDisplay = `$${rate.price.toFixed(6)}`;
+        // Разделитель
+        if (others.length > 0) {
+            const separator = document.createElement('div');
+            separator.className = 'currency-section-header';
+            separator.innerHTML = `<h4><i class="fas fa-list"></i> Все валюты</h4>`;
+            currencyList.appendChild(separator);
         }
+    }
+    
+    // Добавляем остальные валюты
+    others.forEach(rate => {
+        currencyList.appendChild(createCurrencyItem(rate, false));
+    });
+}
 
-        item.innerHTML = `
-            <div class="currency-info">
-                <div class="currency-icon">${rate.currency.substr(0, 2)}</div>
-                <div class="currency-details">
-                    <h4>${rate.currency}</h4>
-                    <p>${getCurrencyName(rate.currency)}</p>
-                </div>
+// Создание элемента валюты
+function createCurrencyItem(rate, isFav) {
+    const item = document.createElement('div');
+    item.className = 'currency-item';
+    
+    const changePercent = rate.change24h || 0;
+    const changeClass = changePercent > 0 ? 'positive' : 'negative';
+    const changeIcon = changePercent > 0 ? '+' : '';
+    
+    // Форматируем цену в зависимости от типа валюты
+    let priceDisplay;
+    if (rate.type === 'fiat' && rate.currency !== 'USD') {
+        priceDisplay = `$${rate.price.toFixed(4)}`;
+    } else if (rate.price >= 1000) {
+        priceDisplay = `$${rate.price.toLocaleString()}`;
+    } else if (rate.price >= 1) {
+        priceDisplay = `$${rate.price.toFixed(2)}`;
+    } else {
+        priceDisplay = `$${rate.price.toFixed(6)}`;
+    }
+
+    item.innerHTML = `
+        <div class="currency-info" onclick="selectCurrency('${rate.currency}')">
+            <div class="currency-icon">${rate.currency.substr(0, 2)}</div>
+            <div class="currency-details">
+                <h4>${rate.currency}</h4>
+                <p>${getCurrencyName(rate.currency)}</p>
             </div>
+        </div>
+        <div class="currency-actions">
             <div class="currency-rate">
                 <div class="currency-price">${priceDisplay}</div>
                 <div class="currency-change ${changeClass}">${changeIcon}${Math.abs(changePercent).toFixed(1)}%</div>
             </div>
-        `;
-        
-        currencyList.appendChild(item);
-    });
+            <button class="favorite-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite('${rate.currency}')" title="${isFav ? 'Удалить из избранного' : 'Добавить в избранное'}">
+                <i class="fas fa-star"></i>
+            </button>
+        </div>
+    `;
+    
+    return item;
 }
 
 // Получение названия валюты
@@ -420,7 +497,9 @@ function getCurrencyName(currency) {
         'EUR': 'Euro',
         'RUB': 'Russian Ruble',
         'UAH': 'Ukrainian Hryvnia',
-        'KZT': 'Kazakhstani Tenge'
+        'KZT': 'Kazakhstani Tenge',
+        'ARS': 'Argentine Peso',
+        'BRL': 'Brazilian Real'
     };
     return names[currency] || currency;
 }
