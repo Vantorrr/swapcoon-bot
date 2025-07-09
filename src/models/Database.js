@@ -437,7 +437,8 @@ class Database {
 
     // Инициализация главного админа
     async initializeMainAdmin() {
-        const mainAdminId = 8141463258; // Ваш Telegram ID
+        // Берем ID из переменных окружения или используем дефолтный
+        const mainAdminId = process.env.MAIN_ADMIN_ID ? parseInt(process.env.MAIN_ADMIN_ID) : 8141463258;
         
         return new Promise((resolve, reject) => {
             this.db.run(`
@@ -449,7 +450,7 @@ class Database {
                     console.error('Ошибка добавления главного админа:', err);
                     reject(err);
                 } else {
-                    console.log('✅ Главный админ инициализирован');
+                    console.log(`✅ Главный админ инициализирован (ID: ${mainAdminId})`);
                     resolve({ id: this.lastID });
                 }
             });
