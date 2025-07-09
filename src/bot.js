@@ -4658,6 +4658,12 @@ webhookApp.get('/api/news', async (req, res) => {
 webhookApp.post('/webhook/telegram', async (req, res) => {
     try {
         console.log('📨 Получен webhook от Telegram');
+        
+        // Инициализируем бота если не инициализирован
+        if (!bot.botInfo) {
+            await bot.init();
+        }
+        
         await bot.handleUpdate(req.body);
         res.sendStatus(200);
     } catch (error) {
@@ -4809,23 +4815,27 @@ bot.callbackQuery('cancel_restart', async (ctx) => {
 
 // Запуск бота
 if (require.main === module) {
-    console.log('🚀 SwapCoon Bot запускается...');
-    
-    // Инициализируем Google Sheets
-    initGoogleSheets();
-    
-    // Запускаем бота в webhook режиме для production
-    if (process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT_NAME) {
-        console.log('🌐 Запуск в webhook режиме (production)');
-        // В production не вызываем bot.start() - webhook обрабатывается через Express
-    } else {
-        console.log('🔄 Запуск в polling режиме (development)');
-        bot.start();
-    }
-    
-    // Ждем немного для инициализации, затем настраиваем Menu Button и отправляем уведомления
-    setTimeout(async () => {
-        await setupMenuButton();
-        await sendStartupNotification();
-    }, 2000);
+    (async () => {
+        console.log('🚀 SwapCoon Bot запускается...');
+        
+        // Инициализируем Google Sheets
+        initGoogleSheets();
+        
+        // Запускаем бота в webhook режиме для production
+        if (process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT_NAME) {
+            console.log('🌐 Запуск в webhook режиме (production)');
+            // Инициализируем бота для webhook режима
+            await bot.init();
+            console.log('✅ Бот инициализирован для webhook режима');
+        } else {
+            console.log('🔄 Запуск в polling режиме (development)');
+            bot.start();
+        }
+        
+        // Ждем немного для инициализации, затем настраиваем Menu Button и отправляем уведомления
+        setTimeout(async () => {
+            await setupMenuButton();
+            await sendStartupNotification();
+        }, 2000);
+    })();
 } 
