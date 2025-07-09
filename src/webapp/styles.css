@@ -1199,9 +1199,22 @@ body {
     font-weight: 500;
 }
 
-/* USER LEVEL IN HEADER */
-.user-level {
+/* USER INFO IN HEADER */
+.user-info {
+    text-align: right;
     margin-bottom: var(--spacing-xs);
+}
+
+.user-name {
+    color: white;
+    font-size: var(--font-sm);
+    font-weight: 500;
+    margin-bottom: 2px;
+}
+
+.user-level {
+    display: flex;
+    justify-content: flex-end;
 }
 
 .level-badge {

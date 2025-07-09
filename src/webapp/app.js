@@ -40,6 +40,10 @@ function initTelegramWebApp() {
         
         console.log('✅ Telegram Web App инициализировано');
         console.log('👤 User ID:', currentUserId);
+        console.log('👤 User data:', tg.initDataUnsafe?.user);
+        
+        // Сразу обновляем отображение профиля с данными из Telegram
+        updateProfileDisplay();
     } else {
         console.log('⚠️ Telegram Web App недоступно, режим разработки');
         currentUserId = 123456789; // Тестовый ID для разработки
@@ -638,16 +642,35 @@ async function loadUserProfile() {
 
 // Обновление отображения профиля
 function updateProfileDisplay() {
-    if (!userProfile) return;
+    // Получаем данные пользователя из Telegram WebApp API
+    const telegramUser = tg?.initDataUnsafe?.user;
     
-    // Основная информация
-    document.getElementById('profile-name').textContent = userProfile.first_name || 'Пользователь';
-    document.getElementById('profile-username').textContent = `@${userProfile.username || userProfile.telegram_id}`;
+    // Основная информация (приоритет данным из Telegram)
+    const firstName = telegramUser?.first_name || userProfile?.first_name || 'Пользователь';
+    const lastName = telegramUser?.last_name || userProfile?.last_name || '';
+    const fullName = `${firstName} ${lastName}`.trim();
+    const username = telegramUser?.username || userProfile?.username || currentUserId;
     
-    // Аватар
+    document.getElementById('profile-name').textContent = fullName;
+    document.getElementById('profile-username').textContent = `@${username}`;
+    
+    // Обновляем имя в заголовке
+    const headerUserName = document.getElementById('header-user-name');
+    if (headerUserName) {
+        headerUserName.textContent = firstName; // Используем только имя в заголовке
+    }
+    
+    // Аватар (если есть фото в Telegram, используем его)
     const avatarImg = document.getElementById('avatar-image');
     if (avatarImg) {
-        avatarImg.src = userProfile.avatar || '../assets/images/logo.png';
+        if (telegramUser?.photo_url) {
+            avatarImg.src = telegramUser.photo_url;
+        } else if (userProfile?.avatar) {
+            avatarImg.src = userProfile.avatar;
+        } else {
+            avatarImg.src = '../assets/images/logo.png';
+        }
+        
         avatarImg.onerror = () => {
             avatarImg.src = '../assets/images/logo.png';
         };
