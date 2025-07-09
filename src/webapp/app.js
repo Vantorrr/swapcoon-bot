@@ -58,33 +58,59 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Инициализация Telegram Web App
 function initTelegramWebApp() {
-    if (tg) {
-        tg.ready();
-        tg.expand();
-        
-        // Получаем ID пользователя из параметров или Telegram
+    try {
+        if (tg && typeof tg.ready === 'function') {
+            tg.ready();
+            
+            // Безопасная проверка expand
+            if (typeof tg.expand === 'function') {
+                tg.expand();
+            }
+            
+            // Получаем ID пользователя из параметров или Telegram
+            const urlParams = new URLSearchParams(window.location.search);
+            currentUserId = urlParams.get('user') || tg.initDataUnsafe?.user?.id;
+            
+            // Безопасная настройка темы
+            if (tg.themeParams) {
+                document.documentElement.style.setProperty('--tg-theme-bg-color', tg.themeParams.bg_color || '#F2F2F7');
+                document.documentElement.style.setProperty('--tg-theme-text-color', tg.themeParams.text_color || '#000000');
+                document.documentElement.style.setProperty('--tg-theme-hint-color', tg.themeParams.hint_color || '#8E8E93');
+                document.documentElement.style.setProperty('--tg-theme-link-color', tg.themeParams.link_color || '#007AFF');
+                document.documentElement.style.setProperty('--tg-theme-button-color', tg.themeParams.button_color || '#007AFF');
+                document.documentElement.style.setProperty('--tg-theme-button-text-color', tg.themeParams.button_text_color || '#FFFFFF');
+            }
+            
+            // Безопасная настройка кнопок Telegram
+            if (tg.MainButton && typeof tg.MainButton.hide === 'function') {
+                tg.MainButton.hide();
+            }
+            if (tg.BackButton && typeof tg.BackButton.hide === 'function') {
+                tg.BackButton.hide();
+            }
+            
+            console.log('✅ Telegram Web App инициализировано');
+            console.log('👤 User ID:', currentUserId);
+            console.log('👤 User data:', tg.initDataUnsafe?.user);
+        } else {
+            console.log('⚠️ Telegram Web App недоступно, режим разработки');
+            const urlParams = new URLSearchParams(window.location.search);
+            currentUserId = urlParams.get('user') || 123456789; // Тестовый ID для разработки
+        }
+    } catch (error) {
+        console.error('❌ Ошибка инициализации Telegram Web App:', error);
+        console.log('🔄 Переключение в режим разработки');
         const urlParams = new URLSearchParams(window.location.search);
-        currentUserId = urlParams.get('user') || tg.initDataUnsafe?.user?.id;
-        
-        // Настройка темы
-        document.documentElement.style.setProperty('--tg-theme-bg-color', tg.themeParams.bg_color || '#F2F2F7');
-        document.documentElement.style.setProperty('--tg-theme-text-color', tg.themeParams.text_color || '#000000');
-        document.documentElement.style.setProperty('--tg-theme-hint-color', tg.themeParams.hint_color || '#8E8E93');
-        document.documentElement.style.setProperty('--tg-theme-link-color', tg.themeParams.link_color || '#007AFF');
-        document.documentElement.style.setProperty('--tg-theme-button-color', tg.themeParams.button_color || '#007AFF');
-        document.documentElement.style.setProperty('--tg-theme-button-text-color', tg.themeParams.button_text_color || '#FFFFFF');
-        
-        // Настройка кнопок Telegram
-        tg.MainButton.hide();
-        tg.BackButton.hide();
-        
-        console.log('✅ Telegram Web App инициализировано');
-        console.log('👤 User ID:', currentUserId);
-        console.log('👤 User data:', tg.initDataUnsafe?.user);
-    } else {
-        console.log('⚠️ Telegram Web App недоступно, режим разработки');
+        currentUserId = urlParams.get('user') || 123456789;
+    }
+    
+    // Дополнительная проверка и установка userId если он не определен
+    if (!currentUserId) {
+        console.log('⚠️ userId не определен, устанавливаем тестовый ID');
         currentUserId = 123456789; // Тестовый ID для разработки
     }
+    
+    console.log('🔑 Финальный User ID:', currentUserId);
 }
 
 // Инициализация обработчиков событий
@@ -757,52 +783,85 @@ async function createOrder() {
         return;
     }
     
+    // Убеждаемся что userId определен
+    if (!currentUserId) {
+        console.log('⚠️ currentUserId не определен при создании заявки, устанавливаем тестовый');
+        currentUserId = 123456789;
+    }
+    
+    console.log('🔄 Создание заявки с userId:', currentUserId);
+    
     const createButton = document.getElementById('create-order-button');
     createButton.disabled = true;
     createButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Создаем заявку...';
     
     try {
+        const orderData = {
+            userId: currentUserId,
+            fromCurrency: currentCalculation.fromCurrency,
+            toCurrency: currentCalculation.toCurrency,
+            fromAmount: currentCalculation.fromAmount,
+            toAmount: currentCalculation.toAmount,
+            fromAddress: '', // Будет заполнено оператором
+            toAddress: address,
+            exchangeRate: currentCalculation.exchangeRate,
+            fee: currentCalculation.fee,
+            amlResult: currentAMLResult
+        };
+        
+        console.log('📋 Данные заявки:', orderData);
+        
         const response = await fetch('/api/create-order', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                userId: currentUserId,
-                fromCurrency: currentCalculation.fromCurrency,
-                toCurrency: currentCalculation.toCurrency,
-                fromAmount: currentCalculation.fromAmount,
-                toAmount: currentCalculation.toAmount,
-                fromAddress: '', // Будет заполнено оператором
-                toAddress: address,
-                exchangeRate: currentCalculation.exchangeRate,
-                fee: currentCalculation.fee,
-                amlResult: currentAMLResult
-            })
+            body: JSON.stringify(orderData)
         });
         
+        console.log('📡 Ответ сервера:', response.status, response.statusText);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
         const data = await response.json();
+        console.log('📋 Данные ответа:', data);
         
         if (data.success) {
-            showNotification('Заявка успешно создана!', 'success');
+            console.log('✅ Заявка успешно создана:', data.data);
+            showNotification(`Заявка #${data.data.id} успешно создана!`, 'success');
             
             // Показываем информацию о заявке
-            if (tg) {
-                tg.showAlert(`Заявка #${data.data.id} создана!\n\nОператор свяжется с вами в течение 15 минут.`);
+            try {
+                if (tg && typeof tg.showAlert === 'function') {
+                    tg.showAlert(`Заявка #${data.data.id} создана!\n\nОператор свяжется с вами в течение 15 минут.`);
+                } else {
+                    // Если нет Telegram, показываем обычное уведомление
+                    alert(`Заявка #${data.data.id} создана!\n\nОператор свяжется с вами в течение 15 минут.`);
+                }
+            } catch (alertError) {
+                console.error('❌ Ошибка показа уведомления:', alertError);
+                // Fallback уведомление
+                alert(`Заявка #${data.data.id} создана!\n\nОператор свяжется с вами в течение 15 минут.`);
             }
             
             // Возвращаемся на главный экран
             setTimeout(() => {
                 showScreen('calculator-screen');
-                document.querySelector('.nav-item[data-screen="calculator-screen"]').click();
+                const navItem = document.querySelector('.nav-item[data-screen="calculator-screen"]');
+                if (navItem) navItem.click();
                 
                 // Очищаем форму
-                document.getElementById('from-amount').value = '';
-                document.getElementById('to-amount').value = '';
+                const fromAmountInput = document.getElementById('from-amount');
+                const toAmountInput = document.getElementById('to-amount');
+                if (fromAmountInput) fromAmountInput.value = '';
+                if (toAmountInput) toAmountInput.value = '';
                 calculateExchange();
             }, 2000);
             
         } else {
+            console.error('❌ Ошибка от сервера:', data);
             throw new Error(data.error || 'Ошибка создания заявки');
         }
         
@@ -1348,8 +1407,16 @@ function applyTheme(theme) {
     
     // Обновляем цвета Telegram WebApp
     if (tg) {
-        tg.setHeaderColor(theme === 'dark' ? '#1C1C1E' : '#007AFF');
-        tg.setBackgroundColor(theme === 'dark' ? '#000000' : '#F2F2F7');
+        try {
+            if (tg && typeof tg.setHeaderColor === 'function') {
+                tg.setHeaderColor(theme === 'dark' ? '#1C1C1E' : '#007AFF');
+            }
+            if (tg && typeof tg.setBackgroundColor === 'function') {
+                tg.setBackgroundColor(theme === 'dark' ? '#000000' : '#F2F2F7');
+            }
+        } catch (error) {
+            console.error('❌ Ошибка установки цветов Telegram:', error);
+        }
     }
 }
 
@@ -1463,7 +1530,16 @@ function loadSavedSettings() {
 // Экспорт данных
 function exportData() {
     if (tg) {
-        tg.showAlert('Функция экспорта данных будет доступна в ближайшее время!');
+        try {
+            if (tg && typeof tg.showAlert === 'function') {
+                tg.showAlert('Функция экспорта данных будет доступна в ближайшее время!');
+            } else {
+                alert('Функция экспорта данных будет доступна в ближайшее время!');
+            }
+        } catch (error) {
+            console.error('❌ Ошибка показа уведомления экспорта:', error);
+            alert('Функция экспорта данных будет доступна в ближайшее время!');
+        }
     } else {
         alert('Функция экспорта данных будет доступна в ближайшее время!');
     }
@@ -1746,16 +1822,23 @@ async function createSupportTicket() {
 
 // Сканирование QR кода
 function scanQR() {
-    if (tg && tg.showScanQrPopup) {
-        tg.showScanQrPopup({
-            text: 'Отсканируйте QR код кошелька'
-        }, (result) => {
-            document.getElementById('wallet-address').value = result;
-            validateWalletAddress();
-            tg.closeScanQrPopup();
-        });
-    } else {
-        showNotification('Сканирование QR недоступно', 'warning');
+    try {
+        if (tg && typeof tg.showScanQrPopup === 'function') {
+            tg.showScanQrPopup({
+                text: 'Отсканируйте QR код кошелька'
+            }, (result) => {
+                document.getElementById('wallet-address').value = result;
+                validateWalletAddress();
+                if (typeof tg.closeScanQrPopup === 'function') {
+                    tg.closeScanQrPopup();
+                }
+            });
+        } else {
+            showNotification('Сканирование QR недоступно в браузере', 'warning');
+        }
+    } catch (error) {
+        console.error('❌ Ошибка сканирования QR:', error);
+        showNotification('Ошибка сканирования QR', 'error');
     }
 }
 

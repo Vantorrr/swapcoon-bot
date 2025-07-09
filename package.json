@@ -4,10 +4,11 @@
   "description": "Telegram bot with mini app for currency exchange",
   "main": "src/bot.js",
   "scripts": {
-    "start": "node src/web-server.js",
+    "start": "node src/web-server-standalone.js",
     "bot": "node src/bot.js",
     "dev": "nodemon src/bot.js",
-    "web": "node src/web-server.js",
+    "web": "node src/web-server-standalone.js",
+    "web-with-bot": "node src/web-server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
