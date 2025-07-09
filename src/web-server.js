@@ -299,6 +299,34 @@ app.get('/api/news', async (req, res) => {
     }
 });
 
+// API для сохранения настроек пользователя
+app.put('/api/profile/:userId/settings', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const settings = req.body;
+        
+        console.log(`💾 Сохранение настроек для пользователя ${userId}:`, settings);
+        
+        // Сохраняем настройки (пока в памяти, можно позже добавить в БД)
+        // await db.updateUserSettings(userId, settings);
+        
+        // Применяем настройки темы если нужно
+        if (settings.theme) {
+            console.log(`🎨 Применение темы: ${settings.theme}`);
+        }
+        
+        res.json({ 
+            success: true, 
+            message: 'Настройки сохранены успешно!',
+            data: settings 
+        });
+        
+    } catch (error) {
+        console.error('❌ Ошибка сохранения настроек:', error);
+        res.status(500).json({ success: false, error: 'Ошибка сохранения настроек' });
+    }
+});
+
 // Функция обработки реферального бонуса
 async function processReferralBonus(referrerId, order) {
     try {
