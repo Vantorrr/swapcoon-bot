@@ -1414,26 +1414,8 @@ function getStatusText(status) {
 
 // Связь с оператором
 function contactOperator() {
-    if (tg) {
-        // Закрываем WebApp и отправляем сообщение в основной бот
-        tg.sendData(JSON.stringify({
-            action: 'contact_support',
-            userId: currentUserId,
-            timestamp: new Date().toISOString(),
-            source: 'webapp'
-        }));
-        
-        // Показываем уведомление
-        showNotification('Запрос отправлен! Оператор свяжется с вами в течение 15 минут.', 'success');
-        
-        // Альтернативно - открываем чат с основным ботом
-        setTimeout(() => {
-            tg.openTelegramLink('https://t.me/swapcoon_bot?start=support');
-        }, 2000);
-    } else {
-        // Для браузера - создаем заявку через API
-        createSupportTicket();
-    }
+    // Создаем заявку через API (работает и в Telegram и в браузере)
+    createSupportTicket();
 }
 
 // Создание заявки в поддержку (для браузера)

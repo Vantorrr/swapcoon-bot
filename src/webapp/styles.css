@@ -734,31 +734,7 @@ body {
     gap: var(--spacing-sm);
 }
 
-.referral-stats {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--spacing-md);
-    margin-bottom: var(--spacing-lg);
-}
-
-.referral-stat {
-    text-align: center;
-    padding: var(--spacing-md);
-    background: var(--background-color);
-    border-radius: var(--radius-md);
-}
-
-.referral-stat-value {
-    font-size: var(--font-lg);
-    font-weight: 600;
-    color: var(--primary-color);
-}
-
-.referral-stat-label {
-    font-size: var(--font-xs);
-    color: var(--text-secondary);
-    margin-top: var(--spacing-xs);
-}
+/* Удалено - дублирует код выше для referral-stats */
 
 .referral-link {
     margin-bottom: var(--spacing-md);
@@ -1636,12 +1612,17 @@ body {
     gap: var(--spacing-md);
     margin-bottom: var(--spacing-lg);
     text-align: center;
+    justify-items: center;
+    align-items: center;
 }
 
 .referral-stat {
     display: flex;
     flex-direction: column;
     gap: var(--spacing-xs);
+    align-items: center;
+    text-align: center;
+    width: 100%;
 }
 
 .referral-stat .stat-value {
@@ -2233,7 +2214,7 @@ input:checked + .slider:before {
     }
 }
 
-@media (max-width: 375px) {
+@media (max-width: 320px) {
     .referral-stats {
         grid-template-columns: 1fr;
         gap: var(--spacing-sm);
