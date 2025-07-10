@@ -897,9 +897,11 @@ function validateFiatAccount() {
     const account = document.getElementById('wallet-address').value.trim();
     const createButton = document.getElementById('create-order-button');
     
+    console.log('🏦 ВАЛИДАЦИЯ ФИАТНОГО СЧЕТА:', account, 'длина:', account.length);
+    
     if (createButton) {
-        // Для фиатных пар требуется только номер счета
-        createButton.disabled = account.length <= 5; // Минимальная длина для номера счета
+        // Для фиатных пар требуется только номер счета (минимум 3 символа)
+        createButton.disabled = account.length < 3;
     }
     
     // Обновляем сводку заказа

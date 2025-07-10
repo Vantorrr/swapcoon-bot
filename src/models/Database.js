@@ -868,7 +868,7 @@ class Database {
                     (SELECT COUNT(*) FROM orders WHERE status = 'pending') as pendingOrders,
                     (SELECT COUNT(*) FROM orders WHERE status = 'processing') as processingOrders,
                     (SELECT COALESCE(SUM(to_amount), 0) FROM orders WHERE status = 'completed') as totalVolume,
-                    (SELECT COALESCE(SUM(to_amount), 0) FROM orders WHERE status = 'completed' AND date(created_at) = date('now')) as volumeToday,
+                    (SELECT COALESCE(SUM(to_amount), 0) FROM orders WHERE date(created_at) = date('now')) as volumeToday,
                     (SELECT COUNT(*) FROM referrals) as totalReferrals,
                     (SELECT COALESCE(SUM(commission), 0) FROM referrals) as totalCommissions,
                     (SELECT COUNT(*) FROM staff WHERE is_active = 1) as activeStaff,

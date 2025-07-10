@@ -4122,6 +4122,14 @@ bot.on('message', async (ctx) => {
 // Расширенная функция для отправки уведомления операторам
 async function notifyOperators(orderData) {
     try {
+        // Отладка данных заявки
+        console.log('🔍 ДАННЫЕ ЗАЯВКИ ДЛЯ УВЕДОМЛЕНИЯ:', {
+            id: orderData.id,
+            fromAddress: orderData.fromAddress,
+            toAddress: orderData.toAddress,
+            pairType: orderData.pairType
+        });
+
         // Сохраняем уведомления в базу данных
         await db.notifyAllOperators(orderData);
         
@@ -4151,8 +4159,11 @@ async function notifyOperators(orderData) {
                 `🛡️ <b>AML отправки:</b> ${getAMLStatusEmoji(fromAML.status)} ${fromAML.status || 'Не проверен'}\n` +
                 `🛡️ <b>AML получения:</b> ${getAMLStatusEmoji(toAML.status)} ${toAML.status || 'Не проверен'}\n`;
         } else {
-            // Для фиатных пар показываем номер счета
-            addressSection = `🏦 <b>Номер счета:</b> <code>${orderData.toAddress || 'Не указан'}</code>\n`;
+            // Для фиатных пар показываем номер счета с лучшей проверкой
+            const accountNumber = orderData.toAddress?.trim();
+            console.log('🏦 НОМЕР СЧЕТА ДЛЯ ФИАТНОЙ ПАРЫ:', accountNumber);
+            
+            addressSection = `🏦 <b>Номер счета:</b> <code>${accountNumber || 'Не указан'}</code>\n`;
             amlSection = `✅ <b>AML проверка:</b> Не требуется (фиатная пара)\n`;
         }
         
@@ -5128,7 +5139,7 @@ webhookApp.post('/webhook/support-ticket', async (req, res) => {
                         ]]
                     }
                 });
-                console.log(`📨 Уведомление отправлено админу ${adminId}`);
+                console.log(`✅ Уведомление отправлено админу ${adminId}`);
             } catch (sendError) {
                 console.log(`⚠️ Не удалось уведомить админа ${adminId}:`, sendError.message);
             }
