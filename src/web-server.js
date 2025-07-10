@@ -114,6 +114,8 @@ app.post('/api/aml-check', async (req, res) => {
 // API для создания заявки
 app.post('/api/create-order', async (req, res) => {
     try {
+        console.log('🚀 API CREATE-ORDER ПОЛУЧИЛ ДАННЫЕ:', req.body);
+        
         const {
             userId,
             fromCurrency,
@@ -126,6 +128,8 @@ app.post('/api/create-order', async (req, res) => {
             exchangeRate,
             fee
         } = req.body;
+        
+        console.log('🏦 ИЗВЛЕЧЕННЫЕ ДАННЫЕ - toAddress:', toAddress, 'pairType:', req.body.pairType);
 
         // Создаем заявку в базе данных
         const order = await db.createOrder({
@@ -146,7 +150,7 @@ app.post('/api/create-order', async (req, res) => {
         const user = await db.getUser(userId);
 
         // Отправляем уведомление операторам с новой структурой данных
-        await notifyOperators({
+        const notificationData = {
             id: order.id,
             userName: user.firstName || user.username,
             fromAmount,
@@ -157,7 +161,10 @@ app.post('/api/create-order', async (req, res) => {
             amlFromResult: req.body.amlFromResult || { status: 'not_checked' },
             amlToResult: req.body.amlToResult || { status: 'not_checked' },
             pairType: req.body.pairType || 'crypto'
-        });
+        };
+        
+        console.log('📤 ОТПРАВЛЯЕМ УВЕДОМЛЕНИЕ ОПЕРАТОРАМ:', notificationData);
+        await notifyOperators(notificationData);
 
         // Отправляем данные в CRM
         await crmService.createLead(order, user);

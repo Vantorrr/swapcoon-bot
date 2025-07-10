@@ -1253,6 +1253,7 @@ async function createOrder() {
             };
         } else {
             // Для фиатных пар
+            console.log('🏦 СОЗДАНИЕ ФИАТНОЙ ЗАЯВКИ - номер счета:', address);
             orderData = {
                 userId: currentUserId,
                 fromCurrency: currentCalculation.fromCurrency,
@@ -1265,6 +1266,7 @@ async function createOrder() {
                 fee: currentCalculation.fee,
                 pairType: 'fiat'
             };
+            console.log('🏦 ФИНАЛЬНЫЕ ДАННЫЕ ФИАТНОЙ ЗАЯВКИ:', orderData);
         }
         
         console.log('📋 Данные заявки:', orderData);

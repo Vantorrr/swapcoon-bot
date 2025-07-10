@@ -304,7 +304,7 @@ class Database {
 
             console.log('🔄 Создание заявки в базе данных...');
             console.log('📋 Данные заказа:', { userId, fromCurrency, toCurrency, fromAmount, toAmount, source });
-            console.log('⚠️ ВРЕМЕННО: поле source убрано из-за ошибки миграции');
+            console.log('🏦 КРИТИЧНО - toAddress в БД:', toAddress, 'fromAddress:', fromAddress);
 
             const sql = `
                 INSERT INTO orders 
@@ -326,7 +326,9 @@ class Database {
                     reject(err);
                 } else {
                     console.log('✅🎉 ЗАКАЗ УСПЕШНО СОЗДАН В БД! ID:', this.lastID);
-                    resolve({ id: this.lastID, ...orderData });
+                    const createdOrder = { id: this.lastID, ...orderData };
+                    console.log('🏦 ВОЗВРАЩАЕМ ИЗ БД:', createdOrder);
+                    resolve(createdOrder);
                 }
             });
         });
