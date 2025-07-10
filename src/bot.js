@@ -846,8 +846,16 @@ bot.on('callback_query:data', async (ctx) => {
             await ctx.reply(
                 `✅ <b>Заказ #${orderId} успешно принят!</b>\n\n` +
                 `🔄 Заказ добавлен в ваш список.\n` +
-                `📞 Свяжитесь с клиентом для завершения обмена.`,
-                { parse_mode: 'HTML' }
+                `📞 Свяжитесь с клиентом для завершения обмена.\n\n` +
+                `💡 Откройте панель управления для работы с заказом:`,
+                { 
+                    parse_mode: 'HTML',
+                    reply_markup: new InlineKeyboard()
+                        .text('🎛️ Открыть заявку', `manage_order_${orderId}`)
+                        .text('📋 Мои заказы', 'op_my_orders')
+                        .row()
+                        .text('🏠 Главное меню', 'back_to_main')
+                }
             );
             
         } catch (error) {
@@ -981,7 +989,7 @@ bot.on('callback_query:data', async (ctx) => {
 
     // === ОБРАБОТЧИКИ СТАТУСОВ ЗАКАЗОВ ===
 
-    // Отправить реквизиты
+    // Выбор реквизитов для отправки
     if (data.startsWith('send_payment_details_')) {
         const userRole = await db.getUserRole(userId);
         if (!userRole || !['admin', 'operator'].includes(userRole)) {
@@ -990,41 +998,182 @@ bot.on('callback_query:data', async (ctx) => {
         
         const orderId = parseInt(data.replace('send_payment_details_', ''));
         
+        await ctx.answerCallbackQuery('💳 Выберите реквизиты...');
+        
+        try {
+            const order = await db.getOrderWithClient(orderId);
+            if (!order) {
+                return ctx.reply('❌ Заказ не найден');
+            }
+            
+            await ctx.reply(
+                `💳 <b>ВЫБОР РЕКВИЗИТОВ</b>\n\n` +
+                `🆔 Заказ #${orderId}\n` +
+                `👤 Клиент: ${order.client_first_name || 'Пользователь'}\n` +
+                `💰 К оплате: ${order.from_amount} ${order.from_currency}\n\n` +
+                `📋 Выберите готовые реквизиты или введите новые:`,
+                {
+                    parse_mode: 'HTML',
+                    reply_markup: new InlineKeyboard()
+                        .text('💳 Карта Сбербанк', `send_preset_details_${orderId}_sber`)
+                        .text('💳 Карта Тинькофф', `send_preset_details_${orderId}_tink`)
+                        .row()
+                        .text('💳 Карта Альфа', `send_preset_details_${orderId}_alfa`)
+                        .text('💳 Карта ВТБ', `send_preset_details_${orderId}_vtb`)
+                        .row()
+                        .text('✍️ Ввести новые реквизиты', `custom_details_${orderId}`)
+                        .row()
+                        .text('🔙 Назад к заказу', `manage_order_${orderId}`)
+                }
+            );
+            
+        } catch (error) {
+            console.error('Ошибка выбора реквизитов:', error);
+            await ctx.reply('❌ Ошибка загрузки заказа');
+        }
+    }
+
+    // Отправка готовых реквизитов
+    if (data.startsWith('send_preset_details_')) {
+        const userRole = await db.getUserRole(userId);
+        if (!userRole || !['admin', 'operator'].includes(userRole)) {
+            return ctx.answerCallbackQuery('❌ Нет прав');
+        }
+        
+        const parts = data.replace('send_preset_details_', '').split('_');
+        const orderId = parseInt(parts[0]);
+        const bankType = parts[1];
+        
+        const presetDetails = {
+            sber: {
+                name: 'Сбербанк',
+                card: '2202 2024 1234 5678',
+                holder: 'ИВАНОВ ИВАН ИВАНОВИЧ',
+                bank: 'ПАО СБЕРБАНК',
+                bik: '044525225',
+                emoji: '🟢'
+            },
+            tink: {
+                name: 'Т-Банк',
+                card: '5536 9140 1234 5678',
+                holder: 'ИВАНОВ ИВАН ИВАНОВИЧ', 
+                bank: 'АО ТИНЬКОФФ БАНК',
+                bik: '044525974',
+                emoji: '🟡'
+            },
+            alfa: {
+                name: 'Альфа-Банк',
+                card: '4154 8127 1234 5678',
+                holder: 'ИВАНОВ ИВАН ИВАНОВИЧ',
+                bank: 'АО АЛЬФА-БАНК',
+                bik: '044525593',
+                emoji: '🔴'
+            },
+            vtb: {
+                name: 'ВТБ',
+                card: '4272 1234 5678 9012',
+                holder: 'ИВАНОВ ИВАН ИВАНОВИЧ',
+                bank: 'ВТБ ПАО',
+                bik: '044525187',
+                emoji: '🔵'
+            }
+        };
+        
+        const details = presetDetails[bankType];
+        if (!details) {
+            return ctx.answerCallbackQuery('❌ Неизвестный тип реквизитов');
+        }
+        
         try {
             const result = await db.updateOrderStatusWithMessage(orderId, 'payment_details_sent', userId, 
-                '💳 Реквизиты для оплаты отправлены. Ожидаем поступления средств.');
+                `💳 Реквизиты ${details.name} отправлены клиенту. Ожидаем поступления средств.`);
             
             const order = await db.getOrderWithClient(orderId);
             
             // Отправляем реквизиты клиенту
             await ctx.api.sendMessage(order.client_id,
-                `💳 <b>Реквизиты для оплаты</b>\n\n` +
+                `💳 <b>РЕКВИЗИТЫ ДЛЯ ОПЛАТЫ</b>\n\n` +
                 `🆔 Заказ #${orderId}\n` +
-                `💰 К оплате: ${order.from_amount} ${order.from_currency}\n\n` +
-                `🏦 <b>Реквизиты:</b>\n` +
-                `📧 Email: payments@swapcoon.com\n` +
-                `💳 Карта: 1234 5678 9012 3456\n` +
-                `🏛️ Банк: SwapCoon Bank\n\n` +
-                `⚠️ <b>Важно:</b>\n` +
-                `• Переводите точную сумму\n` +
-                `• Сохраните чек об оплате\n` +
-                `• После оплаты нажмите "Оплачено"\n\n` +
-                `❓ Есть вопросы? Напишите нашему оператору.`,
+                `💰 К оплате: <b>${order.from_amount} ${order.from_currency}</b>\n\n` +
+                `${details.emoji} <b>${details.name}</b>\n` +
+                `💳 <code>${details.card}</code>\n` +
+                `👤 <code>${details.holder}</code>\n` +
+                `🏦 ${details.bank}\n` +
+                `🔢 БИК: <code>${details.bik}</code>\n\n` +
+                `⚠️ <b>ВАЖНО:</b>\n` +
+                `• Переводите ТОЧНУЮ сумму: ${order.from_amount} ${order.from_currency}\n` +
+                `• Обязательно сохраните чек\n` +
+                `• После оплаты нажмите "✅ Оплачено"\n` +
+                `• Время зачисления: до 10 минут\n\n` +
+                `📞 Вопросы? Напишите оператору!`,
                 { 
                     parse_mode: 'HTML',
                     reply_markup: new InlineKeyboard()
-                        .text('✅ Оплачено', `client_paid_${orderId}`)
+                        .text('✅ Я оплатил', `client_paid_${orderId}`)
                         .text('💬 Связаться с оператором', `client_chat_${orderId}`)
+                        .row()
+                        .text('📋 Копировать карту', `copy_card_${details.card.replace(/\s/g, '')}`)
                 }
             );
             
-            await ctx.answerCallbackQuery('✅ Реквизиты отправлены клиенту!');
-            await ctx.reply(`✅ Реквизиты для заказа #${orderId} отправлены клиенту!\n\n${result.message}`);
+            await ctx.answerCallbackQuery(`✅ Реквизиты ${details.name} отправлены!`);
+            await ctx.reply(
+                `✅ <b>Реквизиты отправлены!</b>\n\n` +
+                `🏦 Банк: ${details.name}\n` +
+                `💳 Карта: ${details.card}\n` +
+                `🆔 Заказ #${orderId}\n\n` +
+                `${result.message}`,
+                { 
+                    parse_mode: 'HTML',
+                    reply_markup: new InlineKeyboard()
+                        .text('🎛️ Управление заказом', `manage_order_${orderId}`)
+                }
+            );
             
         } catch (error) {
-            console.error('Ошибка отправки реквизитов:', error);
+            console.error('Ошибка отправки готовых реквизитов:', error);
             await ctx.answerCallbackQuery('❌ Ошибка отправки реквизитов');
         }
+    }
+
+    // Ввод новых реквизитов
+    if (data.startsWith('custom_details_')) {
+        const userRole = await db.getUserRole(userId);
+        if (!userRole || !['admin', 'operator'].includes(userRole)) {
+            return ctx.answerCallbackQuery('❌ Нет прав');
+        }
+        
+        const orderId = parseInt(data.replace('custom_details_', ''));
+        
+        await ctx.answerCallbackQuery('✍️ Введите реквизиты...');
+        
+        // Сохраняем контекст для следующего сообщения
+        chatContexts.set(userId, { 
+            action: 'input_custom_details',
+            orderId: orderId
+        });
+        
+        await ctx.reply(
+            `✍️ <b>ВВОД НОВЫХ РЕКВИЗИТОВ</b>\n\n` +
+            `🆔 Заказ #${orderId}\n\n` +
+            `📝 Введите реквизиты в формате:\n\n` +
+            `<b>Название банка</b>\n` +
+            `💳 Номер карты\n` +
+            `👤 Держатель карты\n` +
+            `🏦 Название банка\n` +
+            `🔢 БИК (опционально)\n\n` +
+            `<b>Пример:</b>\n` +
+            `Сбербанк\n` +
+            `2202 2024 1234 5678\n` +
+            `ИВАНОВ ИВАН ИВАНОВИЧ\n` +
+            `ПАО СБЕРБАНК\n` +
+            `044525225`,
+            { 
+                parse_mode: 'HTML',
+                reply_markup: new InlineKeyboard()
+                    .text('❌ Отмена', `send_payment_details_${orderId}`)
+            }
+        );
     }
 
     // Платеж получен
@@ -3771,6 +3920,96 @@ bot.on('message', async (ctx) => {
             } catch (error) {
                 console.error('Ошибка отправки сообщения клиенту:', error);
                 await ctx.reply('❌ Ошибка отправки сообщения');
+                chatContexts.delete(userId);
+                return;
+            }
+        }
+
+        if (context.action === 'input_custom_details') {
+            try {
+                const orderId = context.orderId;
+                const customDetailsText = messageText.trim();
+                
+                // Парсим введенные реквизиты
+                const lines = customDetailsText.split('\n').map(line => line.trim()).filter(line => line);
+                
+                if (lines.length < 3) {
+                    await ctx.reply(
+                        `❌ <b>Недостаточно данных!</b>\n\n` +
+                        `Введите минимум:\n` +
+                        `• Название банка\n` +
+                        `• Номер карты\n` +
+                        `• Держатель карты\n\n` +
+                        `Попробуйте еще раз:`,
+                        { 
+                            parse_mode: 'HTML',
+                            reply_markup: new InlineKeyboard()
+                                .text('❌ Отмена', `send_payment_details_${orderId}`)
+                        }
+                    );
+                    return;
+                }
+                
+                const bankName = lines[0];
+                const cardNumber = lines[1];
+                const cardHolder = lines[2];
+                const bankFullName = lines[3] || bankName;
+                const bik = lines[4] || 'Не указан';
+                
+                // Обновляем статус заказа
+                const result = await db.updateOrderStatusWithMessage(orderId, 'payment_details_sent', userId, 
+                    `💳 Новые реквизиты (${bankName}) отправлены клиенту. Ожидаем поступления средств.`);
+                
+                const order = await db.getOrderWithClient(orderId);
+                
+                // Отправляем реквизиты клиенту
+                await ctx.api.sendMessage(order.client_id,
+                    `💳 <b>РЕКВИЗИТЫ ДЛЯ ОПЛАТЫ</b>\n\n` +
+                    `🆔 Заказ #${orderId}\n` +
+                    `💰 К оплате: <b>${order.from_amount} ${order.from_currency}</b>\n\n` +
+                    `🏦 <b>${bankName}</b>\n` +
+                    `💳 <code>${cardNumber}</code>\n` +
+                    `👤 <code>${cardHolder}</code>\n` +
+                    `🏛️ ${bankFullName}\n` +
+                    (bik !== 'Не указан' ? `🔢 БИК: <code>${bik}</code>\n` : '') +
+                    `\n⚠️ <b>ВАЖНО:</b>\n` +
+                    `• Переводите ТОЧНУЮ сумму: ${order.from_amount} ${order.from_currency}\n` +
+                    `• Обязательно сохраните чек\n` +
+                    `• После оплаты нажмите "✅ Оплачено"\n` +
+                    `• Время зачисления: до 10 минут\n\n` +
+                    `📞 Вопросы? Напишите оператору!`,
+                    { 
+                        parse_mode: 'HTML',
+                        reply_markup: new InlineKeyboard()
+                            .text('✅ Я оплатил', `client_paid_${orderId}`)
+                            .text('💬 Связаться с оператором', `client_chat_${orderId}`)
+                            .row()
+                            .text('📋 Копировать карту', `copy_card_${cardNumber.replace(/\s/g, '')}`)
+                    }
+                );
+                
+                // Подтверждаем отправку оператору
+                await ctx.reply(
+                    `✅ <b>Новые реквизиты отправлены!</b>\n\n` +
+                    `🏦 Банк: ${bankName}\n` +
+                    `💳 Карта: ${cardNumber}\n` +
+                    `👤 Держатель: ${cardHolder}\n` +
+                    `🆔 Заказ #${orderId}\n\n` +
+                    `${result.message}`,
+                    { 
+                        parse_mode: 'HTML',
+                        reply_markup: new InlineKeyboard()
+                            .text('🎛️ Управление заказом', `manage_order_${orderId}`)
+                    }
+                );
+                
+                // Удаляем контекст
+                chatContexts.delete(userId);
+                return;
+                
+            } catch (error) {
+                console.error('Ошибка отправки новых реквизитов:', error);
+                await ctx.reply('❌ Ошибка отправки реквизитов');
                 chatContexts.delete(userId);
                 return;
             }
