@@ -4576,6 +4576,46 @@ webhookApp.post('/api/create-order', async (req, res) => {
 
         console.log('✅ Заявка создана:', order);
 
+        // ОТПРАВЛЯЕМ УВЕДОМЛЕНИЕ ОПЕРАТОРАМ!!!
+        try {
+            // Получаем или создаем пользователя в базе
+            let user = await db.getUser(userId);
+            if (!user) {
+                console.log(`👤 Создаем пользователя ${userId} в базе данных`);
+                await db.addUser({
+                    telegramId: userId,
+                    username: null,
+                    firstName: `User_${userId}`,
+                    lastName: null
+                });
+                user = { first_name: `User_${userId}`, username: null };
+            }
+            
+            const userName = user?.first_name || user?.username || `ID: ${userId}`;
+            
+            // Проверяем есть ли операторы
+            const staff = await db.getStaffList();
+            const operators = staff.filter(s => ['admin', 'operator'].includes(s.role));
+            
+            if (operators.length === 0) {
+                console.log('⚠️ Нет операторов для уведомления! Добавьте операторов через /add_operator');
+            } else {
+                await notifyOperators({
+                    id: order.id,
+                    userName: userName,
+                    fromAmount,
+                    fromCurrency,
+                    toCurrency,
+                    address: toAddress,
+                    amlStatus: amlResult?.status || 'not_checked'
+                });
+                
+                console.log(`🔔 Уведомления отправлены ${operators.length} операторам для заявки #${order.id}`);
+            }
+        } catch (notifyError) {
+            console.error('❌ Ошибка отправки уведомлений операторам:', notifyError);
+        }
+
         res.json({ success: true, data: order });
     } catch (error) {
         console.error('❌ Ошибка создания заявки:', error);
