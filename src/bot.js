@@ -1232,18 +1232,27 @@ bot.on('callback_query:data', async (ctx) => {
 
     // Средства отправлены
     if (data.startsWith('funds_sent_')) {
+        console.log(`🔥 НАЖАТА КНОПКА СРЕДСТВА ОТПРАВЛЕНЫ! User: ${userId}, Data: ${data}`);
+        
         const userRole = await db.getUserRole(userId);
+        console.log(`👤 Роль пользователя: ${userRole}`);
+        
         if (!userRole || !['admin', 'operator'].includes(userRole)) {
+            console.log(`❌ Нет прав! Роль: ${userRole}`);
             return ctx.answerCallbackQuery('❌ Нет прав');
         }
         
         const orderId = parseInt(data.replace('funds_sent_', ''));
+        console.log(`📋 Order ID: ${orderId}`);
         
         try {
+            console.log(`🔄 Обновляем статус заказа ${orderId} на 'sending'...`);
             const result = await db.updateOrderStatusWithMessage(orderId, 'sending', userId,
                 '📤 Средства отправлены на ваш адрес! Ожидайте поступления...');
+            console.log(`✅ Статус обновлен:`, result);
             
             const order = await db.getOrderWithClient(orderId);
+            console.log(`📋 Данные заказа:`, order ? `ID: ${order.id}, Client: ${order.client_id}` : 'НЕ НАЙДЕН');
             
             await ctx.api.sendMessage(order.client_id,
                 `📤 <b>Средства отправлены!</b>\n\n` +
@@ -1261,11 +1270,13 @@ bot.on('callback_query:data', async (ctx) => {
                 }
             );
             
+            console.log(`📱 Отправляем callback и ответ оператору...`);
             await ctx.answerCallbackQuery('✅ Статус обновлен!');
             await ctx.reply(`✅ Статус заказа #${orderId} обновлен!\n\n${result.message}`);
+            console.log(`🎉 ВСЕ УСПЕШНО! Кнопка средства отправлены сработала!`);
             
         } catch (error) {
-            console.error('Ошибка обновления статуса:', error);
+            console.error('❌🔥 ОШИБКА в обработчике funds_sent_:', error);
             await ctx.answerCallbackQuery('❌ Ошибка обновления статуса');
         }
     }
