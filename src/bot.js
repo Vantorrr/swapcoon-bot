@@ -4161,7 +4161,6 @@ async function notifyOperators(orderData) {
 
         const message = 
             `🚨 <b>НОВАЯ ЗАЯВКА С САЙТА #${orderData.id}</b>\n\n` +
-            `🌐 <b>Источник:</b> Веб-приложение\n` +
             `👤 <b>Пользователь:</b> ${orderData.userName || 'Неизвестен'}\n` +
             `💱 <b>Обмен:</b> ${orderData.fromAmount} ${orderData.fromCurrency} → ${orderData.toCurrency}\n` +
             `${pairTypeIcon} <b>Тип пары:</b> ${pairTypeText}\n` +

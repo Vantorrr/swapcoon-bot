@@ -307,6 +307,8 @@ function getTestRates() {
         { currency: 'USD', buy: 1.0, sell: 1.0, lastUpdate: new Date().toISOString(), type: 'fiat' },
         { currency: 'EUR', buy: 0.92, sell: 0.94, lastUpdate: new Date().toISOString(), type: 'fiat' },
         { currency: 'RUB', buy: 0.0098, sell: 0.0102, lastUpdate: new Date().toISOString(), type: 'fiat' },
+        { currency: 'UAH', buy: 0.025, sell: 0.027, lastUpdate: new Date().toISOString(), type: 'fiat' },
+        { currency: 'KZT', buy: 0.002, sell: 0.0022, lastUpdate: new Date().toISOString(), type: 'fiat' },
         { currency: 'ARS', buy: 0.00098, sell: 0.00102, lastUpdate: new Date().toISOString(), type: 'fiat' },
         { currency: 'BRL', buy: 0.194, sell: 0.206, lastUpdate: new Date().toISOString(), type: 'fiat' }
     ];
@@ -527,6 +529,10 @@ function getCurrencyName(currency) {
         'DOT': 'Polkadot',
         'MATIC': 'Polygon',
         'AVAX': 'Avalanche',
+        'XRP': 'Ripple',
+        'LTC': 'Litecoin',
+        'BCH': 'Bitcoin Cash',
+        'LINK': 'Chainlink',
         'USD': 'US Dollar',
         'EUR': 'Euro',
         'RUB': 'Russian Ruble',
@@ -551,13 +557,17 @@ function getCurrencyIcon(currency) {
         'DOT': '⚫',
         'MATIC': '🟣',
         'AVAX': '🏔️',
+        'XRP': '💧',
+        'LTC': '🥈',
+        'BCH': '🟢',
+        'LINK': '🔗',
         'USD': '💵',
         'EUR': '💶',
         'RUB': '₽',
         'UAH': '₴',
         'KZT': '₸',
         'ARS': '💰',
-        'BRL': '💰'
+        'BRL': '🇧🇷'
     };
     return icons[currency] || '🪙';
 }
@@ -666,7 +676,7 @@ function selectNetwork(network) {
 
 // Проверка является ли пара криптовалютной
 function isCryptoPair(fromCurrency, toCurrency) {
-    const cryptoCurrencies = ['BTC', 'ETH', 'USDT', 'BNB', 'ADA', 'DOT', 'XRP', 'LTC', 'BCH', 'LINK'];
+    const cryptoCurrencies = ['BTC', 'ETH', 'USDT', 'USDC', 'BNB', 'ADA', 'DOT', 'XRP', 'LTC', 'BCH', 'LINK', 'SOL', 'MATIC', 'AVAX'];
     return cryptoCurrencies.includes(fromCurrency) && cryptoCurrencies.includes(toCurrency);
 }
 
@@ -679,6 +689,11 @@ function proceedToOrder() {
     
     // Определяем тип валютной пары
     const isCrypto = isCryptoPair(currentCalculation.fromCurrency, currentCalculation.toCurrency);
+    
+    // ОТЛАДКА: выводим информацию о классификации пары
+    console.log(`🔍 ПРОВЕРКА ПАРЫ: ${currentCalculation.fromCurrency} → ${currentCalculation.toCurrency}`);
+    console.log(`🔍 Классификация: ${isCrypto ? 'КРИПТОВАЛЮТНАЯ' : 'ФИАТНАЯ'}`);
+    console.log(`🔍 Интерфейс: ${isCrypto ? 'Адрес кошелька + AML' : 'Номер счета БЕЗ AML'}`);
     
     // Обновляем интерфейс в зависимости от типа пары
     updateOrderInterfaceForPairType(isCrypto);
