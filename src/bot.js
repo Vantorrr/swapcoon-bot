@@ -4579,11 +4579,20 @@ webhookApp.post('/api/create-order', async (req, res) => {
 
         // ОТПРАВЛЯЕМ УВЕДОМЛЕНИЕ ОПЕРАТОРАМ!!!
         try {
+            console.log(`🔔 НАЧИНАЕМ ОТПРАВКУ УВЕДОМЛЕНИЙ для заявки #${order.id}`);
+            
+            // Проверяем инициализацию бота
+            if (!bot.botInfo) {
+                console.log('🔄 Инициализируем бота для уведомлений...');
+                await bot.init();
+                console.log('✅ Бот инициализирован:', bot.botInfo?.username);
+            }
+            
             // Получаем или создаем пользователя в базе
             let user = await db.getUser(userId);
             if (!user) {
                 console.log(`👤 Создаем пользователя ${userId} в базе данных`);
-                await db.addUser({
+                await db.upsertUser({
                     telegramId: userId,
                     username: null,
                     firstName: `User_${userId}`,
@@ -4593,28 +4602,54 @@ webhookApp.post('/api/create-order', async (req, res) => {
             }
             
             const userName = user?.first_name || user?.username || `ID: ${userId}`;
+            console.log(`👤 Пользователь: ${userName} (ID: ${userId})`);
             
             // Проверяем есть ли операторы
             const staff = await db.getStaffList();
             const operators = staff.filter(s => ['admin', 'operator'].includes(s.role));
+            console.log(`👥 Найдено операторов: ${operators.length}`);
             
             if (operators.length === 0) {
                 console.log('⚠️ Нет операторов для уведомления! Добавьте операторов через /add_operator');
             } else {
-                await notifyOperators({
-                    id: order.id,
-                    userName: userName,
-                    fromAmount,
-                    fromCurrency,
-                    toCurrency,
-                    address: toAddress,
-                    amlStatus: amlResult?.status || 'not_checked'
-                });
+                // ПРЯМАЯ ОТПРАВКА УВЕДОМЛЕНИЙ
+                console.log('📨 Отправляем уведомления напрямую через bot.api...');
                 
-                console.log(`🔔 Уведомления отправлены ${operators.length} операторам для заявки #${order.id}`);
+                const notificationMessage = 
+                    `🚨 <b>НОВАЯ ЗАЯВКА С САЙТА #${order.id}</b>\n\n` +
+                    `🌐 <b>Источник:</b> Веб-приложение\n` +
+                    `👤 <b>Пользователь:</b> ${userName}\n` +
+                    `💱 <b>Обмен:</b> ${fromAmount} ${fromCurrency} → ${toCurrency}\n` +
+                    `💰 <b>Сумма:</b> ~$${(fromAmount * 0.03).toFixed(2)} прибыли\n` +
+                    `📍 <b>Адрес:</b> <code>${toAddress || 'Не указан'}</code>\n` +
+                    `🛡️ <b>AML:</b> ${amlResult?.status || 'not_checked'}\n` +
+                    `⏰ <b>Время:</b> ${new Date().toLocaleString('ru-RU')}\n\n` +
+                    `🔥 СРОЧНО ПРИНИМАЙТЕ ЗАКАЗ!`;
+                
+                for (const operator of operators) {
+                    try {
+                        console.log(`📤 Отправляем уведомление оператору ${operator.telegram_id}...`);
+                        
+                        const result = await bot.api.sendMessage(operator.telegram_id, notificationMessage, {
+                            parse_mode: 'HTML',
+                            reply_markup: {
+                                inline_keyboard: [[
+                                    { text: '✅ Принять заказ', callback_data: `take_order_${order.id}` },
+                                    { text: '📊 Панель', callback_data: 'open_operator_panel' }
+                                ]]
+                            }
+                        });
+                        
+                        console.log(`✅ Уведомление отправлено оператору ${operator.telegram_id}, message_id: ${result.message_id}`);
+                    } catch (sendError) {
+                        console.error(`❌ Не удалось отправить уведомление оператору ${operator.telegram_id}:`, sendError);
+                    }
+                }
+                
+                console.log(`🎯 Процесс уведомлений завершен для заявки #${order.id}`);
             }
         } catch (notifyError) {
-            console.error('❌ Ошибка отправки уведомлений операторам:', notifyError);
+            console.error('❌ КРИТИЧЕСКАЯ ОШИБКА отправки уведомлений:', notifyError);
         }
 
         res.json({ success: true, data: order });

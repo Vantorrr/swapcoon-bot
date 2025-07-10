@@ -646,15 +646,27 @@ function proceedToOrder() {
 // Обновление сводки заявки
 function updateOrderSummary() {
     const summary = document.getElementById('order-summary');
+    const walletAddress = document.getElementById('wallet-address')?.value?.trim() || '';
+    
+    let addressSection = '';
+    if (walletAddress) {
+        addressSection = `
+            <div class="info-section">
+                <h4>🎯 Адрес получения</h4>
+                ${createCopyableElement(walletAddress, 'Ваш кошелек', '💳')}
+            </div>
+        `;
+    }
+    
     summary.innerHTML = `
         <h3>Сводка обмена</h3>
         <div class="info-row">
             <span>Отдаете</span>
-            <span>${currentCalculation.fromAmount} ${currentCalculation.fromCurrency}</span>
+            <span><strong>${currentCalculation.fromAmount} ${currentCalculation.fromCurrency}</strong></span>
         </div>
         <div class="info-row">
             <span>Получаете</span>
-            <span>${currentCalculation.toAmount.toFixed(8)} ${currentCalculation.toCurrency}</span>
+            <span><strong>${currentCalculation.toAmount.toFixed(8)} ${currentCalculation.toCurrency}</strong></span>
         </div>
         <div class="info-row">
             <span>Курс обмена</span>
@@ -664,6 +676,7 @@ function updateOrderSummary() {
             <span>Комиссия</span>
             <span>${currentCalculation.fee.toFixed(8)} ${currentCalculation.toCurrency}</span>
         </div>
+        ${addressSection}
     `;
 }
 
@@ -679,6 +692,11 @@ function validateWalletAddress() {
     } else {
         amlButton.disabled = true;
         createButton.disabled = true;
+    }
+    
+    // Обновляем сводку заказа для отображения адреса
+    if (currentCalculation) {
+        updateOrderSummary();
     }
 }
 
@@ -806,7 +824,7 @@ function displayAMLResult(result) {
                 
                 <div class="aml-detailed-report">
                     <div class="address-info">
-                        🔵 <strong>Адрес:</strong> <code class="address-code">${result.address || 'N/A'}</code>
+                        ${createCopyableElement(result.address || 'N/A', '🔵 Адрес', '📍')}
                     </div>
                     
                     <div class="blockchain-info">
@@ -1627,20 +1645,77 @@ function exportData() {
     }
 }
 
-// Копирование реферальной ссылки
-function copyReferralLink() {
-    const linkInput = document.getElementById('referral-link-input');
-    linkInput.select();
-    linkInput.setSelectionRange(0, 99999); // Для мобильных устройств
-    
+// УНИВЕРСАЛЬНАЯ ФУНКЦИЯ КОПИРОВАНИЯ
+function copyToClipboard(text, successMessage = 'Скопировано!') {
     if (navigator.clipboard) {
-        navigator.clipboard.writeText(linkInput.value).then(() => {
-            showNotification('Ссылка скопирована!', 'success');
+        navigator.clipboard.writeText(text).then(() => {
+            showNotification(successMessage, 'success');
+            
+            // Анимация вибрации на мобильных
+            if (navigator.vibrate) {
+                navigator.vibrate(50);
+            }
+            
+            // Анимация для Telegram WebApp
+            if (tg && typeof tg.HapticFeedback === 'object') {
+                tg.HapticFeedback.notificationOccurred('success');
+            }
+        }).catch(err => {
+            console.error('❌ Ошибка копирования:', err);
+            fallbackCopy(text, successMessage);
         });
     } else {
-        document.execCommand('copy');
-        showNotification('Ссылка скопирована!', 'success');
+        fallbackCopy(text, successMessage);
     }
+}
+
+// Резервный способ копирования для старых браузеров
+function fallbackCopy(text, successMessage) {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    textArea.style.top = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    try {
+        document.execCommand('copy');
+        showNotification(successMessage, 'success');
+        
+        if (navigator.vibrate) {
+            navigator.vibrate(50);
+        }
+    } catch (err) {
+        console.error('❌ Ошибка резервного копирования:', err);
+        showNotification('Не удалось скопировать', 'error');
+    }
+    
+    document.body.removeChild(textArea);
+}
+
+// Копирование реферальной ссылки (обновлено)
+function copyReferralLink() {
+    const linkInput = document.getElementById('referral-link-input');
+    if (linkInput && linkInput.value) {
+        copyToClipboard(linkInput.value, '🔗 Реферальная ссылка скопирована!');
+    }
+}
+
+// СОЗДАНИЕ КОПИРУЕМОГО ЭЛЕМЕНТА С КНОПКОЙ
+function createCopyableElement(text, label = '', icon = '📋') {
+    return `
+        <div class="copyable-item">
+            <div class="copyable-content">
+                ${label ? `<span class="copyable-label">${label}:</span>` : ''}
+                <code class="copyable-text" onclick="copyToClipboard('${text}', '${icon} ${label || 'Данные'} скопированы!')">${text}</code>
+            </div>
+            <button class="copy-btn" onclick="copyToClipboard('${text}', '${icon} ${label || 'Данные'} скопированы!')" title="Копировать">
+                <i class="fas fa-copy"></i>
+            </button>
+        </div>
+    `;
 }
 
 // Глобальные переменные для фильтров
