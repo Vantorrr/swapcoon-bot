@@ -304,15 +304,16 @@ class Database {
 
             console.log('🔄 Создание заявки в базе данных...');
             console.log('📋 Данные заказа:', { userId, fromCurrency, toCurrency, fromAmount, toAmount, source });
+            console.log('⚠️ ВРЕМЕННО: поле source убрано из-за ошибки миграции');
 
             const sql = `
                 INSERT INTO orders 
                 (user_id, from_currency, to_currency, from_amount, to_amount, 
-                 from_address, to_address, exchange_rate, fee, aml_status, status, source)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 from_address, to_address, exchange_rate, fee, aml_status, status)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `;
             const params = [userId, fromCurrency, toCurrency, fromAmount, toAmount, 
-                           fromAddress, toAddress, exchangeRate, fee, amlStatus, status, source];
+                           fromAddress, toAddress, exchangeRate, fee, amlStatus, status];
 
             console.log('📝 SQL запрос:', sql);
             console.log('📋 Параметры:', params);
