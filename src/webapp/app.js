@@ -387,13 +387,6 @@ function updateCalculationDisplay(fromAmount, toAmount, exchangeRate, fee) {
     document.getElementById('to-amount').value = toAmount.toFixed(8);
     document.getElementById('exchange-rate').textContent = `1 ${fromCurrency} = ${exchangeRate.toFixed(2)} ${toCurrency}`;
     document.getElementById('final-amount').textContent = `${toAmount.toFixed(8)} ${toCurrency}`;
-    
-    // Обновляем балансы (приблизительные в USD)
-    const fromUSD = fromAmount * (currentRates.find(r => r.currency === fromCurrency)?.sell || 1);
-    const toUSD = toAmount * (currentRates.find(r => r.currency === toCurrency)?.sell || 1);
-    
-    document.getElementById('from-balance').textContent = `≈ $${fromUSD.toFixed(2)}`;
-    document.getElementById('to-balance').textContent = `≈ $${toUSD.toFixed(2)}`;
 }
 
 // Переключение валют
@@ -402,8 +395,17 @@ function swapCurrencies() {
     fromCurrency = toCurrency;
     toCurrency = temp;
     
-    document.querySelector('#from-currency .currency-code').textContent = fromCurrency;
-    document.querySelector('#to-currency .currency-code').textContent = toCurrency;
+    // Обновляем кнопки валют
+    const fromButton = document.querySelector('#from-currency');
+    const toButton = document.querySelector('#to-currency');
+    
+    fromButton.querySelector('.currency-name').textContent = fromCurrency;
+    fromButton.querySelector('.currency-desc').textContent = getCurrencyName(fromCurrency);
+    fromButton.querySelector('.currency-icon').textContent = getCurrencyIcon(fromCurrency);
+    
+    toButton.querySelector('.currency-name').textContent = toCurrency;
+    toButton.querySelector('.currency-desc').textContent = getCurrencyName(toCurrency);
+    toButton.querySelector('.currency-icon').textContent = getCurrencyIcon(toCurrency);
     
     // Анимация кнопки
     const swapButton = document.getElementById('swap-currencies');
@@ -534,6 +536,30 @@ function getCurrencyName(currency) {
     return names[currency] || currency;
 }
 
+// Получение иконки валюты
+function getCurrencyIcon(currency) {
+    const icons = {
+        'BTC': '₿',
+        'ETH': '⟠',
+        'USDT': '💵',
+        'USDC': '💵',
+        'BNB': '🟡',
+        'SOL': '☀️',
+        'ADA': '🔷',
+        'DOT': '⚫',
+        'MATIC': '🟣',
+        'AVAX': '🏔️',
+        'USD': '💵',
+        'EUR': '💶',
+        'RUB': '₽',
+        'UAH': '₴',
+        'KZT': '₸',
+        'ARS': '💰',
+        'BRL': '💰'
+    };
+    return icons[currency] || '🪙';
+}
+
 // Выбор валюты
 function selectCurrency(currency) {
     // Сохраняем тип валюты и валюту для дальнейшей обработки
@@ -567,17 +593,29 @@ function finalizeCurrencySelection(currency, additionalInfo = null) {
     if (currencyType === 'from') {
         fromCurrency = currency;
         let displayText = currency;
+        let desc = getCurrencyName(currency);
         if (additionalInfo) {
             displayText += ` (${additionalInfo})`;
+            desc = additionalInfo;
         }
-        document.querySelector('#from-currency .currency-code').textContent = displayText;
+        
+        const button = document.querySelector('#from-currency');
+        button.querySelector('.currency-name').textContent = displayText;
+        button.querySelector('.currency-desc').textContent = desc;
+        button.querySelector('.currency-icon').textContent = getCurrencyIcon(currency);
     } else {
         toCurrency = currency;
         let displayText = currency;
+        let desc = getCurrencyName(currency);
         if (additionalInfo) {
             displayText += ` (${additionalInfo})`;
+            desc = additionalInfo;
         }
-        document.querySelector('#to-currency .currency-code').textContent = displayText;
+        
+        const button = document.querySelector('#to-currency');
+        button.querySelector('.currency-name').textContent = displayText;
+        button.querySelector('.currency-desc').textContent = desc;
+        button.querySelector('.currency-icon').textContent = getCurrencyIcon(currency);
     }
     
     // Сбрасываем состояние

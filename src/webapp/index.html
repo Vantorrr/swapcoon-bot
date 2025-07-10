@@ -86,13 +86,14 @@
                     <div class="currency-block">
                         <label>Отдаю</label>
                         <div class="currency-input">
-                            <input type="number" id="from-amount" placeholder="0.00" step="0.01">
-                            <div class="currency-select" id="from-currency">
-                                <span class="currency-code">BTC</span>
-                                <i class="fas fa-chevron-down"></i>
-                            </div>
+                            <input type="number" id="from-amount" placeholder="Введите сумму" step="0.01">
                         </div>
-                        <div class="currency-balance" id="from-balance">≈ $0.00</div>
+                        <button class="currency-button" id="from-currency" onclick="openCurrencyModal('from')">
+                            <div class="currency-icon">🪙</div>
+                            <span class="currency-name">BTC</span>
+                            <span class="currency-desc">Bitcoin</span>
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
                     </div>
 
                     <!-- Кнопка переключения -->
@@ -104,13 +105,14 @@
                     <div class="currency-block">
                         <label>Получаю</label>
                         <div class="currency-input">
-                            <input type="number" id="to-amount" placeholder="0.00" step="0.01" readonly>
-                            <div class="currency-select" id="to-currency">
-                                <span class="currency-code">USDT</span>
-                                <i class="fas fa-chevron-down"></i>
-                            </div>
+                            <input type="number" id="to-amount" placeholder="Результат" step="0.01" readonly>
                         </div>
-                        <div class="currency-balance" id="to-balance">≈ $0.00</div>
+                        <button class="currency-button" id="to-currency" onclick="openCurrencyModal('to')">
+                            <div class="currency-icon">💰</div>
+                            <span class="currency-name">USDT</span>
+                            <span class="currency-desc">Tether USD</span>
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
                     </div>
 
                     <!-- Информация о курсе -->

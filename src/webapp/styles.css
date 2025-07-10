@@ -347,11 +347,87 @@ body {
     font-size: var(--font-sm);
 }
 
-.currency-balance {
-    font-size: var(--font-xs);
+/* Новые красивые кнопки выбора валют */
+.currency-button {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    background: linear-gradient(135deg, var(--surface-color) 0%, var(--background-color) 100%);
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: var(--spacing-sm);
+    box-shadow: var(--shadow-sm);
+    text-align: left;
+    font-family: inherit;
+}
+
+.currency-button:hover {
+    border-color: var(--primary-color);
+    background: linear-gradient(135deg, var(--primary-color) 0%, #5856D6 100%);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.currency-button:hover .currency-icon {
+    transform: scale(1.1);
+}
+
+.currency-button:hover .currency-desc {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.currency-button:active {
+    transform: translateY(0);
+    box-shadow: var(--shadow-sm);
+}
+
+.currency-icon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary-color);
+    border-radius: 50%;
+    font-size: var(--font-xl);
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.currency-button:hover .currency-icon {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.currency-name {
+    font-size: var(--font-lg);
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    transition: color 0.3s ease;
+}
+
+.currency-desc {
+    font-size: var(--font-sm);
     color: var(--text-secondary);
-    margin-top: var(--spacing-xs);
-    text-align: right;
+    margin: 0;
+    transition: color 0.3s ease;
+}
+
+.currency-button .fas.fa-chevron-right {
+    margin-left: auto;
+    color: var(--text-secondary);
+    font-size: var(--font-md);
+    transition: all 0.3s ease;
+}
+
+.currency-button:hover .fas.fa-chevron-right {
+    color: white;
+    transform: translateX(4px);
 }
 
 /* Swap Button */
