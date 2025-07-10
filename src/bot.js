@@ -3416,7 +3416,7 @@ bot.on('callback_query:data', async (ctx) => {
                 {
                     parse_mode: 'HTML',
                     reply_markup: new InlineKeyboard()
-                        .text('📤 Отправить средства', `operator_send_${orderId}`)
+                        .text('📤 Отправить средства', `funds_sent_${orderId}`)
                         .text('💬 Написать клиенту', `operator_chat_${orderId}`)
                 }
             );
