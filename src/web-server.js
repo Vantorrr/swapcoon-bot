@@ -100,6 +100,7 @@ app.post('/api/aml-check', async (req, res) => {
             currency,
             result: amlResult.status,
             detailedResult: amlResult, // Передаем полный результат
+            addressType: req.body.type || 'to', // Передаем тип адреса (from/to)
             userId: userId || 'anonymous'
         });
         
@@ -144,15 +145,18 @@ app.post('/api/create-order', async (req, res) => {
         // Получаем данные пользователя
         const user = await db.getUser(userId);
 
-        // Отправляем уведомление операторам
+        // Отправляем уведомление операторам с новой структурой данных
         await notifyOperators({
             id: order.id,
             userName: user.firstName || user.username,
             fromAmount,
             fromCurrency,
             toCurrency,
-            address: toAddress,
-            amlStatus: amlResult.status
+            fromAddress: fromAddress || '',
+            toAddress: toAddress,
+            amlFromResult: req.body.amlFromResult || { status: 'not_checked' },
+            amlToResult: req.body.amlToResult || { status: 'not_checked' },
+            pairType: req.body.pairType || 'crypto'
         });
 
         // Отправляем данные в CRM

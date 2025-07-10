@@ -4132,14 +4132,42 @@ async function notifyOperators(orderData) {
         // Расчет примерной прибыли (3% комиссия)
         const estimatedProfit = (orderData.fromAmount * 0.03).toFixed(2);
         
+        // Определяем тип пары и формируем соответствующее сообщение
+        const isCryptoPair = orderData.pairType === 'crypto';
+        
+        let addressSection = '';
+        let amlSection = '';
+        
+        if (isCryptoPair) {
+            // Для криптопар показываем оба адреса и оба AML результата
+            const fromAML = orderData.amlFromResult || { status: 'not_checked' };
+            const toAML = orderData.amlToResult || { status: 'not_checked' };
+            
+            addressSection = 
+                `📤 <b>Адрес отправки:</b> <code>${orderData.fromAddress || 'Не указан'}</code>\n` +
+                `📥 <b>Адрес получения:</b> <code>${orderData.toAddress || 'Не указан'}</code>\n`;
+                
+            amlSection = 
+                `🛡️ <b>AML отправки:</b> ${getAMLStatusEmoji(fromAML.status)} ${fromAML.status || 'Не проверен'}\n` +
+                `🛡️ <b>AML получения:</b> ${getAMLStatusEmoji(toAML.status)} ${toAML.status || 'Не проверен'}\n`;
+        } else {
+            // Для фиатных пар показываем номер счета
+            addressSection = `🏦 <b>Номер счета:</b> <code>${orderData.toAddress || 'Не указан'}</code>\n`;
+            amlSection = `✅ <b>AML проверка:</b> Не требуется (фиатная пара)\n`;
+        }
+        
+        const pairTypeIcon = isCryptoPair ? '🔗' : '🏦';
+        const pairTypeText = isCryptoPair ? 'Криптовалютная' : 'Фиатная';
+
         const message = 
             `🚨 <b>НОВАЯ ЗАЯВКА С САЙТА #${orderData.id}</b>\n\n` +
             `🌐 <b>Источник:</b> Веб-приложение\n` +
             `👤 <b>Пользователь:</b> ${orderData.userName || 'Неизвестен'}\n` +
             `💱 <b>Обмен:</b> ${orderData.fromAmount} ${orderData.fromCurrency} → ${orderData.toCurrency}\n` +
-            `💰 <b>Ожидаемая прибыль:</b> ~$${estimatedProfit}\n` +
-            `📍 <b>Адрес получения:</b> <code>${orderData.address || 'Не указан'}</code>\n` +
-            `🛡️ <b>AML статус:</b> ${getAMLStatusEmoji(orderData.amlStatus)} ${orderData.amlStatus || 'Не проверен'}\n` +
+            `${pairTypeIcon} <b>Тип пары:</b> ${pairTypeText}\n` +
+            `💰 <b>Ожидаемая прибыль:</b> ~$${estimatedProfit}\n\n` +
+            addressSection +
+            amlSection +
             `⏰ <b>Создан:</b> ${new Date().toLocaleString('ru-RU', {
                 timeZone: 'Europe/Moscow',
                 year: 'numeric',
@@ -4150,7 +4178,7 @@ async function notifyOperators(orderData) {
             })}\n\n` +
             `📊 <b>Приоритет:</b> ${getPriorityText(orderData.fromAmount)}\n` +
             `📋 Используйте /operator чтобы принять заказ\n\n` +
-            `#заявка #сайт #${orderData.fromCurrency}_${orderData.toCurrency}`;
+            `#заявка #сайт #${orderData.fromCurrency}_${orderData.toCurrency} #${pairTypeText.toLowerCase()}`;
 
         const keyboard = new InlineKeyboard()
             .text('👨‍💼 Панель оператора', 'open_operator_panel')
@@ -4282,6 +4310,11 @@ async function notifyWebsiteActivity(activityType, data) {
                 const riskLevel = riskScore <= 50 ? 'Низкий' : riskScore <= 80 ? 'Средний' : 'Высокий';
                 const riskIcon = riskScore <= 50 ? '🟢' : riskScore <= 80 ? '🟡' : '🔴';
                 
+                // Определяем тип адреса
+                const addressType = data.addressType || 'to';
+                const addressTypeText = addressType === 'from' ? 'ОТПРАВКИ' : 'ПОЛУЧЕНИЯ';
+                const addressTypeEmoji = addressType === 'from' ? '📤' : '📥';
+                
                 let connectionsText = '';
                 if (connections.length > 0) {
                     // Основные связи (1% и выше)
@@ -4323,20 +4356,20 @@ async function notifyWebsiteActivity(activityType, data) {
                 // Большой индикатор риска для привлечения внимания
                 let topIndicator = '';
                 if (riskScore >= 80) {
-                    topIndicator = '🔴⚠️ <b>ВЫСОКИЙ РИСК!</b> ⚠️🔴';
+                    topIndicator = `🔴⚠️ <b>ВЫСОКИЙ РИСК АДРЕСА ${addressTypeText}!</b> ⚠️🔴`;
                 } else if (riskScore >= 50) {
-                    topIndicator = '🟡⚠️ <b>СРЕДНИЙ РИСК</b> ⚠️🟡';
+                    topIndicator = `🟡⚠️ <b>СРЕДНИЙ РИСК АДРЕСА ${addressTypeText}</b> ⚠️🟡`;
                 } else {
-                    topIndicator = '🟢✅ <b>НИЗКИЙ РИСК</b> ✅🟢';
+                    topIndicator = `🟢✅ <b>НИЗКИЙ РИСК АДРЕСА ${addressTypeText}</b> ✅🟢`;
                 }
 
                 message = `${topIndicator}\n\n` +
-                         `🔵 <b>Адрес:</b> <code>${data.address}</code>\n\n` +
+                         `${addressTypeEmoji} <b>Адрес ${addressTypeText.toLowerCase()}:</b> <code>${data.address}</code>\n\n` +
                          `⛓️ <b>Блокчейн:</b> ${blockchain}\n` +
                          `${connectionsText}\n\n` +
                          `📈 <b>Уровень риска:</b> ${riskLevel} (${riskScore.toFixed(1)}%)\n\n` +
                          `⏰ <b>Время:</b> ${new Date().toLocaleString('ru-RU')}\n\n` +
-                         `#aml #риск_${riskLevel.toLowerCase()}`;
+                         `#aml #${addressType}_адрес #риск_${riskLevel.toLowerCase()}`;
                 break;
         }
         
