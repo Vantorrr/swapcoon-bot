@@ -3090,7 +3090,7 @@ bot.on('callback_query:data', async (ctx) => {
             await ctx.editMessageText(closedMessage, {
                 parse_mode: 'HTML',
                 reply_markup: new InlineKeyboard()
-                    .text('✅ Тикет закрыт', 'noop')
+                    .text('🏠 Главное меню', 'back_to_main')
             });
             
             console.log(`🎫 Тикет ${ticketId} закрыт пользователем ${userId} (${adminName})`);

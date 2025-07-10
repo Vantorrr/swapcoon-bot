@@ -639,7 +639,7 @@ function proceedToOrder() {
     // Очищаем предыдущие данные
     document.getElementById('wallet-address').value = '';
     document.getElementById('aml-result').innerHTML = '';
-    document.getElementById('create-order-button').disabled = true;
+    document.getElementById('create-order-button').disabled = true; // Пока не введен адрес
     currentAMLResult = null;
 }
 
@@ -671,12 +671,14 @@ function updateOrderSummary() {
 function validateWalletAddress() {
     const address = document.getElementById('wallet-address').value.trim();
     const amlButton = document.getElementById('aml-check-button');
+    const createButton = document.getElementById('create-order-button');
     
     if (address.length > 20) { // Базовая валидация
         amlButton.disabled = false;
+        createButton.disabled = false; // Разрешаем создание заявки без AML
     } else {
         amlButton.disabled = true;
-        document.getElementById('create-order-button').disabled = true;
+        createButton.disabled = true;
     }
 }
 
@@ -713,8 +715,9 @@ async function performAMLCheck() {
             currentAMLResult = data.data;
             displayAMLResult(currentAMLResult);
             
-            if (currentAMLResult.status === 'approved') {
-                document.getElementById('create-order-button').disabled = false;
+            // Отправляем AML результат админам если статус не "approved"
+            if (currentAMLResult.status !== 'approved') {
+                sendAMLAlertToAdmins(address, currentAMLResult);
             }
         } else {
             throw new Error(data.error || 'Ошибка AML проверки');
@@ -747,14 +750,17 @@ function displayAMLResult(result) {
     let message = 'Адрес прошел проверку';
     
     if (result.status === 'rejected') {
-        resultClass = 'error';
-        icon = 'fas fa-times-circle';
-        message = 'Адрес заблокирован';
+        resultClass = 'warning'; // Изменил с error на warning
+        icon = 'fas fa-exclamation-triangle';
+        message = 'Адрес требует внимания (можно продолжить)';
     } else if (result.status === 'manual_review') {
         resultClass = 'warning';
         icon = 'fas fa-exclamation-triangle';
-        message = 'Требуется ручная проверка';
+        message = 'Требуется ручная проверка (можно продолжить)';
     }
+
+    // Разрешаем создание заявки в любом случае
+    document.getElementById('create-order-button').disabled = false;
 
     // Если есть детальный отчет, показываем его
     if (result.detailedReport && result.connections) {
@@ -847,8 +853,8 @@ function displayAMLResult(result) {
 
 // Создание заявки
 async function createOrder() {
-    if (!currentCalculation || !currentAMLResult) {
-        showNotification('Завершите все проверки перед созданием заявки', 'warning');
+    if (!currentCalculation) {
+        showNotification('Сначала рассчитайте обмен', 'warning');
         return;
     }
     
@@ -882,7 +888,7 @@ async function createOrder() {
             toAddress: address,
             exchangeRate: currentCalculation.exchangeRate,
             fee: currentCalculation.fee,
-            amlResult: currentAMLResult
+            amlResult: currentAMLResult || { status: 'not_checked', risk: 'unknown' }
         };
         
         console.log('📋 Данные заявки:', orderData);
@@ -1880,6 +1886,22 @@ function requestBankCards() {
 // OTC торговля
 function requestOTCTrading() {
     createSupportTicket('OTC торговля', 'Заявка на OTC торговлю большими объемами. Клиент интересуется обменом крупных сумм с индивидуальными условиями.');
+}
+
+// Отправка AML уведомления админам
+async function sendAMLAlertToAdmins(address, amlResult) {
+    try {
+        if (!currentUserId) return;
+        
+        const riskLevel = amlResult.status === 'rejected' ? 'ВЫСОКИЙ' : 'СРЕДНИЙ';
+        const subject = `🛡️ AML ПРЕДУПРЕЖДЕНИЕ - ${riskLevel} РИСК`;
+        const message = `Адрес: ${address}\nСтатус: ${amlResult.status}\nРиск: ${amlResult.risk}\nОценка: ${amlResult.score}/100`;
+        
+        await createSupportTicket(subject, message);
+        console.log('📨 AML уведомление отправлено админам');
+    } catch (error) {
+        console.error('❌ Ошибка отправки AML уведомления:', error);
+    }
 }
 
 // Создание заявки в поддержку с темой
