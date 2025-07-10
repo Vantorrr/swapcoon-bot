@@ -4875,7 +4875,67 @@ webhookApp.post('/api/aml-check', async (req, res) => {
     }
 });
 
-// API для создания заявки УДАЛЕН - используется web-server.js
+// API для создания заявки
+webhookApp.post('/api/create-order', async (req, res) => {
+    try {
+        console.log('🚀 API CREATE-ORDER В BOT.JS ПОЛУЧИЛ:', req.body);
+        
+        const {
+            userId,
+            fromCurrency,
+            toCurrency,
+            fromAmount,
+            toAmount,
+            fromAddress,
+            toAddress,
+            amlResult,
+            exchangeRate,
+            fee,
+            pairType
+        } = req.body;
+
+        // Создаем заявку в базе данных
+        const order = await db.createOrder({
+            userId,
+            fromCurrency,
+            toCurrency,
+            fromAmount,
+            toAmount,
+            fromAddress,
+            toAddress,
+            exchangeRate: exchangeRate || (toAmount / fromAmount),
+            fee: fee || 0,
+            amlStatus: amlResult?.status || 'clean',
+            status: 'pending',
+            source: 'web'
+        });
+
+        console.log('✅ Заявка создана в bot.js:', order);
+
+        // Получаем пользователя
+        const user = await db.getUser(userId);
+        const userName = user?.firstName || user?.username || `User_${userId}`;
+
+        // ПРАВИЛЬНЫЕ данные для уведомлений
+        await notifyOperators({
+            id: order.id,
+            userName: userName,
+            fromAmount: order.fromAmount,
+            fromCurrency: order.fromCurrency,
+            toCurrency: order.toCurrency,
+            fromAddress: order.fromAddress || '',
+            toAddress: order.toAddress || '',
+            amlFromResult: req.body.amlFromResult || { status: 'not_checked' },
+            amlToResult: req.body.amlToResult || { status: 'not_checked' },
+            pairType: pairType || 'fiat'
+        });
+
+        res.json({ success: true, data: order });
+    } catch (error) {
+        console.error('❌ Ошибка создания заявки в bot.js:', error);
+        res.status(500).json({ success: false, error: 'Ошибка создания заявки: ' + error.message });
+    }
+});
 
 // API для получения истории пользователя
 webhookApp.get('/api/history/:userId', async (req, res) => {
