@@ -340,8 +340,8 @@ function calculateExchange() {
     // Расчет курса обмена
     const exchangeRate = fromRate.sell / toRate.buy;
     const toAmount = fromAmount * exchangeRate;
-    const fee = toAmount * 0.01; // 1% комиссия
-    const finalAmount = toAmount - fee;
+    const fee = 0; // Комиссия убрана
+    const finalAmount = toAmount;
     
     currentCalculation = {
         fromAmount,
@@ -374,8 +374,8 @@ function reverseCalculateExchange() {
     }
     
     const exchangeRate = fromRate.sell / toRate.buy;
-    const fee = toAmount * 0.01;
-    const grossAmount = toAmount + fee;
+    const fee = 0; // Комиссия убрана
+    const grossAmount = toAmount; // Без комиссии
     const fromAmount = grossAmount / exchangeRate;
     
     document.getElementById('from-amount').value = fromAmount.toFixed(8);
@@ -386,7 +386,6 @@ function reverseCalculateExchange() {
 function updateCalculationDisplay(fromAmount, toAmount, exchangeRate, fee) {
     document.getElementById('to-amount').value = toAmount.toFixed(8);
     document.getElementById('exchange-rate').textContent = `1 ${fromCurrency} = ${exchangeRate.toFixed(2)} ${toCurrency}`;
-    document.getElementById('fee-amount').textContent = `${fee.toFixed(8)} ${toCurrency}`;
     document.getElementById('final-amount').textContent = `${toAmount.toFixed(8)} ${toCurrency}`;
     
     // Обновляем балансы (приблизительные в USD)
@@ -671,10 +670,6 @@ function updateOrderSummary() {
         <div class="info-row">
             <span>Курс обмена</span>
             <span>1 ${currentCalculation.fromCurrency} = ${currentCalculation.exchangeRate.toFixed(2)} ${currentCalculation.toCurrency}</span>
-        </div>
-        <div class="info-row">
-            <span>Комиссия</span>
-            <span>${currentCalculation.fee.toFixed(8)} ${currentCalculation.toCurrency}</span>
         </div>
         ${addressSection}
     `;
@@ -1913,10 +1908,6 @@ function displayHistory(history) {
                 <div class="history-detail">
                     <span>Курс:</span>
                     <span>${order.exchange_rate?.toFixed(4) || 'N/A'}</span>
-                </div>
-                <div class="history-detail">
-                    <span>Комиссия:</span>
-                    <span>${order.fee || 0} ${order.to_currency}</span>
                 </div>
             </div>
             <div class="history-status ${order.status}">
