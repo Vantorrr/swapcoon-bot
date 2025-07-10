@@ -4141,34 +4141,85 @@ async function notifyOperators(orderData) {
         const estimatedProfit = (orderData.fromAmount * 0.03).toFixed(2);
         
         // Определяем тип пары и формируем соответствующее сообщение
-        const isCryptoPair = orderData.pairType === 'crypto';
+        const pairType = orderData.pairType || 'fiat';
         
         let addressSection = '';
         let amlSection = '';
+        let pairTypeIcon = '';
+        let pairTypeText = '';
         
-        if (isCryptoPair) {
-            // Для криптопар показываем оба адреса и оба AML результата
-            const fromAML = orderData.amlFromResult || { status: 'not_checked' };
-            const toAML = orderData.amlToResult || { status: 'not_checked' };
-            
-            addressSection = 
-                `📤 <b>Адрес отправки:</b> <code>${orderData.fromAddress || 'Не указан'}</code>\n` +
-                `📥 <b>Адрес получения:</b> <code>${orderData.toAddress || 'Не указан'}</code>\n`;
+        switch (pairType) {
+            case 'crypto':
+                // BTC → ETH: два адреса + AML для каждого
+                const fromAML = orderData.amlFromResult || { status: 'not_checked' };
+                const toAML = orderData.amlToResult || { status: 'not_checked' };
                 
-            amlSection = 
-                `🛡️ <b>AML отправки:</b> ${getAMLStatusEmoji(fromAML.status)} ${fromAML.status || 'Не проверен'}\n` +
-                `🛡️ <b>AML получения:</b> ${getAMLStatusEmoji(toAML.status)} ${toAML.status || 'Не проверен'}\n`;
-        } else {
-            // Для фиатных пар показываем номер счета с лучшей проверкой
-            const accountNumber = orderData.toAddress?.trim();
-            console.log('🏦 НОМЕР СЧЕТА ДЛЯ ФИАТНОЙ ПАРЫ:', accountNumber);
-            
-            addressSection = `🏦 <b>Номер счета:</b> <code>${accountNumber || 'Не указан'}</code>\n`;
-            amlSection = `✅ <b>AML проверка:</b> Не требуется (фиатная пара)\n`;
+                addressSection = 
+                    `📤 <b>Адрес отправки:</b> <code>${orderData.fromAddress || 'Не указан'}</code>\n` +
+                    `📥 <b>Адрес получения:</b> <code>${orderData.toAddress || 'Не указан'}</code>\n`;
+                    
+                amlSection = 
+                    `🛡️ <b>AML отправки:</b> ${getAMLStatusEmoji(fromAML.status)} ${fromAML.status || 'Не проверен'}\n` +
+                    `🛡️ <b>AML получения:</b> ${getAMLStatusEmoji(toAML.status)} ${toAML.status || 'Не проверен'}\n`;
+                    
+                pairTypeIcon = '🔗';
+                pairTypeText = 'Криптовалютная';
+                break;
+                
+            case 'crypto-to-fiat':
+                // USDT → RUB: криптоадрес + реквизиты
+                const cryptoAML = orderData.amlFromResult || { status: 'not_checked' };
+                
+                addressSection = 
+                    `📤 <b>Криптоадрес:</b> <code>${orderData.fromAddress || 'Не указан'}</code>\n` +
+                    `📥 <b>Реквизиты получения:</b> <code>${orderData.toAddress || 'Не указан'}</code>\n`;
+                    
+                amlSection = 
+                    `🛡️ <b>AML адреса:</b> ${getAMLStatusEmoji(cryptoAML.status)} ${cryptoAML.status || 'Не проверен'}\n` +
+                    `✅ <b>AML реквизитов:</b> Не требуется (фиат)\n`;
+                    
+                pairTypeIcon = '🔄';
+                pairTypeText = 'Крипто → Фиат';
+                break;
+                
+            case 'fiat-to-crypto':
+                // RUB → USDT: кошелек получения + AML
+                const walletAML = orderData.amlToResult || { status: 'not_checked' };
+                
+                addressSection = 
+                    `📤 <b>Реквизиты отправки:</b> Будут предоставлены оператором\n` +
+                    `📥 <b>Кошелек получения:</b> <code>${orderData.toAddress || 'Не указан'}</code>\n`;
+                    
+                amlSection = 
+                    `✅ <b>AML отправки:</b> Не требуется (фиат)\n` +
+                    `🛡️ <b>AML кошелька:</b> ${getAMLStatusEmoji(walletAML.status)} ${walletAML.status || 'Не проверен'}\n`;
+                    
+                pairTypeIcon = '🔁';
+                pairTypeText = 'Фиат → Крипто';
+                break;
+                
+            case 'fiat':
+            default:
+                // ARS → BRL или специальные случаи
+                const accountNumber = orderData.toAddress?.trim();
+                console.log('🏦 НОМЕР СЧЕТА ДЛЯ ФИАТНОЙ ПАРЫ:', accountNumber);
+                
+                // Проверяем специальные случаи
+                const isSpecialCase = (orderData.fromCurrency === 'ARS' && orderData.toCurrency === 'RUB') ||
+                                    (orderData.fromCurrency === 'RUB' && orderData.toCurrency === 'KZT');
+                
+                if (isSpecialCase) {
+                    const currencyName = orderData.toCurrency === 'RUB' ? 'рублей' : 'тенге';
+                    addressSection = `💳 <b>Реквизиты для ${currencyName}:</b> <code>${accountNumber || 'Не указан'}</code>\n`;
+                } else {
+                    addressSection = `🏦 <b>Номер счета:</b> <code>${accountNumber || 'Не указан'}</code>\n`;
+                }
+                
+                amlSection = `✅ <b>AML проверка:</b> Не требуется (фиатная пара)\n`;
+                pairTypeIcon = '🏦';
+                pairTypeText = 'Фиатная';
+                break;
         }
-        
-        const pairTypeIcon = isCryptoPair ? '🔗' : '🏦';
-        const pairTypeText = isCryptoPair ? 'Криптовалютная' : 'Фиатная';
 
         const message = 
             `🚨 <b>НОВАЯ ЗАЯВКА С САЙТА #${orderData.id}</b>\n\n` +

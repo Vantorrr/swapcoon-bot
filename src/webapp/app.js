@@ -680,6 +680,33 @@ function isCryptoPair(fromCurrency, toCurrency) {
     return cryptoCurrencies.includes(fromCurrency) && cryptoCurrencies.includes(toCurrency);
 }
 
+// Проверка является ли пара смешанной (крипто → фиат)
+function isCryptoToFiatPair(fromCurrency, toCurrency) {
+    const cryptoCurrencies = ['BTC', 'ETH', 'USDT', 'USDC', 'BNB', 'ADA', 'DOT', 'XRP', 'LTC', 'BCH', 'LINK', 'SOL', 'MATIC', 'AVAX'];
+    const fiatCurrencies = ['USD', 'EUR', 'RUB', 'UAH', 'KZT', 'ARS', 'BRL'];
+    return cryptoCurrencies.includes(fromCurrency) && fiatCurrencies.includes(toCurrency);
+}
+
+// Проверка является ли пара смешанной (фиат → крипто)
+function isFiatToCryptoPair(fromCurrency, toCurrency) {
+    const cryptoCurrencies = ['BTC', 'ETH', 'USDT', 'USDC', 'BNB', 'ADA', 'DOT', 'XRP', 'LTC', 'BCH', 'LINK', 'SOL', 'MATIC', 'AVAX'];
+    const fiatCurrencies = ['USD', 'EUR', 'RUB', 'UAH', 'KZT', 'ARS', 'BRL'];
+    return fiatCurrencies.includes(fromCurrency) && cryptoCurrencies.includes(toCurrency);
+}
+
+// Определяем тип валютной пары
+function getPairType(fromCurrency, toCurrency) {
+    if (isCryptoPair(fromCurrency, toCurrency)) {
+        return 'crypto'; // BTC → ETH
+    } else if (isCryptoToFiatPair(fromCurrency, toCurrency)) {
+        return 'crypto-to-fiat'; // USDT → RUB
+    } else if (isFiatToCryptoPair(fromCurrency, toCurrency)) {
+        return 'fiat-to-crypto'; // RUB → USDT
+    } else {
+        return 'fiat'; // ARS → BRL
+    }
+}
+
 // Переход к оформлению заявки
 function proceedToOrder() {
     if (!currentCalculation) {
@@ -688,15 +715,43 @@ function proceedToOrder() {
     }
     
     // Определяем тип валютной пары
-    const isCrypto = isCryptoPair(currentCalculation.fromCurrency, currentCalculation.toCurrency);
+    const pairType = getPairType(currentCalculation.fromCurrency, currentCalculation.toCurrency);
     
     // ОТЛАДКА: выводим информацию о классификации пары
     console.log(`🔍 ПРОВЕРКА ПАРЫ: ${currentCalculation.fromCurrency} → ${currentCalculation.toCurrency}`);
-    console.log(`🔍 Классификация: ${isCrypto ? 'КРИПТОВАЛЮТНАЯ' : 'ФИАТНАЯ'}`);
-    console.log(`🔍 Интерфейс: ${isCrypto ? 'Адрес кошелька + AML' : 'Номер счета БЕЗ AML'}`);
+    console.log(`🔍 Тип пары: ${pairType}`);
+    
+    let interfaceDescription = '';
+    switch (pairType) {
+        case 'crypto':
+            interfaceDescription = 'Два адреса кошельков + AML для каждого';
+            break;
+        case 'crypto-to-fiat':
+            interfaceDescription = 'Криптоадрес + AML, затем реквизиты получения';
+            break;
+        case 'fiat-to-crypto':
+            interfaceDescription = 'Кошелек получения крипты + AML проверка';
+            break;
+        case 'fiat':
+            const isSpecialCase = currentCalculation && (
+                (currentCalculation.fromCurrency === 'ARS' && currentCalculation.toCurrency === 'RUB') ||
+                (currentCalculation.fromCurrency === 'RUB' && currentCalculation.toCurrency === 'KZT')
+            );
+            if (isSpecialCase) {
+                if (currentCalculation.fromCurrency === 'ARS' && currentCalculation.toCurrency === 'RUB') {
+                    interfaceDescription = 'Реквизиты для получения рублей БЕЗ AML';
+                } else if (currentCalculation.fromCurrency === 'RUB' && currentCalculation.toCurrency === 'KZT') {
+                    interfaceDescription = 'Реквизиты для получения тенге БЕЗ AML';
+                }
+            } else {
+                interfaceDescription = 'Номер счета БЕЗ AML';
+            }
+            break;
+    }
+    console.log(`🔍 Интерфейс: ${interfaceDescription}`);
     
     // Обновляем интерфейс в зависимости от типа пары
-    updateOrderInterfaceForPairType(isCrypto);
+    updateOrderInterfaceForPairType(pairType);
     
     // Обновляем сводку заявки
     updateOrderSummary();
@@ -710,39 +765,43 @@ function proceedToOrder() {
 }
 
 // Обновление интерфейса в зависимости от типа валютной пары
-function updateOrderInterfaceForPairType(isCrypto) {
+function updateOrderInterfaceForPairType(pairType) {
     const addressLabel = document.querySelector('label[for="wallet-address"]');
     const addressInput = document.getElementById('wallet-address');
     const amlSection = document.getElementById('aml-section');
     const inputHelp = document.querySelector('.input-help');
     
-    if (isCrypto) {
-        // Криптовалютная пара - добавляем поле для адреса отправки
+    // Удаляем дополнительные поля если они есть
+    const toAddressDiv = document.getElementById('to-address-input');
+    const receivingDetailsDiv = document.getElementById('receiving-details-input');
+    if (toAddressDiv) toAddressDiv.remove();
+    if (receivingDetailsDiv) receivingDetailsDiv.remove();
+    
+    if (pairType === 'crypto') {
+        // Криптовалютная пара (BTC → ETH) - два адреса + AML для каждого
         if (addressLabel) addressLabel.textContent = 'Адреса кошельков';
-        if (addressInput) addressInput.placeholder = 'Введите адрес для получения';
+        if (addressInput) addressInput.placeholder = 'Введите адрес отправки';
         if (amlSection) {
             amlSection.style.display = 'block';
-            // Добавляем второе поле для адреса отправки если его еще нет
-            if (!document.getElementById('from-address-input')) {
-                const fromAddressDiv = document.createElement('div');
-                fromAddressDiv.className = 'address-input';
-                fromAddressDiv.innerHTML = `
-                    <label for="from-wallet-address">Адрес кошелька для отправки</label>
-                    <div class="input-group">
-                        <input type="text" id="from-wallet-address" placeholder="Введите адрес отправки">
-                        <button class="scan-button" onclick="scanQR('from')">
-                            <i class="fas fa-qrcode"></i>
-                        </button>
-                    </div>
-                    <div class="input-help">
-                        Адрес с которого вы будете отправлять средства
-                    </div>
-                `;
-                fromAddressDiv.id = 'from-address-input';
-                amlSection.parentNode.insertBefore(fromAddressDiv, amlSection);
-            }
+            // Добавляем второе поле для адреса получения
+            const toAddressDiv = document.createElement('div');
+            toAddressDiv.className = 'address-input';
+            toAddressDiv.innerHTML = `
+                <label for="to-wallet-address">Адрес кошелька для получения</label>
+                <div class="input-group">
+                    <input type="text" id="to-wallet-address" placeholder="Введите адрес получения">
+                    <button class="scan-button" onclick="scanQR('to')">
+                        <i class="fas fa-qrcode"></i>
+                    </button>
+                </div>
+                <div class="input-help">
+                    Адрес на который вы хотите получить средства
+                </div>
+            `;
+            toAddressDiv.id = 'to-address-input';
+            amlSection.parentNode.insertBefore(toAddressDiv, amlSection);
             
-            // Обновляем AML секцию для двух адресов
+            // AML секция для двух адресов
             amlSection.innerHTML = `
                 <div class="aml-checks">
                     <h4>Проверка AML</h4>
@@ -760,55 +819,150 @@ function updateOrderInterfaceForPairType(isCrypto) {
                 </div>
             `;
             
-            // Добавляем обработчики для новых кнопок
+            // Добавляем обработчики
             setTimeout(() => {
                 const fromButton = document.getElementById('aml-check-from-button');
                 const toButton = document.getElementById('aml-check-to-button');
-                const fromInput = document.getElementById('from-wallet-address');
-                const toInput = document.getElementById('wallet-address');
+                const fromInput = document.getElementById('wallet-address');
+                const toInput = document.getElementById('to-wallet-address');
                 
                 if (fromButton) fromButton.addEventListener('click', () => performAMLCheck('from'));
                 if (toButton) toButton.addEventListener('click', () => performAMLCheck('to'));
-                
                 if (fromInput) fromInput.addEventListener('input', () => validateCryptoAddresses());
                 if (toInput) toInput.addEventListener('input', () => validateCryptoAddresses());
             }, 100);
         }
         if (inputHelp) inputHelp.textContent = 'Проверьте правильность адресов перед отправкой';
-    } else {
-        // Фиатная пара
-        // Удаляем поле адреса отправки если оно есть
-        const fromAddressDiv = document.getElementById('from-address-input');
-        if (fromAddressDiv) fromAddressDiv.remove();
         
-        if (addressLabel) addressLabel.textContent = 'Номер счета (CVU/Alias)';
-        if (addressInput) addressInput.placeholder = 'Введите номер счета';
+    } else if (pairType === 'crypto-to-fiat') {
+        // Смешанная пара (USDT → RUB) - криптоадрес + AML, затем реквизиты
+        if (addressLabel) addressLabel.textContent = 'Адрес криптокошелька для отправки';
+        if (addressInput) addressInput.placeholder = 'Введите адрес USDT кошелька';
         if (amlSection) {
-            amlSection.style.display = 'none'; // Скрываем AML для фиатных пар
-            // Возвращаем оригинальную структуру AML
-            amlSection.innerHTML = `
-                <button class="secondary-button" id="aml-check-button">
-                    <i class="fas fa-shield-alt"></i>
-                    Проверить AML
-                </button>
-                <div class="aml-result" id="aml-result"></div>
+            amlSection.style.display = 'block';
+            
+            // Добавляем поле для реквизитов получения
+            const receivingDetailsDiv = document.createElement('div');
+            receivingDetailsDiv.className = 'address-input';
+            receivingDetailsDiv.innerHTML = `
+                <label for="receiving-details">Укажите реквизиты для получения средств</label>
+                <div class="input-group">
+                    <input type="text" id="receiving-details" placeholder="Номер карты, счета или реквизиты">
+                    <button class="scan-button" onclick="scanQR('receiving')">
+                        <i class="fas fa-qrcode"></i>
+                    </button>
+                </div>
+                <div class="input-help">
+                    Укажите реквизиты для получения фиатных средств
+                </div>
             `;
-        }
-        if (inputHelp) inputHelp.textContent = 'Проверьте правильность номера счета перед отправкой';
-    }
+            receivingDetailsDiv.id = 'receiving-details-input';
+            amlSection.parentNode.insertBefore(receivingDetailsDiv, amlSection);
+            
+            // AML секция только для криптоадреса
+            amlSection.innerHTML = `
+                <div class="aml-checks">
+                    <h4>Проверка AML криптоадреса</h4>
+                    <button class="secondary-button" id="aml-check-crypto-button" disabled>
+                        <i class="fas fa-shield-alt"></i>
+                        Проверить криптоадрес на AML
+                    </button>
+                    <div class="aml-result" id="aml-crypto-result"></div>
+                </div>
+            `;
+            
+            // Добавляем обработчики
+            setTimeout(() => {
+                const cryptoButton = document.getElementById('aml-check-crypto-button');
+                const cryptoInput = document.getElementById('wallet-address');
+                const receivingInput = document.getElementById('receiving-details');
+                
+                if (cryptoButton) cryptoButton.addEventListener('click', () => performAMLCheck('crypto'));
+                if (cryptoInput) cryptoInput.addEventListener('input', () => validateCryptoToFiatAddresses());
+                if (receivingInput) receivingInput.addEventListener('input', () => validateCryptoToFiatAddresses());
+            }, 100);
+                 }
+         if (inputHelp) inputHelp.textContent = 'Сначала проверим криптоадрес на AML, затем укажите реквизиты';
+         
+     } else if (pairType === 'fiat-to-crypto') {
+         // Смешанная пара (RUB → USDT) - только кошелек получения + AML
+         if (addressLabel) addressLabel.textContent = 'Кошелек для получения криптовалюты';
+         if (addressInput) addressInput.placeholder = `Введите адрес ${currentCalculation?.toCurrency || 'USDT'} кошелька`;
+         if (amlSection) {
+             amlSection.style.display = 'block';
+             
+             // AML секция только для кошелька получения
+             amlSection.innerHTML = `
+                 <div class="aml-checks">
+                     <h4>Проверка AML кошелька</h4>
+                     <button class="secondary-button" id="aml-check-wallet-button" disabled>
+                         <i class="fas fa-shield-alt"></i>
+                         Проверить кошелек на AML
+                     </button>
+                     <div class="aml-result" id="aml-wallet-result"></div>
+                 </div>
+             `;
+             
+             // Добавляем обработчики
+             setTimeout(() => {
+                 const walletButton = document.getElementById('aml-check-wallet-button');
+                 const walletInput = document.getElementById('wallet-address');
+                 
+                 if (walletButton) walletButton.addEventListener('click', () => performAMLCheck('wallet'));
+                 if (walletInput) walletInput.addEventListener('input', () => validateFiatToCryptoAddresses());
+             }, 100);
+         }
+         if (inputHelp) inputHelp.textContent = 'Укажите адрес кошелька для получения криптовалюты и проверьте его на AML';
+         
+          } else {
+         // Фиатная пара - проверяем специальные случаи
+         const isSpecialCase = currentCalculation && (
+             (currentCalculation.fromCurrency === 'ARS' && currentCalculation.toCurrency === 'RUB') ||
+             (currentCalculation.fromCurrency === 'RUB' && currentCalculation.toCurrency === 'KZT')
+         );
+         
+         if (isSpecialCase) {
+             // Специальные случаи: ARS → RUB, RUB → KZT (переводы на карты)
+             if (currentCalculation.fromCurrency === 'ARS' && currentCalculation.toCurrency === 'RUB') {
+                 if (addressLabel) addressLabel.textContent = 'Реквизиты для получения рублей';
+                 if (addressInput) addressInput.placeholder = 'Номер карты или банковские реквизиты';
+                 if (inputHelp) inputHelp.textContent = 'Укажите реквизиты для получения рублей на карту';
+             } else if (currentCalculation.fromCurrency === 'RUB' && currentCalculation.toCurrency === 'KZT') {
+                 if (addressLabel) addressLabel.textContent = 'Реквизиты для получения тенге';
+                 if (addressInput) addressInput.placeholder = 'Номер карты или банковские реквизиты';
+                 if (inputHelp) inputHelp.textContent = 'Укажите реквизиты для получения тенге на карту';
+             }
+         } else {
+             // Обычные фиатные пары (ARS → BRL, etc.)
+             if (addressLabel) addressLabel.textContent = 'Номер счета (CVU/Alias)';
+             if (addressInput) addressInput.placeholder = 'Введите номер счета';
+             if (inputHelp) inputHelp.textContent = 'Проверьте правильность номера счета перед отправкой';
+         }
+         
+         if (amlSection) {
+             amlSection.style.display = 'none'; // Скрываем AML для фиатных пар
+             amlSection.innerHTML = `
+                 <button class="secondary-button" id="aml-check-button">
+                     <i class="fas fa-shield-alt"></i>
+                     Проверить AML
+                 </button>
+                 <div class="aml-result" id="aml-result"></div>
+             `;
+         }
+     }
 }
 
 // Обновление сводки заявки
 function updateOrderSummary() {
     const summary = document.getElementById('order-summary');
-    const isCrypto = isCryptoPair(currentCalculation.fromCurrency, currentCalculation.toCurrency);
+    const pairType = getPairType(currentCalculation.fromCurrency, currentCalculation.toCurrency);
     
     let addressSection = '';
     
-    if (isCrypto) {
+    if (pairType === 'crypto') {
         // Для криптовалютных пар показываем оба адреса
-        const fromAddress = document.getElementById('from-wallet-address')?.value?.trim() || '';
-        const toAddress = document.getElementById('wallet-address')?.value?.trim() || '';
+        const fromAddress = document.getElementById('wallet-address')?.value?.trim() || ''; // адрес отправки
+        const toAddress = document.getElementById('to-wallet-address')?.value?.trim() || ''; // адрес получения
         
         if (fromAddress || toAddress) {
             addressSection = `
@@ -819,19 +973,67 @@ function updateOrderSummary() {
                 </div>
             `;
         }
-    } else {
-        // Для фиатных пар показываем номер счета
-        const account = document.getElementById('wallet-address')?.value?.trim() || '';
+    } else if (pairType === 'crypto-to-fiat') {
+        // Для смешанных пар показываем криптоадрес и реквизиты
+        const cryptoAddress = document.getElementById('wallet-address')?.value?.trim() || '';
+        const receivingDetails = document.getElementById('receiving-details')?.value?.trim() || '';
         
-        if (account) {
+        if (cryptoAddress || receivingDetails) {
             addressSection = `
                 <div class="info-section">
-                    <h4>🏦 Номер счета</h4>
-                    ${createCopyableElement(account, 'CVU/Alias', '💳')}
+                    <h4>💰 Детали обмена</h4>
+                    ${cryptoAddress ? createCopyableElement(cryptoAddress, 'Криптоадрес отправки', '📤') : ''}
+                    ${receivingDetails ? createCopyableElement(receivingDetails, 'Реквизиты получения', '📥') : ''}
                 </div>
-            `;
-        }
-    }
+                         `;
+         }
+     } else if (pairType === 'fiat-to-crypto') {
+         // Для смешанных пар показываем кошелек получения крипты
+         const walletAddress = document.getElementById('wallet-address')?.value?.trim() || '';
+         
+         if (walletAddress) {
+             addressSection = `
+                 <div class="info-section">
+                     <h4>💰 Детали обмена</h4>
+                     ${createCopyableElement(walletAddress, 'Кошелек получения', '📥')}
+                 </div>
+             `;
+         }
+          } else {
+         // Для фиатных пар показываем номер счета или реквизиты
+         const account = document.getElementById('wallet-address')?.value?.trim() || '';
+         
+         if (account) {
+             // Проверяем специальные случаи
+             const isSpecialCase = (currentCalculation.fromCurrency === 'ARS' && currentCalculation.toCurrency === 'RUB') ||
+                                 (currentCalculation.fromCurrency === 'RUB' && currentCalculation.toCurrency === 'KZT');
+                                 
+             if (isSpecialCase) {
+                 let currencyName, icon;
+                 if (currentCalculation.fromCurrency === 'ARS' && currentCalculation.toCurrency === 'RUB') {
+                     currencyName = 'рублей';
+                     icon = '💳';
+                 } else if (currentCalculation.fromCurrency === 'RUB' && currentCalculation.toCurrency === 'KZT') {
+                     currencyName = 'тенге';
+                     icon = '💳';
+                 }
+                 
+                 addressSection = `
+                     <div class="info-section">
+                         <h4>💳 Реквизиты получения</h4>
+                         ${createCopyableElement(account, `Реквизиты для ${currencyName}`, icon)}
+                     </div>
+                 `;
+             } else {
+                 addressSection = `
+                     <div class="info-section">
+                         <h4>🏦 Номер счета</h4>
+                         ${createCopyableElement(account, 'CVU/Alias', '💳')}
+                     </div>
+                 `;
+             }
+         }
+     }
     
     summary.innerHTML = `
         <h3>Сводка обмена</h3>
@@ -853,19 +1055,30 @@ function updateOrderSummary() {
 
 // Валидация адреса кошелька (старая функция для совместимости)
 function validateWalletAddress() {
-    const isCrypto = currentCalculation && isCryptoPair(currentCalculation.fromCurrency, currentCalculation.toCurrency);
+    if (!currentCalculation) return;
     
-    if (isCrypto) {
-        validateCryptoAddresses();
-    } else {
-        validateFiatAccount();
+    const pairType = getPairType(currentCalculation.fromCurrency, currentCalculation.toCurrency);
+    
+    switch (pairType) {
+        case 'crypto':
+            validateCryptoAddresses();
+            break;
+                 case 'crypto-to-fiat':
+             validateCryptoToFiatAddresses();
+             break;
+         case 'fiat-to-crypto':
+             validateFiatToCryptoAddresses();
+             break;
+         case 'fiat':
+             validateFiatAccount();
+             break;
     }
 }
 
 // Валидация криптовалютных адресов (два адреса)
 function validateCryptoAddresses() {
-    const fromAddress = document.getElementById('from-wallet-address')?.value?.trim() || '';
-    const toAddress = document.getElementById('wallet-address')?.value?.trim() || '';
+    const fromAddress = document.getElementById('wallet-address')?.value?.trim() || ''; // адрес отправки
+    const toAddress = document.getElementById('to-wallet-address')?.value?.trim() || ''; // адрес получения
     
     const fromButton = document.getElementById('aml-check-from-button');
     const toButton = document.getElementById('aml-check-to-button');
@@ -897,11 +1110,70 @@ function validateFiatAccount() {
     const account = document.getElementById('wallet-address').value.trim();
     const createButton = document.getElementById('create-order-button');
     
-    console.log('🏦 ВАЛИДАЦИЯ ФИАТНОГО СЧЕТА:', account, 'длина:', account.length);
+    // Определяем тип поля в зависимости от пары
+    const isSpecialCase = currentCalculation && (
+        (currentCalculation.fromCurrency === 'ARS' && currentCalculation.toCurrency === 'RUB') ||
+        (currentCalculation.fromCurrency === 'RUB' && currentCalculation.toCurrency === 'KZT')
+    );
+    
+    const fieldType = isSpecialCase ? 'реквизиты' : 'номер счета';
+    
+    console.log(`🏦 ВАЛИДАЦИЯ ФИАТНОГО ${fieldType.toUpperCase()}:`, account, 'длина:', account.length);
     
     if (createButton) {
-        // Для фиатных пар требуется только номер счета (минимум 3 символа)
+        // Для фиатных пар требуется только номер счета или реквизиты (минимум 3 символа)
         createButton.disabled = account.length < 3;
+    }
+    
+    // Обновляем сводку заказа
+    if (currentCalculation) {
+        updateOrderSummary();
+    }
+}
+
+// Валидация смешанных пар (крипто → фиат)
+function validateCryptoToFiatAddresses() {
+    const cryptoAddress = document.getElementById('wallet-address')?.value?.trim() || ''; // USDT адрес
+    const receivingDetails = document.getElementById('receiving-details')?.value?.trim() || ''; // реквизиты получения
+    
+    const cryptoButton = document.getElementById('aml-check-crypto-button');
+    const createButton = document.getElementById('create-order-button');
+    
+    console.log('🔄 ВАЛИДАЦИЯ CRYPTO-TO-FIAT:', { cryptoAddress: cryptoAddress.length, receivingDetails: receivingDetails.length });
+    
+    // Валидация криптоадреса для AML
+    if (cryptoButton) {
+        cryptoButton.disabled = cryptoAddress.length <= 20;
+    }
+    
+    // Разрешаем создание заявки если оба поля заполнены
+    if (createButton) {
+        createButton.disabled = !(cryptoAddress.length > 20 && receivingDetails.length >= 3);
+    }
+    
+    // Обновляем сводку заказа
+    if (currentCalculation) {
+        updateOrderSummary();
+    }
+}
+
+// Валидация смешанных пар (фиат → крипто)
+function validateFiatToCryptoAddresses() {
+    const walletAddress = document.getElementById('wallet-address')?.value?.trim() || ''; // адрес кошелька для получения крипты
+    
+    const walletButton = document.getElementById('aml-check-wallet-button');
+    const createButton = document.getElementById('create-order-button');
+    
+    console.log('🔄 ВАЛИДАЦИЯ FIAT-TO-CRYPTO:', { walletAddress: walletAddress.length });
+    
+    // Валидация адреса кошелька для AML
+    if (walletButton) {
+        walletButton.disabled = walletAddress.length <= 20;
+    }
+    
+    // Разрешаем создание заявки если адрес заполнен
+    if (createButton) {
+        createButton.disabled = !(walletAddress.length > 20);
     }
     
     // Обновляем сводку заказа
@@ -912,24 +1184,59 @@ function validateFiatAccount() {
 
 // Выполнение AML проверки
 async function performAMLCheck(addressType = 'to') {
-    const addressInput = addressType === 'from' ? 
-        document.getElementById('from-wallet-address') : 
-        document.getElementById('wallet-address');
+    let addressInput;
+    
+    if (addressType === 'from') {
+        addressInput = document.getElementById('wallet-address');
+    } else if (addressType === 'to') {
+        addressInput = document.getElementById('to-wallet-address');
+    } else if (addressType === 'crypto') {
+        // Для смешанных пар crypto-to-fiat
+        addressInput = document.getElementById('wallet-address');
+    } else if (addressType === 'wallet') {
+        // Для смешанных пар fiat-to-crypto
+        addressInput = document.getElementById('wallet-address');
+    } else {
+        addressInput = document.getElementById('wallet-address');
+    }
     
     const address = addressInput?.value?.trim();
     
     if (!address) {
-        showNotification(`Введите адрес ${addressType === 'from' ? 'отправки' : 'получения'}`, 'warning');
+        let message;
+        if (addressType === 'from') {
+            message = 'Введите адрес отправки';
+        } else if (addressType === 'to') {
+            message = 'Введите адрес получения';
+        } else if (addressType === 'crypto') {
+            message = 'Введите криптоадрес';
+        } else if (addressType === 'wallet') {
+            message = 'Введите адрес кошелька';
+        } else {
+            message = 'Введите адрес кошелька';
+        }
+        showNotification(message, 'warning');
         return;
     }
     
-    const amlButton = addressType === 'from' ? 
-        document.getElementById('aml-check-from-button') : 
-        document.getElementById('aml-check-to-button');
+    let amlButton, amlResult;
     
-    const amlResult = addressType === 'from' ? 
-        document.getElementById('aml-from-result') : 
-        document.getElementById('aml-to-result');
+    if (addressType === 'from') {
+        amlButton = document.getElementById('aml-check-from-button');
+        amlResult = document.getElementById('aml-from-result');
+    } else if (addressType === 'to') {
+        amlButton = document.getElementById('aml-check-to-button');
+        amlResult = document.getElementById('aml-to-result');
+    } else if (addressType === 'crypto') {
+        amlButton = document.getElementById('aml-check-crypto-button');
+        amlResult = document.getElementById('aml-crypto-result');
+    } else if (addressType === 'wallet') {
+        amlButton = document.getElementById('aml-check-wallet-button');
+        amlResult = document.getElementById('aml-wallet-result');
+    } else {
+        amlButton = document.getElementById('aml-check-button');
+        amlResult = document.getElementById('aml-result');
+    }
     
     if (!amlButton || !amlResult) {
         // Fallback для старого интерфейса
@@ -991,13 +1298,29 @@ async function performAMLCheck(addressType = 'to') {
             `;
         }
     } finally {
-        const button = addressType === 'from' ? 
-            document.getElementById('aml-check-from-button') : 
-            document.getElementById('aml-check-to-button');
+        let button;
+        let buttonText;
+        
+        if (addressType === 'from') {
+            button = document.getElementById('aml-check-from-button');
+            buttonText = 'Проверить адрес отправки';
+        } else if (addressType === 'to') {
+            button = document.getElementById('aml-check-to-button');
+            buttonText = 'Проверить адрес получения';
+        } else if (addressType === 'crypto') {
+            button = document.getElementById('aml-check-crypto-button');
+            buttonText = 'Проверить криптоадрес на AML';
+        } else if (addressType === 'wallet') {
+            button = document.getElementById('aml-check-wallet-button');
+            buttonText = 'Проверить кошелек на AML';
+        } else {
+            button = document.getElementById('aml-check-button');
+            buttonText = 'Проверить AML';
+        }
         
         if (button) {
             button.disabled = false;
-            button.innerHTML = `<i class="fas fa-shield-alt"></i> Проверить адрес ${addressType === 'from' ? 'отправки' : 'получения'}`;
+            button.innerHTML = `<i class="fas fa-shield-alt"></i> ${buttonText}`;
         }
     }
 }
@@ -1204,13 +1527,6 @@ async function createOrder() {
         return;
     }
     
-    const address = document.getElementById('wallet-address').value.trim();
-    
-    if (!address) {
-        showNotification('Введите адрес кошелька', 'warning');
-        return;
-    }
-    
     // Убеждаемся что userId определен
     if (!currentUserId) {
         console.log('⚠️ currentUserId не определен при создании заявки, устанавливаем тестовый');
@@ -1224,16 +1540,49 @@ async function createOrder() {
     createButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Создаем заявку...';
     
     try {
-        const isCrypto = isCryptoPair(currentCalculation.fromCurrency, currentCalculation.toCurrency);
+        const pairType = getPairType(currentCalculation.fromCurrency, currentCalculation.toCurrency);
+        
+        // Проверка для фиатных пар - нужен номер счета или реквизиты
+        if (pairType === 'fiat') {
+            const address = document.getElementById('wallet-address').value.trim();
+                         if (!address) {
+                 // Определяем тип сообщения в зависимости от пары
+                 const isSpecialCase = (currentCalculation.fromCurrency === 'ARS' && currentCalculation.toCurrency === 'RUB') ||
+                                     (currentCalculation.fromCurrency === 'RUB' && currentCalculation.toCurrency === 'KZT');
+                 const message = isSpecialCase ? 'Введите реквизиты для получения' : 'Введите номер счета';
+                
+                showNotification(message, 'warning');
+                createButton.disabled = false;
+                createButton.innerHTML = '<i class="fas fa-check"></i> Создать заявку';
+                return;
+            }
+        }
+        
+        // Проверка для fiat-to-crypto пар - нужен адрес кошелька
+        if (pairType === 'fiat-to-crypto') {
+            const address = document.getElementById('wallet-address').value.trim();
+            if (!address) {
+                showNotification('Введите адрес кошелька', 'warning');
+                createButton.disabled = false;
+                createButton.innerHTML = '<i class="fas fa-check"></i> Создать заявку';
+                return;
+            }
+        }
         
         let orderData;
         
-        if (isCrypto) {
+        if (pairType === 'crypto') {
             // Для криптовалютных пар
-            const fromAddress = document.getElementById('from-wallet-address')?.value?.trim() || '';
+            const fromAddress = document.getElementById('wallet-address')?.value?.trim() || ''; // адрес отправки
+            const toAddress = document.getElementById('to-wallet-address')?.value?.trim() || ''; // адрес получения
             
             if (!fromAddress) {
                 showNotification('Введите адрес отправки', 'warning');
+                return;
+            }
+            
+            if (!toAddress) {
+                showNotification('Введите адрес получения', 'warning');
                 return;
             }
             
@@ -1244,30 +1593,116 @@ async function createOrder() {
                 fromAmount: currentCalculation.fromAmount,
                 toAmount: currentCalculation.toAmount,
                 fromAddress: fromAddress,
-                toAddress: address,
+                toAddress: toAddress,
                 exchangeRate: currentCalculation.exchangeRate,
                 fee: currentCalculation.fee,
                 amlFromResult: currentFromAMLResult || { status: 'not_checked', risk: 'unknown' },
                 amlToResult: currentToAMLResult || { status: 'not_checked', risk: 'unknown' },
                 pairType: 'crypto'
             };
-        } else {
-            // Для фиатных пар
-            console.log('🏦 СОЗДАНИЕ ФИАТНОЙ ЗАЯВКИ - номер счета:', address);
+        } else if (pairType === 'crypto-to-fiat') {
+            // Для смешанных пар (USDT → RUB)
+            const cryptoAddress = document.getElementById('wallet-address')?.value?.trim() || ''; // USDT адрес
+            const receivingDetails = document.getElementById('receiving-details')?.value?.trim() || ''; // реквизиты получения
+            
+            if (!cryptoAddress) {
+                showNotification('Введите криптоадрес', 'warning');
+                createButton.disabled = false;
+                createButton.innerHTML = '<i class="fas fa-check"></i> Создать заявку';
+                return;
+            }
+            
+            if (!receivingDetails) {
+                showNotification('Введите реквизиты для получения', 'warning');
+                createButton.disabled = false;
+                createButton.innerHTML = '<i class="fas fa-check"></i> Создать заявку';
+                return;
+            }
+            
+            console.log('🔄 СОЗДАНИЕ CRYPTO-TO-FIAT ЗАЯВКИ:', { cryptoAddress, receivingDetails });
             orderData = {
                 userId: currentUserId,
                 fromCurrency: currentCalculation.fromCurrency,
                 toCurrency: currentCalculation.toCurrency,
                 fromAmount: currentCalculation.fromAmount,
                 toAmount: currentCalculation.toAmount,
-                fromAddress: '', // Будет заполнено оператором
-                toAddress: address, // Номер счета для фиатных пар
+                fromAddress: cryptoAddress, // USDT адрес
+                toAddress: receivingDetails, // реквизиты получения
                 exchangeRate: currentCalculation.exchangeRate,
                 fee: currentCalculation.fee,
-                pairType: 'fiat'
+                amlFromResult: currentFromAMLResult || { status: 'not_checked', risk: 'unknown' },
+                amlToResult: { status: 'not_required', risk: 'none' }, // для фиатных реквизитов AML не нужен
+                pairType: 'crypto-to-fiat'
             };
-            console.log('🏦 ФИНАЛЬНЫЕ ДАННЫЕ ФИАТНОЙ ЗАЯВКИ:', orderData);
-        }
+            console.log('🔄 ФИНАЛЬНЫЕ ДАННЫЕ CRYPTO-TO-FIAT ЗАЯВКИ:', orderData);
+        } else if (pairType === 'fiat-to-crypto') {
+            // Для смешанных пар (RUB → USDT)
+            const walletAddress = document.getElementById('wallet-address')?.value?.trim() || ''; // кошелек получения крипты
+            
+            if (!walletAddress) {
+                showNotification('Введите адрес кошелька', 'warning');
+                createButton.disabled = false;
+                createButton.innerHTML = '<i class="fas fa-check"></i> Создать заявку';
+                return;
+            }
+            
+            console.log('🔄 СОЗДАНИЕ FIAT-TO-CRYPTO ЗАЯВКИ:', { walletAddress });
+            orderData = {
+                userId: currentUserId,
+                fromCurrency: currentCalculation.fromCurrency,
+                toCurrency: currentCalculation.toCurrency,
+                fromAmount: currentCalculation.fromAmount,
+                toAmount: currentCalculation.toAmount,
+                fromAddress: '', // Реквизиты отправки будут заполнены оператором
+                toAddress: walletAddress, // кошелек получения крипты
+                exchangeRate: currentCalculation.exchangeRate,
+                fee: currentCalculation.fee,
+                amlFromResult: { status: 'not_required', risk: 'none' }, // для фиатных средств AML не нужен
+                amlToResult: currentFromAMLResult || { status: 'not_checked', risk: 'unknown' }, // AML кошелька получения
+                pairType: 'fiat-to-crypto'
+            };
+            console.log('🔄 ФИНАЛЬНЫЕ ДАННЫЕ FIAT-TO-CRYPTO ЗАЯВКИ:', orderData);
+                } else {
+             // Для фиатных пар
+             const address = document.getElementById('wallet-address').value.trim(); // номер счета или реквизиты
+             
+             // Специальная логика для переводов на карты
+             const isSpecialCase = (currentCalculation.fromCurrency === 'ARS' && currentCalculation.toCurrency === 'RUB') ||
+                                 (currentCalculation.fromCurrency === 'RUB' && currentCalculation.toCurrency === 'KZT');
+                                 
+             if (isSpecialCase) {
+                 const pairName = `${currentCalculation.fromCurrency}→${currentCalculation.toCurrency}`;
+                 console.log(`💳 СОЗДАНИЕ ${pairName} ЗАЯВКИ - реквизиты:`, address);
+                 orderData = {
+                     userId: currentUserId,
+                     fromCurrency: currentCalculation.fromCurrency,
+                     toCurrency: currentCalculation.toCurrency,
+                     fromAmount: currentCalculation.fromAmount,
+                     toAmount: currentCalculation.toAmount,
+                     fromAddress: '', // Будет заполнено оператором
+                     toAddress: address, // Реквизиты для получения средств
+                     exchangeRate: currentCalculation.exchangeRate,
+                     fee: currentCalculation.fee,
+                     pairType: 'fiat'
+                 };
+                 console.log(`💳 ФИНАЛЬНЫЕ ДАННЫЕ ${pairName} ЗАЯВКИ:`, orderData);
+             } else {
+                 console.log('🏦 СОЗДАНИЕ ФИАТНОЙ ЗАЯВКИ - номер счета:', address);
+                 orderData = {
+                     userId: currentUserId,
+                     fromCurrency: currentCalculation.fromCurrency,
+                     toCurrency: currentCalculation.toCurrency,
+                     fromAmount: currentCalculation.fromAmount,
+                     toAmount: currentCalculation.toAmount,
+                     fromAddress: '', // Будет заполнено оператором
+                     toAddress: address, // Номер счета для фиатных пар
+                     exchangeRate: currentCalculation.exchangeRate,
+                     fee: currentCalculation.fee,
+                     pairType: 'fiat'
+                 };
+                 console.log('🏦 ФИНАЛЬНЫЕ ДАННЫЕ ФИАТНОЙ ЗАЯВКИ:', orderData);
+             }
+         }
         
         console.log('📋 Данные заявки:', orderData);
         
