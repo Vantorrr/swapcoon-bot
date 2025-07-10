@@ -239,16 +239,17 @@ class Database {
                 exchangeRate,
                 fee,
                 amlStatus,
-                status
+                status,
+                source = 'web'
             } = orderData;
 
             this.db.run(`
                 INSERT INTO orders 
                 (user_id, from_currency, to_currency, from_amount, to_amount, 
-                 from_address, to_address, exchange_rate, fee, aml_status, status)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 from_address, to_address, exchange_rate, fee, aml_status, status, source)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `, [userId, fromCurrency, toCurrency, fromAmount, toAmount, 
-                fromAddress, toAddress, exchangeRate, fee, amlStatus, status], 
+                fromAddress, toAddress, exchangeRate, fee, amlStatus, status, source], 
             function(err) {
                 if (err) {
                     reject(err);

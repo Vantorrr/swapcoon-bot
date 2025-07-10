@@ -4571,7 +4571,8 @@ webhookApp.post('/api/create-order', async (req, res) => {
             exchangeRate: exchangeRate || (toAmount / fromAmount),
             fee: fee || 0,
             amlStatus: amlResult?.status || 'clean',
-            status: 'pending'
+            status: 'pending',
+            source: 'web'
         });
 
         console.log('✅ Заявка создана:', order);
@@ -4812,6 +4813,57 @@ webhookApp.post('/webhook/support-ticket', async (req, res) => {
     } catch (error) {
         console.error('❌ Ошибка обработки webhook:', error);
         res.status(500).json({ success: false, error: 'Ошибка обработки webhook' });
+    }
+});
+
+// ТЕСТОВЫЙ ENDPOINT ДЛЯ ПРОВЕРКИ УВЕДОМЛЕНИЙ
+webhookApp.post('/test/notify-operators', async (req, res) => {
+    try {
+        console.log('🧪 ТЕСТ УВЕДОМЛЕНИЙ ОПЕРАТОРОВ');
+        
+        // Проверяем инициализацию бота
+        if (!bot.botInfo) {
+            console.log('🔄 Инициализируем бота...');
+            await bot.init();
+        }
+        console.log('✅ Бот инициализирован:', bot.botInfo?.username);
+        
+        // Проверяем персонал
+        const staff = await db.getStaffList();
+        const operators = staff.filter(s => ['admin', 'operator'].includes(s.role));
+        console.log(`👥 Найдено ${operators.length} операторов:`, operators.map(o => o.telegram_id));
+        
+        // Тестовые данные заявки
+        const testOrderData = {
+            id: 'TEST_' + Date.now(),
+            userName: 'Тестовый пользователь',
+            fromAmount: 500,
+            fromCurrency: 'USDT',
+            toCurrency: 'RUB',
+            address: 'test_address_456',
+            amlStatus: 'clean'
+        };
+        
+        console.log('📋 Тестовая заявка:', testOrderData);
+        
+        // Вызываем функцию уведомлений
+        await notifyOperators(testOrderData);
+        console.log('✅ Функция notifyOperators выполнена');
+        
+        res.json({ 
+            success: true, 
+            message: 'Тест завершен',
+            operators: operators.length,
+            testOrder: testOrderData
+        });
+        
+    } catch (error) {
+        console.error('❌ Ошибка теста уведомлений:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: error.message,
+            stack: error.stack
+        });
     }
 });
 
