@@ -198,6 +198,17 @@ class Database {
     runMigrations() {
         console.log('🔄 Проверяем миграции базы данных...');
         
+        // Проверяем структуру таблицы orders ПЕРЕД миграцией
+        this.db.all(`PRAGMA table_info(orders)`, (pragmaErr, columns) => {
+            if (pragmaErr) {
+                console.error('❌ Ошибка чтения структуры таблицы orders:', pragmaErr.message);
+            } else {
+                console.log('📋 Структура таблицы orders ДО миграции:', columns.map(c => c.name));
+                const hasSourceColumn = columns.some(col => col.name === 'source');
+                console.log(`🔍 Поле 'source' существует: ${hasSourceColumn ? '✅ ДА' : '❌ НЕТ'}`);
+            }
+        });
+        
         // Миграция 1: Добавление колонки source в таблицу orders
         this.db.run(`
             ALTER TABLE orders ADD COLUMN source TEXT DEFAULT 'web'
@@ -206,10 +217,11 @@ class Database {
                 if (err.message.includes('duplicate column')) {
                     console.log('✅ Колонка source уже существует');
                 } else {
-                    console.error('❌ Ошибка миграции source:', err.message);
+                    console.error('❌🔥 ОШИБКА МИГРАЦИИ SOURCE:', err.message);
+                    console.error('❌🔥 ПОЛНАЯ ОШИБКА:', err);
                 }
             } else {
-                console.log('✅ Добавлена колонка source в таблицу orders');
+                console.log('✅🎉 УСПЕШНО добавлена колонка source в таблицу orders');
                 
                 // Обновляем существующие записи
                 this.db.run(`
@@ -222,6 +234,17 @@ class Database {
                     }
                 });
             }
+            
+            // Проверяем структуру таблицы ПОСЛЕ миграции
+            this.db.all(`PRAGMA table_info(orders)`, (pragmaErr2, columns2) => {
+                if (pragmaErr2) {
+                    console.error('❌ Ошибка чтения структуры таблицы orders после миграции:', pragmaErr2.message);
+                } else {
+                    console.log('📋 Структура таблицы orders ПОСЛЕ миграции:', columns2.map(c => c.name));
+                    const hasSourceAfter = columns2.some(col => col.name === 'source');
+                    console.log(`🔍 Поле 'source' теперь существует: ${hasSourceAfter ? '✅ ДА' : '❌ НЕТ'}`);
+                }
+            });
         });
         
         console.log('🎯 Миграции завершены');
@@ -279,17 +302,29 @@ class Database {
                 source = 'web'
             } = orderData;
 
-            this.db.run(`
+            console.log('🔄 Создание заявки в базе данных...');
+            console.log('📋 Данные заказа:', { userId, fromCurrency, toCurrency, fromAmount, toAmount, source });
+
+            const sql = `
                 INSERT INTO orders 
                 (user_id, from_currency, to_currency, from_amount, to_amount, 
                  from_address, to_address, exchange_rate, fee, aml_status, status, source)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            `, [userId, fromCurrency, toCurrency, fromAmount, toAmount, 
-                fromAddress, toAddress, exchangeRate, fee, amlStatus, status, source], 
-            function(err) {
+            `;
+            const params = [userId, fromCurrency, toCurrency, fromAmount, toAmount, 
+                           fromAddress, toAddress, exchangeRate, fee, amlStatus, status, source];
+
+            console.log('📝 SQL запрос:', sql);
+            console.log('📋 Параметры:', params);
+
+            this.db.run(sql, params, function(err) {
                 if (err) {
+                    console.error('❌🔥 ОШИБКА СОЗДАНИЯ ЗАКАЗА В БД:', err.message);
+                    console.error('❌🔥 КОД ОШИБКИ:', err.code);
+                    console.error('❌🔥 ПОЛНАЯ ОШИБКА:', err);
                     reject(err);
                 } else {
+                    console.log('✅🎉 ЗАКАЗ УСПЕШНО СОЗДАН В БД! ID:', this.lastID);
                     resolve({ id: this.lastID, ...orderData });
                 }
             });
