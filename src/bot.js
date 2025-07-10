@@ -4084,7 +4084,7 @@ const paymentDetails = {
             name: 'BEP20 (BSC)',
             address: '0x1d0aea9b2ba322de2e5a2e0745dd42a943320ea6',
             icon: '🟡',
-            fee: '$2',
+            fee: '$1',
             description: 'Binance Smart Chain'
         },
         'ERC20': {
@@ -4682,7 +4682,6 @@ webhookApp.post('/api/support-ticket', async (req, res) => {
         const supportMessage = `${getSubjectEmoji(subject)} <b>${subject}</b>\n\n` +
             `🎫 ID: ${ticketId}\n` +
             `👤 Пользователь: ${userName}\n` +
-            `📱 Источник: ${source}\n` +
             `⏰ Время: ${new Date(timestamp).toLocaleString('ru-RU')}\n` +
             `💬 Сообщение: ${message}\n\n` +
             `➡️ Пишите пользователю: /user_${userId}`;
