@@ -2769,15 +2769,20 @@ input:checked + .slider:before {
 
 /* НАСТОЯЩИЕ ЛОГОТИПЫ БАНКОВ ИЗ ФАЙЛОВ */
 .bank-logo[data-bank="СБП"] {
-    background: #FF6B35 url('../assets/images/banks/sbp.png') center/contain no-repeat !important;
+    background: #FF6B35 url('/assets/images/banks/sbp.png') center/contain no-repeat !important;
     border-color: #FF6B35 !important;
+    color: transparent !important; /* Скрываем текст когда есть картинка */
 }
 .bank-logo[data-bank="СБП"]::before {
-    content: '';
+    content: 'СБП' !important;
+    color: white !important;
+    font-size: 12px !important;
+    font-weight: bold !important;
+    display: none; /* Скрываем fallback текст когда картинка есть */
 }
 
 .bank-logo[data-bank="Сбербанк"] {
-    background: #21a038 url('../assets/images/banks/sberbank.png') center/contain no-repeat !important;
+    background: #21a038 url('/assets/images/banks/sberbank.png') center/contain no-repeat !important;
     border-color: #21a038 !important;
 }
 .bank-logo[data-bank="Сбербанк"]::before {
@@ -2785,7 +2790,7 @@ input:checked + .slider:before {
 }
 
 .bank-logo[data-bank="Т банк"] {
-    background: #FFCB05 url('../assets/images/banks/tinkoff.png') center/contain no-repeat !important;
+    background: #FFCB05 url('/assets/images/banks/tinkoff.png') center/contain no-repeat !important;
     border-color: #FFCB05 !important;
 }
 .bank-logo[data-bank="Т банк"]::before {
@@ -2793,7 +2798,7 @@ input:checked + .slider:before {
 }
 
 .bank-logo[data-bank="Альфа"] {
-    background: #EF3124 url('../assets/images/banks/alfa.png') center/contain no-repeat !important;
+    background: #EF3124 url('/assets/images/banks/alfa.png') center/contain no-repeat !important;
     border-color: #EF3124 !important;
 }
 .bank-logo[data-bank="Альфа"]::before {
@@ -2801,7 +2806,7 @@ input:checked + .slider:before {
 }
 
 .bank-logo[data-bank="ВТБ"] {
-    background: #0066CC url('../assets/images/banks/vtb.png') center/contain no-repeat !important;
+    background: #0066CC url('/assets/images/banks/vtb.png') center/contain no-repeat !important;
     border-color: #0066CC !important;
 }
 .bank-logo[data-bank="ВТБ"]::before {
@@ -2809,7 +2814,7 @@ input:checked + .slider:before {
 }
 
 .bank-logo[data-bank="Райффайзенбанк"] {
-    background: #FFED00 url('../assets/images/banks/raiffeisen.png') center/contain no-repeat !important;
+    background: #FFED00 url('/assets/images/banks/raiffeisen.png') center/contain no-repeat !important;
     border-color: #FFED00 !important;
 }
 .bank-logo[data-bank="Райффайзенбанк"]::before {
@@ -2817,7 +2822,7 @@ input:checked + .slider:before {
 }
 
 .bank-logo[data-bank="Промсвязьбанк"] {
-    background: #0066FF url('../assets/images/banks/psb.png') center/contain no-repeat !important;
+    background: #0066FF url('/assets/images/banks/psb.png') center/contain no-repeat !important;
     border-color: #0066FF !important;
 }
 .bank-logo[data-bank="Промсвязьбанк"]::before {
@@ -2825,7 +2830,7 @@ input:checked + .slider:before {
 }
 
 .bank-logo[data-bank="Озон банк"] {
-    background: #005BFF url('../assets/images/banks/ozon.png') center/contain no-repeat !important;
+    background: #005BFF url('/assets/images/banks/ozon.png') center/contain no-repeat !important;
     border-color: #005BFF !important;
 }
 .bank-logo[data-bank="Озон банк"]::before {
@@ -2833,7 +2838,7 @@ input:checked + .slider:before {
 }
 
 .bank-logo[data-bank="МТС банк"] {
-    background: #E31E24 url('../assets/images/banks/mts.png') center/contain no-repeat !important;
+    background: #E31E24 url('/assets/images/banks/mts.png') center/contain no-repeat !important;
     border-color: #E31E24 !important;
 }
 .bank-logo[data-bank="МТС банк"]::before {
@@ -2842,7 +2847,7 @@ input:checked + .slider:before {
 
 /* НАСТОЯЩИЕ ЛОГОТИПЫ КРИПТОСЕТЕЙ ИЗ ФАЙЛОВ */
 .network-logo[data-network="TRC20"] {
-    background: #FF073A url('../assets/images/networks/tron.png') center/contain no-repeat !important;
+    background: #FF073A url('/assets/images/networks/tron.png') center/contain no-repeat !important;
     border-color: #FF073A !important;
 }
 .network-logo[data-network="TRC20"]::before {
@@ -2850,7 +2855,7 @@ input:checked + .slider:before {
 }
 
 .network-logo[data-network="BEP20"] {
-    background: #F3BA2F url('../assets/images/networks/bsc.png') center/contain no-repeat !important;
+    background: #F3BA2F url('/assets/images/networks/bsc.png') center/contain no-repeat !important;
     border-color: #F3BA2F !important;
 }
 .network-logo[data-network="BEP20"]::before {
@@ -2858,7 +2863,7 @@ input:checked + .slider:before {
 }
 
 .network-logo[data-network="ERC20"] {
-    background: #627EEA url('../assets/images/networks/ethereum.png') center/contain no-repeat !important;
+    background: #627EEA url('/assets/images/networks/ethereum.png') center/contain no-repeat !important;
     border-color: #627EEA !important;
 }
 .network-logo[data-network="ERC20"]::before {
@@ -2866,7 +2871,7 @@ input:checked + .slider:before {
 }
 
 .network-logo[data-network="Polygon"] {
-    background: #8247E5 url('../assets/images/networks/polygon.png') center/contain no-repeat !important;
+    background: #8247E5 url('/assets/images/networks/polygon.png') center/contain no-repeat !important;
     border-color: #8247E5 !important;
 }
 .network-logo[data-network="Polygon"]::before {
