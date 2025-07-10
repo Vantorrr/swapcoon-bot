@@ -2775,8 +2775,8 @@ input:checked + .slider:before {
     border-color: #FF6B35;
 }
 .bank-logo[data-bank="СБП"]::before {
-    content: 'СБП';
-    font-size: 14px;
+    content: '⚡';
+    font-size: 20px;
     font-weight: 800;
 }
 
@@ -2785,8 +2785,8 @@ input:checked + .slider:before {
     border-color: #21a038;
 }
 .bank-logo[data-bank="Сбербанк"]::before {
-    content: 'С';
-    font-size: 22px;
+    content: '🟢';
+    font-size: 20px;
     font-weight: 900;
 }
 
@@ -2796,8 +2796,8 @@ input:checked + .slider:before {
     color: #333;
 }
 .bank-logo[data-bank="Т банк"]::before {
-    content: 'Т';
-    font-size: 22px;
+    content: '🟡';
+    font-size: 20px;
     font-weight: 900;
     color: #333;
     text-shadow: none;
@@ -2808,8 +2808,8 @@ input:checked + .slider:before {
     border-color: #EF3124;
 }
 .bank-logo[data-bank="Альфа"]::before {
-    content: 'А';
-    font-size: 22px;
+    content: '🔴';
+    font-size: 20px;
     font-weight: 900;
 }
 
@@ -2818,8 +2818,8 @@ input:checked + .slider:before {
     border-color: #0066CC;
 }
 .bank-logo[data-bank="ВТБ"]::before {
-    content: 'ВТБ';
-    font-size: 14px;
+    content: '🔵';
+    font-size: 20px;
     font-weight: 800;
 }
 
@@ -2829,8 +2829,8 @@ input:checked + .slider:before {
     color: #333;
 }
 .bank-logo[data-bank="Райффайзенбанк"]::before {
-    content: 'R';
-    font-size: 22px;
+    content: '🟨';
+    font-size: 20px;
     font-weight: 900;
     color: #333;
     text-shadow: none;
@@ -2841,8 +2841,8 @@ input:checked + .slider:before {
     border-color: #0066FF;
 }
 .bank-logo[data-bank="Промсвязьбанк"]::before {
-    content: 'ПСБ';
-    font-size: 14px;
+    content: '🏪';
+    font-size: 18px;
     font-weight: 800;
 }
 
@@ -2851,8 +2851,8 @@ input:checked + .slider:before {
     border-color: #005BFF;
 }
 .bank-logo[data-bank="Озон банк"]::before {
-    content: 'O';
-    font-size: 22px;
+    content: '🟣';
+    font-size: 20px;
     font-weight: 900;
 }
 
@@ -2861,8 +2861,8 @@ input:checked + .slider:before {
     border-color: #E31E24;
 }
 .bank-logo[data-bank="МТС банк"]::before {
-    content: 'MТС';
-    font-size: 14px;
+    content: '📱';
+    font-size: 18px;
     font-weight: 800;
 }
 
@@ -2872,8 +2872,8 @@ input:checked + .slider:before {
     border-color: #FF073A;
 }
 .network-logo[data-network="TRC20"]::before {
-    content: 'TRX';
-    font-size: 14px;
+    content: '🔴';
+    font-size: 18px;
     font-weight: 800;
 }
 
@@ -2883,8 +2883,8 @@ input:checked + .slider:before {
     color: #333;
 }
 .network-logo[data-network="BEP20"]::before {
-    content: 'BSC';
-    font-size: 14px;
+    content: '🟡';
+    font-size: 18px;
     font-weight: 800;
     color: #333;
     text-shadow: none;
@@ -2895,8 +2895,8 @@ input:checked + .slider:before {
     border-color: #627EEA;
 }
 .network-logo[data-network="ERC20"]::before {
-    content: 'ETH';
-    font-size: 14px;
+    content: '💎';
+    font-size: 18px;
     font-weight: 800;
 }
 
@@ -2905,8 +2905,8 @@ input:checked + .slider:before {
     border-color: #8247E5;
 }
 .network-logo[data-network="Polygon"]::before {
-    content: 'POL';
-    font-size: 14px;
+    content: '🟣';
+    font-size: 18px;
     font-weight: 800;
 }
 

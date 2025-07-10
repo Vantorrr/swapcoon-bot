@@ -4654,6 +4654,76 @@ webhookApp.get('/api/news', async (req, res) => {
     }
 });
 
+// API для создания тикета поддержки С УВЕДОМЛЕНИЕМ АДМИНОВ
+webhookApp.post('/api/support-ticket', async (req, res) => {
+    try {
+        const { userId, source, subject, message, timestamp } = req.body;
+        
+        console.log(`🎫 НОВЫЙ ТИКЕТ от пользователя ${userId}: ${subject}`);
+        
+        // Получаем данные пользователя
+        const user = await db.getUser(userId);
+        const userName = user?.first_name || user?.username || `ID: ${userId}`;
+        
+        // Создаем тикет в базе
+        const ticketId = `TICKET-${Date.now()}`;
+        
+        // Определяем эмодзи по теме
+        const getSubjectEmoji = (subject) => {
+            const subjectLower = subject.toLowerCase();
+            if (subjectLower.includes('наличн')) return '💵';
+            if (subjectLower.includes('aml')) return '🛡️';
+            if (subjectLower.includes('карт')) return '💳';
+            if (subjectLower.includes('otc')) return '📈';
+            return '🆘';
+        };
+
+        // Формируем сообщение для админов
+        const supportMessage = `${getSubjectEmoji(subject)} <b>${subject}</b>\n\n` +
+            `🎫 ID: ${ticketId}\n` +
+            `👤 Пользователь: ${userName}\n` +
+            `📱 Источник: ${source}\n` +
+            `⏰ Время: ${new Date(timestamp).toLocaleString('ru-RU')}\n` +
+            `💬 Сообщение: ${message}\n\n` +
+            `➡️ Пишите пользователю: /user_${userId}`;
+
+        // ПРЯМО ОТПРАВЛЯЕМ УВЕДОМЛЕНИЯ АДМИНАМ
+        try {
+            const adminIds = await db.getAdminIds();
+            console.log(`📋 Отправляем уведомления ${adminIds.length} админам`);
+            
+            for (const adminId of adminIds) {
+                try {
+                    await bot.api.sendMessage(adminId, supportMessage, { 
+                        parse_mode: 'HTML',
+                        reply_markup: {
+                            inline_keyboard: [[
+                                { text: '💬 Написать пользователю', url: `tg://user?id=${userId}` },
+                                { text: '✅ Закрыть тикет', callback_data: `close_ticket_${ticketId}` }
+                            ]]
+                        }
+                    });
+                    console.log(`✅ Уведомление отправлено админу ${adminId}`);
+                } catch (sendError) {
+                    console.log(`⚠️ Не удалось уведомить админа ${adminId}:`, sendError.message);
+                }
+            }
+        } catch (error) {
+            console.error('❌ Ошибка отправки уведомлений:', error);
+        }
+        
+        res.json({ 
+            success: true, 
+            message: 'Заявка отправлена! Мы свяжемся с вами в ближайшее время.',
+            data: { ticketId, timestamp, subject }
+        });
+        
+    } catch (error) {
+        console.error('❌ Ошибка создания тикета поддержки:', error);
+        res.status(500).json({ success: false, error: 'Ошибка создания тикета поддержки' });
+    }
+});
+
 // Webhook endpoint для получения уведомлений от Telegram
 webhookApp.post('/webhook/telegram', async (req, res) => {
     try {
