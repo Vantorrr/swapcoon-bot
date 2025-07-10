@@ -149,22 +149,26 @@ app.post('/api/create-order', async (req, res) => {
         // Получаем данные пользователя
         const user = await db.getUser(userId);
 
-        // Отправляем уведомление операторам с данными из созданного order
-        const notificationData = {
+        // Отправляем уведомление операторам НАПРЯМУЮ с точными данными
+        console.log('📤 ВЫЗЫВАЕМ notifyOperators С ДАННЫМИ:', {
             id: order.id,
-            userName: user.firstName || user.username,
+            fromAddress: order.fromAddress,
+            toAddress: order.toAddress,
+            pairType: req.body.pairType
+        });
+        
+        await notifyOperators({
+            id: order.id,
+            userName: user.firstName || user.username || `User_${userId}`,
             fromAmount: order.fromAmount,
             fromCurrency: order.fromCurrency,
             toCurrency: order.toCurrency,
             fromAddress: order.fromAddress || '',
-            toAddress: order.toAddress,
+            toAddress: order.toAddress || '',
             amlFromResult: req.body.amlFromResult || { status: 'not_checked' },
             amlToResult: req.body.amlToResult || { status: 'not_checked' },
             pairType: req.body.pairType || 'fiat'
-        };
-        
-        console.log('📤 ОТПРАВЛЯЕМ УВЕДОМЛЕНИЕ ОПЕРАТОРАМ:', notificationData);
-        await notifyOperators(notificationData);
+        });
 
         // Отправляем данные в CRM
         await crmService.createLead(order, user);
