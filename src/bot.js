@@ -1011,15 +1011,14 @@ bot.on('callback_query:data', async (ctx) => {
                 `🆔 Заказ #${orderId}\n` +
                 `👤 Клиент: ${order.client_first_name || 'Пользователь'}\n` +
                 `💰 К оплате: ${order.from_amount} ${order.from_currency}\n\n` +
-                `📋 Выберите готовые реквизиты или введите новые:`,
+                `📋 Выберите готовые криптоадреса или введите новые:`,
                 {
                     parse_mode: 'HTML',
                     reply_markup: new InlineKeyboard()
-                        .text('💳 Карта Сбербанк', `send_preset_details_${orderId}_sber`)
-                        .text('💳 Карта Тинькофф', `send_preset_details_${orderId}_tink`)
+                        .text('🔴 TRC-20 USDT', `send_preset_details_${orderId}_trc20`)
+                        .text('💸 BEP-20 USDT', `send_preset_details_${orderId}_bep20`)
                         .row()
-                        .text('💳 Карта Альфа', `send_preset_details_${orderId}_alfa`)
-                        .text('💳 Карта ВТБ', `send_preset_details_${orderId}_vtb`)
+                        .text('💸 ByBit ID', `send_preset_details_${orderId}_bybit`)
                         .row()
                         .text('✍️ Ввести новые реквизиты', `custom_details_${orderId}`)
                         .row()
@@ -1045,37 +1044,26 @@ bot.on('callback_query:data', async (ctx) => {
         const bankType = parts[1];
         
         const presetDetails = {
-            sber: {
-                name: 'Сбербанк',
-                card: '2202 2024 1234 5678',
-                holder: 'ИВАНОВ ИВАН ИВАНОВИЧ',
-                bank: 'ПАО СБЕРБАНК',
-                bik: '044525225',
-                emoji: '🟢'
-            },
-            tink: {
-                name: 'Т-Банк',
-                card: '5536 9140 1234 5678',
-                holder: 'ИВАНОВ ИВАН ИВАНОВИЧ', 
-                bank: 'АО ТИНЬКОФФ БАНК',
-                bik: '044525974',
-                emoji: '🟡'
-            },
-            alfa: {
-                name: 'Альфа-Банк',
-                card: '4154 8127 1234 5678',
-                holder: 'ИВАНОВ ИВАН ИВАНОВИЧ',
-                bank: 'АО АЛЬФА-БАНК',
-                bik: '044525593',
+            trc20: {
+                name: 'TRC-20 USDT',
+                address: 'THcSDj69NjoD9Ev53mK9cx3jF7AswMDtcW',
+                network: 'TRON (TRC-20)',
+                currency: 'USDT',
                 emoji: '🔴'
             },
-            vtb: {
-                name: 'ВТБ',
-                card: '4272 1234 5678 9012',
-                holder: 'ИВАНОВ ИВАН ИВАНОВИЧ',
-                bank: 'ВТБ ПАО',
-                bik: '044525187',
-                emoji: '🔵'
+            bep20: {
+                name: 'BEP-20 USDT',
+                address: '0x1d0aea9b2ba322de2e5a2e0745dd42a943320ea6',
+                network: 'BSC (BEP-20)',
+                currency: 'USDT',
+                emoji: '💸'
+            },
+            bybit: {
+                name: 'ByBit ID',
+                address: '47028037',
+                network: 'ByBit Exchange',
+                currency: 'USDT/USDC/BTC/ETH',
+                emoji: '💸'
             }
         };
         
@@ -1092,35 +1080,34 @@ bot.on('callback_query:data', async (ctx) => {
             
             // Отправляем реквизиты клиенту
             await ctx.api.sendMessage(order.client_id,
-                `💳 <b>РЕКВИЗИТЫ ДЛЯ ОПЛАТЫ</b>\n\n` +
+                `💳 <b>АДРЕС ДЛЯ ПЕРЕВОДА</b>\n\n` +
                 `🆔 Заказ #${orderId}\n` +
-                `💰 К оплате: <b>${order.from_amount} ${order.from_currency}</b>\n\n` +
+                `💰 К переводу: <b>${order.from_amount} ${order.from_currency}</b>\n\n` +
                 `${details.emoji} <b>${details.name}</b>\n` +
-                `💳 <code>${details.card}</code>\n` +
-                `👤 <code>${details.holder}</code>\n` +
-                `🏦 ${details.bank}\n` +
-                `🔢 БИК: <code>${details.bik}</code>\n\n` +
+                `🏦 Сеть: ${details.network}\n` +
+                `💎 Валюта: ${details.currency}\n` +
+                `📍 Адрес: <code>${details.address}</code>\n\n` +
                 `⚠️ <b>ВАЖНО:</b>\n` +
                 `• Переводите ТОЧНУЮ сумму: ${order.from_amount} ${order.from_currency}\n` +
-                `• Обязательно сохраните чек\n` +
-                `• После оплаты нажмите "✅ Оплачено"\n` +
-                `• Время зачисления: до 10 минут\n\n` +
+                `• Проверьте сеть перевода!\n` +
+                `• После перевода нажмите "✅ Отправил"\n` +
+                `• Время зачисления: 5-30 минут\n\n` +
                 `📞 Вопросы? Напишите оператору!`,
                 { 
                     parse_mode: 'HTML',
                     reply_markup: new InlineKeyboard()
-                        .text('✅ Я оплатил', `client_paid_${orderId}`)
+                        .text('✅ Я отправил', `client_paid_${orderId}`)
                         .text('💬 Связаться с оператором', `client_chat_${orderId}`)
                         .row()
-                        .text('📋 Копировать карту', `copy_card_${details.card.replace(/\s/g, '')}`)
+                        .text('📋 Копировать адрес', `copy_address_${details.address}`)
                 }
             );
             
-            await ctx.answerCallbackQuery(`✅ Реквизиты ${details.name} отправлены!`);
+            await ctx.answerCallbackQuery(`✅ Адрес ${details.name} отправлен!`);
             await ctx.reply(
-                `✅ <b>Реквизиты отправлены!</b>\n\n` +
-                `🏦 Банк: ${details.name}\n` +
-                `💳 Карта: ${details.card}\n` +
+                `✅ <b>Адрес отправлен!</b>\n\n` +
+                `🏦 Сеть: ${details.name}\n` +
+                `📍 Адрес: ${details.address}\n` +
                 `🆔 Заказ #${orderId}\n\n` +
                 `${result.message}`,
                 { 
@@ -1154,20 +1141,18 @@ bot.on('callback_query:data', async (ctx) => {
         });
         
         await ctx.reply(
-            `✍️ <b>ВВОД НОВЫХ РЕКВИЗИТОВ</b>\n\n` +
+            `✍️ <b>ВВОД НОВОГО АДРЕСА</b>\n\n` +
             `🆔 Заказ #${orderId}\n\n` +
-            `📝 Введите реквизиты в формате:\n\n` +
-            `<b>Название банка</b>\n` +
-            `💳 Номер карты\n` +
-            `👤 Держатель карты\n` +
-            `🏦 Название банка\n` +
-            `🔢 БИК (опционально)\n\n` +
+            `📝 Введите данные в формате:\n\n` +
+            `<b>Название сети</b>\n` +
+            `📍 Адрес\n` +
+            `🏦 Описание сети\n` +
+            `💎 Валюта\n\n` +
             `<b>Пример:</b>\n` +
-            `Сбербанк\n` +
-            `2202 2024 1234 5678\n` +
-            `ИВАНОВ ИВАН ИВАНОВИЧ\n` +
-            `ПАО СБЕРБАНК\n` +
-            `044525225`,
+            `TRC-20 USDT\n` +
+            `THcSDj69NjoD9Ev53mK9cx3jF7AswMDtcW\n` +
+            `TRON (TRC-20)\n` +
+            `USDT`,
             { 
                 parse_mode: 'HTML',
                 reply_markup: new InlineKeyboard()
@@ -3988,16 +3973,16 @@ bot.on('message', async (ctx) => {
                 const orderId = context.orderId;
                 const customDetailsText = messageText.trim();
                 
-                // Парсим введенные реквизиты
+                // Парсим введенные данные адреса
                 const lines = customDetailsText.split('\n').map(line => line.trim()).filter(line => line);
                 
                 if (lines.length < 3) {
                     await ctx.reply(
                         `❌ <b>Недостаточно данных!</b>\n\n` +
                         `Введите минимум:\n` +
-                        `• Название банка\n` +
-                        `• Номер карты\n` +
-                        `• Держатель карты\n\n` +
+                        `• Название сети\n` +
+                        `• Адрес\n` +
+                        `• Описание сети\n\n` +
                         `Попробуйте еще раз:`,
                         { 
                             parse_mode: 'HTML',
@@ -4008,50 +3993,48 @@ bot.on('message', async (ctx) => {
                     return;
                 }
                 
-                const bankName = lines[0];
-                const cardNumber = lines[1];
-                const cardHolder = lines[2];
-                const bankFullName = lines[3] || bankName;
-                const bik = lines[4] || 'Не указан';
+                const networkName = lines[0];
+                const address = lines[1];
+                const networkDescription = lines[2];
+                const currency = lines[3] || 'USDT';
                 
                 // Обновляем статус заказа
                 const result = await db.updateOrderStatusWithMessage(orderId, 'payment_details_sent', userId, 
-                    `💳 Новые реквизиты (${bankName}) отправлены клиенту. Ожидаем поступления средств.`);
+                    `💳 Новый адрес (${networkName}) отправлен клиенту. Ожидаем поступления средств.`);
                 
                 const order = await db.getOrderWithClient(orderId);
                 
-                // Отправляем реквизиты клиенту
+                // Отправляем адрес клиенту
                 await ctx.api.sendMessage(order.client_id,
-                    `💳 <b>РЕКВИЗИТЫ ДЛЯ ОПЛАТЫ</b>\n\n` +
+                    `💳 <b>АДРЕС ДЛЯ ПЕРЕВОДА</b>\n\n` +
                     `🆔 Заказ #${orderId}\n` +
-                    `💰 К оплате: <b>${order.from_amount} ${order.from_currency}</b>\n\n` +
-                    `🏦 <b>${bankName}</b>\n` +
-                    `💳 <code>${cardNumber}</code>\n` +
-                    `👤 <code>${cardHolder}</code>\n` +
-                    `🏛️ ${bankFullName}\n` +
-                    (bik !== 'Не указан' ? `🔢 БИК: <code>${bik}</code>\n` : '') +
-                    `\n⚠️ <b>ВАЖНО:</b>\n` +
+                    `💰 К переводу: <b>${order.from_amount} ${order.from_currency}</b>\n\n` +
+                    `🏦 <b>${networkName}</b>\n` +
+                    `📍 Адрес: <code>${address}</code>\n` +
+                    `🏛️ Сеть: ${networkDescription}\n` +
+                    `💎 Валюта: ${currency}\n\n` +
+                    `⚠️ <b>ВАЖНО:</b>\n` +
                     `• Переводите ТОЧНУЮ сумму: ${order.from_amount} ${order.from_currency}\n` +
-                    `• Обязательно сохраните чек\n` +
-                    `• После оплаты нажмите "✅ Оплачено"\n` +
-                    `• Время зачисления: до 10 минут\n\n` +
+                    `• Проверьте сеть перевода!\n` +
+                    `• После перевода нажмите "✅ Отправил"\n` +
+                    `• Время зачисления: 5-30 минут\n\n` +
                     `📞 Вопросы? Напишите оператору!`,
                     { 
                         parse_mode: 'HTML',
                         reply_markup: new InlineKeyboard()
-                            .text('✅ Я оплатил', `client_paid_${orderId}`)
+                            .text('✅ Я отправил', `client_paid_${orderId}`)
                             .text('💬 Связаться с оператором', `client_chat_${orderId}`)
                             .row()
-                            .text('📋 Копировать карту', `copy_card_${cardNumber.replace(/\s/g, '')}`)
+                            .text('📋 Копировать адрес', `copy_address_${address}`)
                     }
                 );
                 
                 // Подтверждаем отправку оператору
                 await ctx.reply(
-                    `✅ <b>Новые реквизиты отправлены!</b>\n\n` +
-                    `🏦 Банк: ${bankName}\n` +
-                    `💳 Карта: ${cardNumber}\n` +
-                    `👤 Держатель: ${cardHolder}\n` +
+                    `✅ <b>Новый адрес отправлен!</b>\n\n` +
+                    `🏦 Сеть: ${networkName}\n` +
+                    `📍 Адрес: ${address}\n` +
+                    `💎 Валюта: ${currency}\n` +
                     `🆔 Заказ #${orderId}\n\n` +
                     `${result.message}`,
                     { 
@@ -4066,8 +4049,8 @@ bot.on('message', async (ctx) => {
                 return;
                 
             } catch (error) {
-                console.error('Ошибка отправки новых реквизитов:', error);
-                await ctx.reply('❌ Ошибка отправки реквизитов');
+                console.error('Ошибка отправки нового адреса:', error);
+                await ctx.reply('❌ Ошибка отправки адреса');
                 chatContexts.delete(userId);
                 return;
             }
