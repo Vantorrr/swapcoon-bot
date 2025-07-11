@@ -705,12 +705,33 @@ bot.on('callback_query:data', async (ctx) => {
         await ctx.answerCallbackQuery();
         const staff = await db.getStaffList();
         
+        // 🎯 КРАСИВЫЙ МАППИНГ ПЕРСОНАЛА С ИМЕНАМИ И ССЫЛКАМИ
+        const staffInfo = {
+            '461759951': { name: 'NIC Admin', username: 'simeply', role: 'admin' },
+            '280417617': { name: 'ART Admin', username: 'MISTERNECH', role: 'admin' },
+            '7692725312': { name: 'Оператор', username: 'SwapCoonSupport', role: 'operator' },
+            '8141463258': { name: 'DEV', username: 'pavel_xdev', role: 'admin' }
+        };
+        
         let staffText = '';
         staff.forEach(member => {
             const roleEmoji = member.role === 'admin' ? '🛡️' : '👨‍💼';
             const statusEmoji = member.is_active ? '✅' : '❌';
-            staffText += `${roleEmoji} ${statusEmoji} ${member.first_name || member.username || member.telegram_id}\n`;
-            staffText += `   Заказов: ${member.orders_handled || 0}\n\n`;
+            
+            // Получаем красивое имя и ссылку
+            const memberInfo = staffInfo[member.telegram_id.toString()];
+            let displayName;
+            
+            if (memberInfo) {
+                displayName = `<b>${memberInfo.name}</b> (@${memberInfo.username})`;
+            } else {
+                // Fallback для новых сотрудников
+                displayName = `${member.first_name || member.username || member.telegram_id}`;
+            }
+            
+            staffText += `${roleEmoji} ${statusEmoji} ${displayName}\n`;
+            staffText += `   📊 Заказов обработано: ${member.orders_handled || 0}\n`;
+            staffText += `   🆔 ID: <code>${member.telegram_id}</code>\n\n`;
         });
         
         const staffKeyboard = new InlineKeyboard()
