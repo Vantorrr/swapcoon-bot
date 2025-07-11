@@ -2917,7 +2917,7 @@ input:checked + .slider:before {
     width: 48px;
     height: 48px;
     border-radius: var(--radius-md);
-    background: var(--primary-color);
+    background: white;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2981,100 +2981,74 @@ input:checked + .slider:before {
     transform: scale(1.05);
 }
 
-/* ОБЫЧНЫЕ ЛОГОТИПЫ БАНКОВ */
+/* НАСТОЯЩИЕ ИКОНКИ БАНКОВ ИЗ ПАПКИ ASSETS! */
 .bank-logo[data-bank="СБП"] {
-    background: linear-gradient(135deg, #FF6B35, #F7931E);
+    background: white url('/assets/images/banks/sbp.png') center/contain no-repeat !important;
+    border: 2px solid var(--border-color) !important;
 }
 
 .bank-logo[data-bank="Сбербанк"] {
-    background: linear-gradient(135deg, #21A038, #4CAF50);
+    background: white url('/assets/images/banks/sberbank.png') center/contain no-repeat !important;
+    border: 2px solid var(--border-color) !important;
 }
 
 .bank-logo[data-bank="Т банк"] {
-    background: linear-gradient(135deg, #FFDD2D, #FFA000);
+    background: white url('/assets/images/banks/tinkoff.png') center/contain no-repeat !important;
+    border: 2px solid var(--border-color) !important;
 }
 
 .bank-logo[data-bank="Альфа"] {
-    background: linear-gradient(135deg, #EF3124, #F44336);
+    background: white url('/assets/images/banks/alfa.png') center/contain no-repeat !important;
+    border: 2px solid var(--border-color) !important;
 }
 
 .bank-logo[data-bank="ВТБ"] {
-    background: linear-gradient(135deg, #0066CC, #2196F3);
+    background: white url('/assets/images/banks/vtb.png') center/contain no-repeat !important;
+    border: 2px solid var(--border-color) !important;
 }
 
 .bank-logo[data-bank="Райффайзенбанк"] {
-    background: linear-gradient(135deg, #FFED4E, #FFC107);
+    background: white url('/assets/images/banks/raiffeisen.png') center/contain no-repeat !important;
+    border: 2px solid var(--border-color) !important;
 }
 
 .bank-logo[data-bank="Промсвязьбанк"] {
-    background: linear-gradient(135deg, #1E88E5, #3F51B5);
+    background: white url('/assets/images/banks/psb.png') center/contain no-repeat !important;
+    border: 2px solid var(--border-color) !important;
 }
 
 .bank-logo[data-bank="Озон банк"] {
-    background: linear-gradient(135deg, #005BFF, #9C27B0);
+    background: white url('/assets/images/banks/ozon.png') center/contain no-repeat !important;
+    border: 2px solid var(--border-color) !important;
 }
 
 .bank-logo[data-bank="МТС банк"] {
-    background: linear-gradient(135deg, #E91E63, #F44336);
+    background: white url('/assets/images/banks/mts.png') center/contain no-repeat !important;
+    border: 2px solid var(--border-color) !important;
 }
 
-/* НАСТОЯЩИЕ ЛОГОТИПЫ КРИПТОСЕТЕЙ БЕЗ ФОНА */
+/* НАСТОЯЩИЕ ЛОГОТИПЫ КРИПТОСЕТЕЙ ИЗ ПАПКИ ASSETS! */
 .network-logo[data-network="TRC20"] {
-    background: transparent url('/assets/images/networks/tron.png') center/contain no-repeat !important;
-    border: none !important;
-}
-.network-logo[data-network="TRC20"]::before {
-    content: '';
+    background: white url('/assets/images/networks/tron.png') center/contain no-repeat !important;
+    border: 2px solid var(--border-color) !important;
 }
 
 .network-logo[data-network="BEP20"] {
-    background: transparent url('/assets/images/networks/bsc.png') center/contain no-repeat !important;
-    border: none !important;
-}
-.network-logo[data-network="BEP20"]::before {
-    content: '';
+    background: white url('/assets/images/networks/bsc.png') center/contain no-repeat !important;
+    border: 2px solid var(--border-color) !important;
 }
 
 .network-logo[data-network="ERC20"] {
-    background: transparent url('/assets/images/networks/ethereum.png') center/contain no-repeat !important;
-    border: none !important;
-}
-.network-logo[data-network="ERC20"]::before {
-    content: '';
+    background: white url('/assets/images/networks/ethereum.png') center/contain no-repeat !important;
+    border: 2px solid var(--border-color) !important;
 }
 
 .network-logo[data-network="Polygon"] {
-    background: transparent url('/assets/images/networks/polygon.png') center/contain no-repeat !important;
-    border: none !important;
-}
-.network-logo[data-network="Polygon"]::before {
-    content: '';
+    background: white url('/assets/images/networks/polygon.png') center/contain no-repeat !important;
+    border: 2px solid var(--border-color) !important;
 }
 
-.bank-logo, .network-logo, .bank-info, .network-info {
-    position: relative;
-    z-index: 1;
-}
-
-/* Специальные эффекты для банков и сетей */
-.bank-item[data-bank="СБП"] .bank-logo {
-    animation: pulse-lightning 2s infinite;
-}
-
-@keyframes pulse-lightning {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); box-shadow: 0 8px 25px rgba(255, 107, 53, 0.4); }
-}
-
-.bank-item .bank-logo, .network-item .network-logo {
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    transition: all 0.3s ease;
-}
-
-.bank-item:hover .bank-logo, .network-item:hover .network-logo {
-    transform: scale(1.1);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-}
+/* Убрано - мешает иконкам */
 
 /* АДАПТИВНОСТЬ ДЛЯ МОБИЛЬНЫХ */
 @media (max-width: 480px) {
