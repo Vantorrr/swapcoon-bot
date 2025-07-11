@@ -735,13 +735,19 @@ function proceedToOrder() {
         case 'fiat':
             const isSpecialCase = currentCalculation && (
                 (currentCalculation.fromCurrency === 'ARS' && currentCalculation.toCurrency === 'RUB') ||
-                (currentCalculation.fromCurrency === 'RUB' && currentCalculation.toCurrency === 'KZT')
+                (currentCalculation.fromCurrency === 'RUB' && currentCalculation.toCurrency === 'KZT') ||
+                (currentCalculation.fromCurrency === 'RUB' && currentCalculation.toCurrency === 'UAH') ||
+                (currentCalculation.fromCurrency === 'UAH' && currentCalculation.toCurrency === 'RUB')
             );
             if (isSpecialCase) {
                 if (currentCalculation.fromCurrency === 'ARS' && currentCalculation.toCurrency === 'RUB') {
                     interfaceDescription = 'Реквизиты для получения рублей БЕЗ AML';
                 } else if (currentCalculation.fromCurrency === 'RUB' && currentCalculation.toCurrency === 'KZT') {
                     interfaceDescription = 'Реквизиты для получения тенге БЕЗ AML';
+                } else if (currentCalculation.fromCurrency === 'RUB' && currentCalculation.toCurrency === 'UAH') {
+                    interfaceDescription = 'Реквизиты для получения гривен БЕЗ AML';
+                } else if (currentCalculation.fromCurrency === 'UAH' && currentCalculation.toCurrency === 'RUB') {
+                    interfaceDescription = 'Реквизиты для получения рублей БЕЗ AML';
                 }
             } else {
                 interfaceDescription = 'Номер счета БЕЗ AML';
@@ -918,7 +924,9 @@ function updateOrderInterfaceForPairType(pairType) {
          // Фиатная пара - проверяем специальные случаи
          const isSpecialCase = currentCalculation && (
              (currentCalculation.fromCurrency === 'ARS' && currentCalculation.toCurrency === 'RUB') ||
-             (currentCalculation.fromCurrency === 'RUB' && currentCalculation.toCurrency === 'KZT')
+             (currentCalculation.fromCurrency === 'RUB' && currentCalculation.toCurrency === 'KZT') ||
+             (currentCalculation.fromCurrency === 'RUB' && currentCalculation.toCurrency === 'UAH') ||
+             (currentCalculation.fromCurrency === 'UAH' && currentCalculation.toCurrency === 'RUB')
          );
          
          if (isSpecialCase) {
@@ -931,6 +939,14 @@ function updateOrderInterfaceForPairType(pairType) {
                  if (addressLabel) addressLabel.textContent = 'Реквизиты для получения тенге';
                  if (addressInput) addressInput.placeholder = 'Номер карты или банковские реквизиты';
                  if (inputHelp) inputHelp.textContent = 'Укажите реквизиты для получения тенге на карту';
+             } else if (currentCalculation.fromCurrency === 'RUB' && currentCalculation.toCurrency === 'UAH') {
+                 if (addressLabel) addressLabel.textContent = 'Реквизиты для получения гривен';
+                 if (addressInput) addressInput.placeholder = 'Номер карты или банковские реквизиты';
+                 if (inputHelp) inputHelp.textContent = 'Укажите реквизиты для получения гривен на карту';
+             } else if (currentCalculation.fromCurrency === 'UAH' && currentCalculation.toCurrency === 'RUB') {
+                 if (addressLabel) addressLabel.textContent = 'Реквизиты для получения рублей';
+                 if (addressInput) addressInput.placeholder = 'Номер карты или банковские реквизиты';
+                 if (inputHelp) inputHelp.textContent = 'Укажите реквизиты для получения рублей на карту';
              }
          } else {
              // Обычные фиатные пары (ARS → BRL, etc.)
@@ -1006,7 +1022,9 @@ function updateOrderSummary() {
          if (account) {
              // Проверяем специальные случаи
              const isSpecialCase = (currentCalculation.fromCurrency === 'ARS' && currentCalculation.toCurrency === 'RUB') ||
-                                 (currentCalculation.fromCurrency === 'RUB' && currentCalculation.toCurrency === 'KZT');
+                                 (currentCalculation.fromCurrency === 'RUB' && currentCalculation.toCurrency === 'KZT') ||
+                                 (currentCalculation.fromCurrency === 'RUB' && currentCalculation.toCurrency === 'UAH') ||
+                                 (currentCalculation.fromCurrency === 'UAH' && currentCalculation.toCurrency === 'RUB');
                                  
              if (isSpecialCase) {
                  let currencyName, icon;
@@ -1015,6 +1033,12 @@ function updateOrderSummary() {
                      icon = '💳';
                  } else if (currentCalculation.fromCurrency === 'RUB' && currentCalculation.toCurrency === 'KZT') {
                      currencyName = 'тенге';
+                     icon = '💳';
+                 } else if (currentCalculation.fromCurrency === 'RUB' && currentCalculation.toCurrency === 'UAH') {
+                     currencyName = 'гривен';
+                     icon = '💳';
+                 } else if (currentCalculation.fromCurrency === 'UAH' && currentCalculation.toCurrency === 'RUB') {
+                     currencyName = 'рублей';
                      icon = '💳';
                  }
                  
@@ -1113,7 +1137,9 @@ function validateFiatAccount() {
     // Определяем тип поля в зависимости от пары
     const isSpecialCase = currentCalculation && (
         (currentCalculation.fromCurrency === 'ARS' && currentCalculation.toCurrency === 'RUB') ||
-        (currentCalculation.fromCurrency === 'RUB' && currentCalculation.toCurrency === 'KZT')
+        (currentCalculation.fromCurrency === 'RUB' && currentCalculation.toCurrency === 'KZT') ||
+        (currentCalculation.fromCurrency === 'RUB' && currentCalculation.toCurrency === 'UAH') ||
+        (currentCalculation.fromCurrency === 'UAH' && currentCalculation.toCurrency === 'RUB')
     );
     
     const fieldType = isSpecialCase ? 'реквизиты' : 'номер счета';
@@ -1548,7 +1574,9 @@ async function createOrder() {
                          if (!address) {
                  // Определяем тип сообщения в зависимости от пары
                  const isSpecialCase = (currentCalculation.fromCurrency === 'ARS' && currentCalculation.toCurrency === 'RUB') ||
-                                     (currentCalculation.fromCurrency === 'RUB' && currentCalculation.toCurrency === 'KZT');
+                                     (currentCalculation.fromCurrency === 'RUB' && currentCalculation.toCurrency === 'KZT') ||
+                                     (currentCalculation.fromCurrency === 'RUB' && currentCalculation.toCurrency === 'UAH') ||
+                                     (currentCalculation.fromCurrency === 'UAH' && currentCalculation.toCurrency === 'RUB');
                  const message = isSpecialCase ? 'Введите реквизиты для получения' : 'Введите номер счета';
                 
                 showNotification(message, 'warning');
@@ -1668,7 +1696,9 @@ async function createOrder() {
              
              // Специальная логика для переводов на карты
              const isSpecialCase = (currentCalculation.fromCurrency === 'ARS' && currentCalculation.toCurrency === 'RUB') ||
-                                 (currentCalculation.fromCurrency === 'RUB' && currentCalculation.toCurrency === 'KZT');
+                                 (currentCalculation.fromCurrency === 'RUB' && currentCalculation.toCurrency === 'KZT') ||
+                                 (currentCalculation.fromCurrency === 'RUB' && currentCalculation.toCurrency === 'UAH') ||
+                                 (currentCalculation.fromCurrency === 'UAH' && currentCalculation.toCurrency === 'RUB');
                                  
              if (isSpecialCase) {
                  const pairName = `${currentCalculation.fromCurrency}→${currentCalculation.toCurrency}`;

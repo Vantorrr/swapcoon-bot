@@ -4206,10 +4206,19 @@ async function notifyOperators(orderData) {
                 
                 // Проверяем специальные случаи
                 const isSpecialCase = (orderData.fromCurrency === 'ARS' && orderData.toCurrency === 'RUB') ||
-                                    (orderData.fromCurrency === 'RUB' && orderData.toCurrency === 'KZT');
+                                    (orderData.fromCurrency === 'RUB' && orderData.toCurrency === 'KZT') ||
+                                    (orderData.fromCurrency === 'RUB' && orderData.toCurrency === 'UAH') ||
+                                    (orderData.fromCurrency === 'UAH' && orderData.toCurrency === 'RUB');
                 
                 if (isSpecialCase) {
-                    const currencyName = orderData.toCurrency === 'RUB' ? 'рублей' : 'тенге';
+                    let currencyName;
+                    if (orderData.toCurrency === 'RUB') {
+                        currencyName = 'рублей';
+                    } else if (orderData.toCurrency === 'KZT') {
+                        currencyName = 'тенге';
+                    } else if (orderData.toCurrency === 'UAH') {
+                        currencyName = 'гривен';
+                    }
                     addressSection = `💳 <b>Реквизиты для ${currencyName}:</b> <code>${accountNumber || 'Не указан'}</code>\n`;
                 } else {
                     addressSection = `🏦 <b>Номер счета:</b> <code>${accountNumber || 'Не указан'}</code>\n`;
