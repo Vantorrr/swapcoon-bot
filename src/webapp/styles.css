@@ -2872,189 +2872,315 @@ input:checked + .slider:before {
     }
 }
 
-/* BANK & NETWORK SELECTION */
+/* 🏦 КРАСИВЫЕ КНОПКИ БАНКОВ КАК НА СКРИНШОТЕ RAPIRA! ✨ */
 .bank-list, .network-list {
-    padding: var(--spacing-md);
-    max-height: 70vh;
+    padding: var(--spacing-lg);
+    max-height: 75vh;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
     gap: var(--spacing-md);
-    background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
-    border-radius: var(--radius-lg);
+    background: linear-gradient(180deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.01) 100%);
+    border-radius: var(--radius-xl);
+    backdrop-filter: blur(10px);
 }
 
+/* 🎨 СУПЕР КРАСИВЫЕ КАРТОЧКИ БАНКОВ */
 .bank-item, .network-item {
     display: flex;
     align-items: center;
-    gap: var(--spacing-md);
-    padding: var(--spacing-lg);
-    background: var(--surface-color);
-    border: 2px solid var(--border-color);
-    border-radius: var(--radius-lg);
+    gap: var(--spacing-lg);
+    padding: var(--spacing-xl);
+    background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0.1) 0%, 
+        rgba(255, 255, 255, 0.05) 50%, 
+        rgba(255, 255, 255, 0.02) 100%);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-xl);
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     position: relative;
     overflow: hidden;
+    backdrop-filter: blur(15px);
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.12),
+        0 4px 16px rgba(0, 0, 0, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* ✨ ЭФФЕКТ СВЕЧЕНИЯ ПРИ НАВЕДЕНИИ */
+.bank-item::before, .network-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, 
+        rgba(0, 122, 255, 0.1), 
+        rgba(88, 86, 214, 0.05),
+        transparent);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    border-radius: var(--radius-xl);
+    pointer-events: none;
 }
 
 .bank-item:hover, .network-item:hover {
-    border-color: var(--primary-color);
-    background: linear-gradient(135deg, rgba(0, 122, 255, 0.05), rgba(0, 122, 255, 0.02));
-    transform: translateY(-4px) scale(1.02);
-    box-shadow: 0 15px 35px rgba(0, 122, 255, 0.3);
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border-color: rgba(0, 122, 255, 0.5);
+    background: linear-gradient(135deg, 
+        rgba(0, 122, 255, 0.15) 0%, 
+        rgba(88, 86, 214, 0.1) 50%, 
+        rgba(147, 51, 234, 0.05) 100%);
+    transform: translateY(-8px) scale(1.03);
+    box-shadow: 
+        0 25px 60px rgba(0, 122, 255, 0.25),
+        0 15px 40px rgba(88, 86, 214, 0.15),
+        0 8px 25px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.bank-item:hover::before, .network-item:hover::before {
+    opacity: 1;
 }
 
 .bank-item:active, .network-item:active {
-    transform: translateY(0);
-    box-shadow: var(--shadow-md);
+    transform: translateY(-4px) scale(1.01);
+    box-shadow: 
+        0 15px 40px rgba(0, 122, 255, 0.3),
+        0 8px 25px rgba(88, 86, 214, 0.2);
 }
 
+/* 🏛️ КРАСИВЫЕ ЛОГОТИПЫ БАНКОВ */
 .bank-logo, .network-logo {
-    width: 48px;
-    height: 48px;
-    border-radius: var(--radius-md);
+    width: 64px;
+    height: 64px;
+    border-radius: var(--radius-lg);
     background: var(--background-color);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 18px;
+    font-size: 28px;
     font-weight: 700;
     flex-shrink: 0;
-    border: 2px solid var(--border-color);
-    transition: all 0.3s ease;
+    border: 3px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     color: white;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    box-shadow: 
+        0 8px 25px rgba(0, 0, 0, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+/* ⚡ АНИМАЦИЯ БЛИКА НА ЛОГОТИПЕ */
+.bank-logo::after, .network-logo::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+        transparent, 
+        rgba(255, 255, 255, 0.4), 
+        transparent);
+    transition: left 0.6s ease;
+    border-radius: var(--radius-lg);
 }
 
 .bank-item:hover .bank-logo, .network-item:hover .network-logo {
-    border-color: var(--primary-color);
-    transform: scale(1.1);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: scale(1.15) rotate(5deg);
+    box-shadow: 
+        0 15px 40px rgba(0, 0, 0, 0.25),
+        inset 0 2px 0 rgba(255, 255, 255, 0.4);
 }
 
+.bank-item:hover .bank-logo::after, .network-item:hover .network-logo::after {
+    left: 100%;
+}
+
+/* 📝 ИНФОРМАЦИЯ О БАНКЕ */
 .bank-info, .network-info {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-xs);
+    gap: var(--spacing-sm);
+    position: relative;
+    z-index: 1;
 }
 
 .bank-info h4, .network-info h4 {
-    font-size: var(--font-md);
-    font-weight: 600;
+    font-size: var(--font-lg);
+    font-weight: 700;
     color: var(--text-primary);
     margin: 0;
+    transition: all 0.3s ease;
+    line-height: 1.2;
 }
 
 .bank-info p, .network-info p {
     font-size: var(--font-sm);
     color: var(--text-secondary);
     margin: 0;
+    transition: all 0.3s ease;
+    line-height: 1.4;
+    opacity: 0.85;
+}
+
+.bank-item:hover .bank-info h4, .network-item:hover .network-info h4 {
+    color: rgba(0, 122, 255, 1);
+    transform: translateX(4px);
+}
+
+.bank-item:hover .bank-info p, .network-item:hover .network-info p {
+    color: var(--text-primary);
+    opacity: 1;
+    transform: translateX(4px);
 }
 
 .network-fee {
     font-size: var(--font-xs);
     color: var(--primary-color);
-    font-weight: 600;
-    background: rgba(0, 122, 255, 0.1);
-    padding: var(--spacing-xs) var(--spacing-sm);
-    border-radius: var(--radius-sm);
+    font-weight: 700;
+    background: linear-gradient(135deg, 
+        rgba(0, 122, 255, 0.15), 
+        rgba(0, 122, 255, 0.1));
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-md);
     align-self: flex-start;
-    margin-top: var(--spacing-xs);
+    margin-top: var(--spacing-sm);
+    border: 1px solid rgba(0, 122, 255, 0.2);
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 122, 255, 0.15);
 }
 
-/* Добавляем анимацию волны при клике */
-.bank-item::before, .network-item::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(0, 122, 255, 0.3);
-    transform: translate(-50%, -50%);
-    transition: width 0.6s, height 0.6s;
-    z-index: 0;
+.network-item:hover .network-fee {
+    background: linear-gradient(135deg, 
+        rgba(0, 122, 255, 0.25), 
+        rgba(0, 122, 255, 0.15));
+    border-color: rgba(0, 122, 255, 0.4);
+    transform: scale(1.05);
 }
 
-.bank-item:active::before, .network-item:active::before {
-    width: 300px;
-    height: 300px;
-}
-
-/* НАСТОЯЩИЕ ЛОГОТИПЫ БАНКОВ БЕЗ ФОНА */
+/* 🎨 ЯРКИЕ КРАСИВЫЕ ЛОГОТИПЫ БАНКОВ С ЭМОДЗИ */
 .bank-logo[data-bank="СБП"] {
-    background: transparent url('/assets/images/banks/sbp.png') center/contain no-repeat !important;
-    border: none !important;
+    background: linear-gradient(135deg, #FF6B35 0%, #F7931E 50%, #FFD700 100%) !important;
+    border: 3px solid rgba(255, 215, 0, 0.3) !important;
 }
 .bank-logo[data-bank="СБП"]::before {
-    content: '';
+    content: '⚡';
+    font-size: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
 }
 
 .bank-logo[data-bank="Сбербанк"] {
-    background: transparent url('/assets/images/banks/sberbank.png') center/contain no-repeat !important;
-    border: none !important;
+    background: linear-gradient(135deg, #21A038 0%, #4CAF50 50%, #66BB6A 100%) !important;
+    border: 3px solid rgba(76, 175, 80, 0.3) !important;
 }
 .bank-logo[data-bank="Сбербанк"]::before {
-    content: '';
+    content: '🟢';
+    font-size: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
 }
 
 .bank-logo[data-bank="Т банк"] {
-    background: transparent url('/assets/images/banks/tinkoff.png') center/contain no-repeat !important;
-    border: none !important;
+    background: linear-gradient(135deg, #FFDD2D 0%, #FFA000 50%, #FF8F00 100%) !important;
+    border: 3px solid rgba(255, 193, 7, 0.3) !important;
 }
 .bank-logo[data-bank="Т банк"]::before {
-    content: '';
+    content: '🟡';
+    font-size: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
 }
 
 .bank-logo[data-bank="Альфа"] {
-    background: transparent url('/assets/images/banks/alfa.png') center/contain no-repeat !important;
-    border: none !important;
+    background: linear-gradient(135deg, #EF3124 0%, #F44336 50%, #E53935 100%) !important;
+    border: 3px solid rgba(244, 67, 54, 0.3) !important;
 }
 .bank-logo[data-bank="Альфа"]::before {
-    content: '';
+    content: '🔴';
+    font-size: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
 }
 
 .bank-logo[data-bank="ВТБ"] {
-    background: transparent url('/assets/images/banks/vtb.png') center/contain no-repeat !important;
-    border: none !important;
+    background: linear-gradient(135deg, #0066CC 0%, #2196F3 50%, #42A5F5 100%) !important;
+    border: 3px solid rgba(33, 150, 243, 0.3) !important;
 }
 .bank-logo[data-bank="ВТБ"]::before {
-    content: '';
+    content: '🔵';
+    font-size: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
 }
 
 .bank-logo[data-bank="Райффайзенбанк"] {
-    background: transparent url('/assets/images/banks/raiffeisen.png') center/contain no-repeat !important;
-    border: none !important;
+    background: linear-gradient(135deg, #FFED4E 0%, #FFC107 50%, #FFB300 100%) !important;
+    border: 3px solid rgba(255, 193, 7, 0.3) !important;
 }
 .bank-logo[data-bank="Райффайзенбанк"]::before {
-    content: '';
+    content: '🟨';
+    font-size: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
 }
 
 .bank-logo[data-bank="Промсвязьбанк"] {
-    background: transparent url('/assets/images/banks/psb.png') center/contain no-repeat !important;
-    border: none !important;
+    background: linear-gradient(135deg, #1E88E5 0%, #3F51B5 50%, #5C6BC0 100%) !important;
+    border: 3px solid rgba(63, 81, 181, 0.3) !important;
 }
 .bank-logo[data-bank="Промсвязьбанк"]::before {
-    content: '';
+    content: '🟦';
+    font-size: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
 }
 
 .bank-logo[data-bank="Озон банк"] {
-    background: transparent url('/assets/images/banks/ozon.png') center/contain no-repeat !important;
-    border: none !important;
+    background: linear-gradient(135deg, #005BFF 0%, #9C27B0 50%, #AB47BC 100%) !important;
+    border: 3px solid rgba(156, 39, 176, 0.3) !important;
 }
 .bank-logo[data-bank="Озон банк"]::before {
-    content: '';
+    content: '🟣';
+    font-size: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
 }
 
 .bank-logo[data-bank="МТС банк"] {
-    background: transparent url('/assets/images/banks/mts.png') center/contain no-repeat !important;
-    border: none !important;
+    background: linear-gradient(135deg, #E91E63 0%, #F44336 50%, #EF5350 100%) !important;
+    border: 3px solid rgba(233, 30, 99, 0.3) !important;
 }
 .bank-logo[data-bank="МТС банк"]::before {
-    content: '';
+    content: '📱';
+    font-size: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
 }
 
 /* НАСТОЯЩИЕ ЛОГОТИПЫ КРИПТОСЕТЕЙ БЕЗ ФОНА */
@@ -3115,17 +3241,62 @@ input:checked + .slider:before {
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
 }
 
-/* Responsive для мобильных */
+/* 📱 АДАПТИВНОСТЬ ДЛЯ МОБИЛЬНЫХ - ОСТАЕТСЯ КРАСИВО! */
 @media (max-width: 480px) {
+    .bank-list, .network-list {
+        padding: var(--spacing-md);
+        gap: var(--spacing-sm);
+    }
+    
+    .bank-item, .network-item {
+        padding: var(--spacing-lg);
+        gap: var(--spacing-md);
+        transform: none;
+    }
+    
+    .bank-item:hover, .network-item:hover {
+        transform: translateY(-4px) scale(1.02);
+    }
+    
+    .bank-logo, .network-logo {
+        width: 52px;
+        height: 52px;
+        font-size: 22px;
+    }
+    
+    .bank-logo::before, .network-logo::before {
+        font-size: 26px !important;
+    }
+    
+    .bank-info h4, .network-info h4 {
+        font-size: var(--font-md);
+    }
+    
+    .bank-info p, .network-info p {
+        font-size: var(--font-sm);
+    }
+    
+    .network-fee {
+        font-size: var(--font-xs);
+        padding: var(--spacing-xs) var(--spacing-sm);
+    }
+}
+
+/* 📱 ДЛЯ ОЧЕНЬ МАЛЕНЬКИХ ЭКРАНОВ */
+@media (max-width: 375px) {
     .bank-item, .network-item {
         padding: var(--spacing-md);
         gap: var(--spacing-sm);
     }
     
     .bank-logo, .network-logo {
-        width: 40px;
-        height: 40px;
-        font-size: var(--font-lg);
+        width: 48px;
+        height: 48px;
+        font-size: 20px;
+    }
+    
+    .bank-logo::before, .network-logo::before {
+        font-size: 24px !important;
     }
     
     .bank-info h4, .network-info h4 {
