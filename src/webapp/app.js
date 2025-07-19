@@ -2851,28 +2851,40 @@ async function sendAMLAlertToAdmins(address, amlResult, addressType = 'to') {
 // Создание заявки в поддержку с темой
 async function createSupportTicket(subject = 'Помощь оператора', message = 'Пользователь запросил помощь через WebApp') {
     try {
+        console.log('🎫 СОЗДАНИЕ ЗАЯВКИ ПОДДЕРЖКИ:');
+        console.log('📂 Тема:', subject);
+        console.log('💬 Сообщение:', message);
+        console.log('👤 currentUserId:', currentUserId);
+        
         if (!currentUserId) {
+            console.error('❌ currentUserId отсутствует!');
             showNotification('Ошибка: пользователь не авторизован', 'error');
             return;
         }
         
         showNotification('Создаем заявку в поддержку...', 'info');
         
+        const requestBody = {
+            userId: currentUserId,
+            source: tg ? 'webapp_telegram' : 'webapp_browser',
+            subject: subject,
+            message: message,
+            timestamp: new Date().toISOString()
+        };
+        
+        console.log('📤 Отправляем данные:', requestBody);
+        
         const response = await fetch('/api/support-ticket', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                userId: currentUserId,
-                source: tg ? 'webapp_telegram' : 'webapp_browser',
-                subject: subject,
-                message: message,
-                timestamp: new Date().toISOString()
-            })
+            body: JSON.stringify(requestBody)
         });
         
+        console.log('📥 Ответ сервера - статус:', response.status);
         const data = await response.json();
+        console.log('📥 Ответ сервера - данные:', data);
         
         if (data.success) {
             showNotification('Заявка создана! Мы свяжемся с вами в ближайшее время.', 'success');

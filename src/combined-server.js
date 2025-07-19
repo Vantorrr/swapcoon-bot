@@ -178,6 +178,34 @@ app.post('/api/support-ticket', async (req, res) => {
     }
 });
 
+// API для профиля пользователя
+app.get('/api/profile/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        console.log('👤 Запрос профиля пользователя:', userId);
+        
+        // Имитация профиля пользователя
+        const userProfile = {
+            id: userId,
+            first_name: 'Пользователь',
+            last_name: '',
+            username: `user${userId}`,
+            level: 1,
+            experience: 0,
+            total_volume: 0,
+            successful_orders: 0,
+            avatar: null,
+            created_at: new Date().toISOString()
+        };
+        
+        console.log('✅ Профиль отправлен:', userProfile);
+        res.json({ success: true, data: userProfile });
+    } catch (error) {
+        console.error('❌ Ошибка получения профиля:', error.message);
+        res.status(500).json({ success: false, error: 'Ошибка получения профиля' });
+    }
+});
+
 // API для создания заявки
 app.post('/api/create-order', async (req, res) => {
     try {
