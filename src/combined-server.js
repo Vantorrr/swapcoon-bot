@@ -29,7 +29,9 @@ try {
     setTimeout(() => {
         try {
             console.log('🔄 Запуск бота в фоновом режиме...');
-            bot.start().catch(error => {
+            bot.start().then(() => {
+                console.log('✅ Бот успешно запущен и готов к отправке уведомлений');
+            }).catch(error => {
                 console.error('❌ Ошибка запуска бота (продолжаем работу):', error.message);
             });
         } catch (error) {
@@ -129,7 +131,10 @@ app.post('/api/support-ticket', async (req, res) => {
         try {
             if (!bot) {
                 console.log('⚠️ Бот еще не инициализирован, пропускаем уведомления');
+            } else if (!bot.api) {
+                console.log('⚠️ Bot API недоступен, пропускаем уведомления');
             } else {
+                console.log('📨 Начинаем отправку уведомлений админам...');
                 const adminIds = [8141463258, 461759951, 280417617]; // ID админов
                 
                 for (const adminId of adminIds) {
@@ -142,20 +147,21 @@ app.post('/api/support-ticket', async (req, res) => {
                         `⏰ <b>Время:</b> ${new Date(timestamp).toLocaleString('ru-RU')}`;
                     
                     try {
+                        console.log(`📤 Отправляем уведомление админу ${adminId}...`);
                         await bot.api.sendMessage(adminId, notificationMessage, { 
                             parse_mode: 'HTML',
                             disable_web_page_preview: true 
                         });
-                        console.log(`✅ Уведомление отправлено админу ${adminId}`);
+                        console.log(`✅ Уведомление успешно отправлено админу ${adminId}`);
                     } catch (error) {
                         console.error(`❌ Ошибка отправки админу ${adminId}:`, error.message);
                     }
                 }
                 
-                console.log('📨 Уведомления админам отправлены');
+                console.log('📨 Процесс отправки уведомлений завершен');
             }
         } catch (error) {
-            console.error('❌ Ошибка отправки уведомлений:', error.message);
+            console.error('❌ Критическая ошибка отправки уведомлений:', error.message);
         }
         
         res.json({ 

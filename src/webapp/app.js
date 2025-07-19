@@ -93,6 +93,16 @@ function initTelegramWebApp() {
         // Применяем тему
         applyTelegramTheme();
         
+        // 👤 МГНОВЕННО ОБНОВЛЯЕМ ПРОФИЛЬ С ДАННЫМИ TELEGRAM
+        setTimeout(() => {
+            try {
+                updateProfileDisplay();
+                console.log('✅ Профиль обновлен сразу после инициализации');
+            } catch (error) {
+                console.error('❌ Ошибка быстрого обновления профиля:', error);
+            }
+        }, 100);
+        
         // ❌ УБРАЛ ГЛАВНУЮ КНОПКУ - ОНА НЕ НУЖНА
         // tg.MainButton скрыта по умолчанию
         if (tg.MainButton) {
@@ -1869,17 +1879,18 @@ function updateProfileDisplay() {
     console.log('👤 currentUserId:', currentUserId);
     console.log('📄 userProfile:', userProfile);
     
-    // Получаем данные пользователя из Telegram WebApp API
-    const telegramUser = tg?.initDataUnsafe?.user;
-    console.log('📱 telegramUser:', telegramUser);
-    
-    // Основная информация (приоритет данным из Telegram)
-    const firstName = telegramUser?.first_name || userProfile?.first_name || 'Пользователь';
-    const lastName = telegramUser?.last_name || userProfile?.last_name || '';
-    const fullName = `${firstName} ${lastName}`.trim();
-    const username = telegramUser?.username || userProfile?.username || `user${currentUserId}`;
-    
-    console.log('✨ Данные для отображения:', { firstName, lastName, fullName, username });
+    try {
+        // Получаем данные пользователя из Telegram WebApp API
+        const telegramUser = tg?.initDataUnsafe?.user;
+        console.log('📱 telegramUser:', telegramUser);
+        
+        // Основная информация (приоритет данным из Telegram)
+        const firstName = telegramUser?.first_name || userProfile?.first_name || 'Пользователь';
+        const lastName = telegramUser?.last_name || userProfile?.last_name || '';
+        const fullName = `${firstName} ${lastName}`.trim();
+        const username = telegramUser?.username || userProfile?.username || `user${currentUserId}`;
+        
+        console.log('✨ Данные для отображения:', { firstName, lastName, fullName, username });
     
     // Обновляем имя в заголовке (ПРИОРИТЕТ!)
     const headerUserName = document.getElementById('header-user-name');
@@ -1954,6 +1965,19 @@ function updateProfileDisplay() {
     }
     
     console.log('✅ Обновление профиля завершено');
+    
+    } catch (error) {
+        console.error('❌ Ошибка в updateProfileDisplay:', error);
+        // Базовая защита - хотя бы имя показываем
+        try {
+            const headerUserName = document.getElementById('header-user-name');
+            if (headerUserName && !headerUserName.textContent) {
+                headerUserName.textContent = 'Пользователь';
+            }
+        } catch (e) {
+            console.error('❌ Критическая ошибка профиля:', e);
+        }
+    }
 }
 
 // Обновление отображения уровня
@@ -2772,28 +2796,24 @@ function requestNoAMLExchange() {
     createSupportTicket('Обмен без AML', 'Заявка на быстрый обмен без AML проверки. Клиент хочет выполнить обмен без детальной проверки адресов.');
 }
 
-// 🌟 ОТЗЫВЫ - ПРЯМОЙ ПЕРЕХОД В ТЕЛЕГРАМ
+// 🌟 ОТЗЫВЫ - ПРАВИЛЬНЫЙ ПЕРЕХОД В ТЕЛЕГРАМ
 function openReviews() {
     const reviewsUrl = 'https://t.me/ExMachinaXReviews';
     
-    console.log('📝 Открываем отзывы напрямую в Telegram:', reviewsUrl);
+    console.log('📝 Открываем отзывы в Telegram:', reviewsUrl);
     
     try {
-        // 🚀 ПРЯМОЙ ПЕРЕХОД БЕЗ БРАУЗЕРА
-        if (tg && tg.openTelegramLink) {
-            console.log('📱 Используем tg.openTelegramLink для прямого перехода');
-            tg.openTelegramLink(reviewsUrl);
-        } else if (tg && tg.switchInlineQuery) {
-            console.log('📱 Альтернативный метод через Telegram API');
-            // Принудительно открываем в самом Telegram
-            window.location.href = reviewsUrl;
+        // 🚀 ПРАВИЛЬНЫЙ МЕТОД TELEGRAM WEBAPP API
+        if (tg && tg.openLink) {
+            console.log('📱 Используем tg.openLink() - правильный метод');
+            tg.openLink(reviewsUrl);
         } else {
-            console.log('🔗 Fallback - прямая ссылка');
+            console.log('🔗 Fallback через window.location');
             window.location.href = reviewsUrl;
         }
         
         showNotification('Открываем группу отзывов...', 'success');
-        console.log('✅ Прямой переход к отзывам выполнен');
+        console.log('✅ Переход к отзывам выполнен');
     } catch (error) {
         console.error('❌ Ошибка открытия отзывов:', error);
         // Принудительный fallback
