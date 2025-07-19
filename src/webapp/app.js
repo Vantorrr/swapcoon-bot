@@ -254,45 +254,60 @@ async function loadInitialData() {
         }
     }, 500);
     
-    // Скрываем загрузочный экран через фиксированное время
+    // 🚀 БЫСТРОЕ СКРЫТИЕ ЗАГРУЗОЧНОГО ЭКРАНА
     console.log('🎬 Скрываем загрузочный экран...');
-    setTimeout(() => {
-        const loadingScreen = document.getElementById('loading-screen');
-        const app = document.getElementById('app');
-        
-        if (loadingScreen) {
-            loadingScreen.style.opacity = '0';
-            setTimeout(() => {
-                loadingScreen.style.display = 'none';
-                if (app) {
-                    app.classList.remove('hidden');
-                }
-                console.log('🎉 Приложение полностью загружено!');
-                showNotification('Приложение готово к работе!', 'success');
-            }, 300);
-        }
-    }, 1200); // Сократили время загрузки
+    hideLoadingScreen();
 }
 
-// Загрузка курсов валют
+// 🚀 БЫСТРАЯ ЗАГРУЗКА КУРСОВ С TIMEOUT И FALLBACK
 async function loadExchangeRates() {
+    console.log('📡 Загружаем курсы валют...');
+    
     try {
-        const response = await fetch('/api/rates');
+        // 🔥 ДОБАВИЛ TIMEOUT 5 СЕКУНД!
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        
+        const response = await fetch('/api/rates', {
+            signal: controller.signal,
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
         const data = await response.json();
         
-        if (data.success) {
+        if (data.success && data.data && data.data.length > 0) {
             currentRates = data.data;
             updateCurrencyList();
             updateRatesTime();
             console.log('✅ Курсы валют загружены:', currentRates.length, 'валют');
+            showNotification('Курсы валют обновлены!', 'success');
         } else {
-            throw new Error(data.error || 'Ошибка загрузки курсов');
+            throw new Error(data.error || 'Пустой ответ от сервера');
         }
     } catch (error) {
-        console.error('❌ Ошибка загрузки курсов:', error);
-        // Используем тестовые курсы
+        console.error('❌ Ошибка загрузки курсов:', error.message);
+        
+        // 🎯 ИСПОЛЬЗУЕМ ТЕСТОВЫЕ КУРСЫ КАК FALLBACK
+        console.log('🔄 Переключаемся на тестовые курсы...');
         currentRates = getTestRates();
         updateCurrencyList();
+        updateRatesTime();
+        
+        if (error.name === 'AbortError') {
+            showNotification('Превышен таймаут загрузки курсов. Используем тестовые данные.', 'warning');
+        } else {
+            showNotification('Не удалось загрузить актуальные курсы. Используем тестовые данные.', 'warning');
+        }
+        
+        console.log('✅ Тестовые курсы загружены:', currentRates.length, 'валют');
         updateRatesTime();
     }
 }
@@ -300,17 +315,30 @@ async function loadExchangeRates() {
 // Тестовые курсы для разработки
 function getTestRates() {
     return [
-        { currency: 'BTC', buy: 95000, sell: 96000, lastUpdate: new Date().toISOString(), type: 'crypto' },
-        { currency: 'ETH', buy: 3500, sell: 3520, lastUpdate: new Date().toISOString(), type: 'crypto' },
-        { currency: 'USDT', buy: 1.0, sell: 1.02, lastUpdate: new Date().toISOString(), type: 'crypto' },
-        { currency: 'USDC', buy: 1.0, sell: 1.02, lastUpdate: new Date().toISOString(), type: 'crypto' },
-        { currency: 'USD', buy: 1.0, sell: 1.0, lastUpdate: new Date().toISOString(), type: 'fiat' },
-        { currency: 'EUR', buy: 0.92, sell: 0.94, lastUpdate: new Date().toISOString(), type: 'fiat' },
-        { currency: 'RUB', buy: 0.0098, sell: 0.0102, lastUpdate: new Date().toISOString(), type: 'fiat' },
-        { currency: 'UAH', buy: 0.025, sell: 0.027, lastUpdate: new Date().toISOString(), type: 'fiat' },
-        { currency: 'KZT', buy: 0.002, sell: 0.0022, lastUpdate: new Date().toISOString(), type: 'fiat' },
-        { currency: 'ARS', buy: 0.00098, sell: 0.00102, lastUpdate: new Date().toISOString(), type: 'fiat' },
-        { currency: 'BRL', buy: 0.194, sell: 0.206, lastUpdate: new Date().toISOString(), type: 'fiat' }
+        // 🪙 КРИПТОВАЛЮТЫ
+        { currency: 'BTC', price: 95000, buy: 95000, sell: 96000, change24h: 2.5, lastUpdate: new Date().toISOString(), type: 'crypto' },
+        { currency: 'ETH', price: 3500, buy: 3500, sell: 3520, change24h: 1.8, lastUpdate: new Date().toISOString(), type: 'crypto' },
+        { currency: 'USDT', price: 1.0, buy: 1.0, sell: 1.02, change24h: 0.1, lastUpdate: new Date().toISOString(), type: 'crypto' },
+        { currency: 'USDC', price: 1.0, buy: 1.0, sell: 1.02, change24h: 0.0, lastUpdate: new Date().toISOString(), type: 'crypto' },
+        { currency: 'BNB', price: 650, buy: 650, sell: 655, change24h: -0.8, lastUpdate: new Date().toISOString(), type: 'crypto' },
+        { currency: 'SOL', price: 180, buy: 180, sell: 182, change24h: 3.2, lastUpdate: new Date().toISOString(), type: 'crypto' },
+        { currency: 'ADA', price: 0.55, buy: 0.55, sell: 0.56, change24h: 1.1, lastUpdate: new Date().toISOString(), type: 'crypto' },
+        { currency: 'DOT', price: 12.5, buy: 12.5, sell: 12.7, change24h: -1.5, lastUpdate: new Date().toISOString(), type: 'crypto' },
+        { currency: 'MATIC', price: 0.95, buy: 0.95, sell: 0.97, change24h: 2.8, lastUpdate: new Date().toISOString(), type: 'crypto' },
+        { currency: 'AVAX', price: 45, buy: 45, sell: 46, change24h: 0.9, lastUpdate: new Date().toISOString(), type: 'crypto' },
+        { currency: 'XRP', price: 0.48, buy: 0.48, sell: 0.49, change24h: -0.3, lastUpdate: new Date().toISOString(), type: 'crypto' },
+        { currency: 'LTC', price: 110, buy: 110, sell: 112, change24h: 1.7, lastUpdate: new Date().toISOString(), type: 'crypto' },
+        { currency: 'BCH', price: 280, buy: 280, sell: 285, change24h: -2.1, lastUpdate: new Date().toISOString(), type: 'crypto' },
+        { currency: 'LINK', price: 18.5, buy: 18.5, sell: 18.8, change24h: 0.6, lastUpdate: new Date().toISOString(), type: 'crypto' },
+        
+        // 💰 ФИАТНЫЕ ВАЛЮТЫ
+        { currency: 'USD', price: 1.0, buy: 1.0, sell: 1.0, change24h: 0.0, lastUpdate: new Date().toISOString(), type: 'fiat' },
+        { currency: 'EUR', price: 0.92, buy: 0.92, sell: 0.94, change24h: 0.2, lastUpdate: new Date().toISOString(), type: 'fiat' },
+        { currency: 'RUB', price: 0.0105, buy: 0.0098, sell: 0.0102, change24h: -0.5, lastUpdate: new Date().toISOString(), type: 'fiat' },
+        { currency: 'UAH', price: 0.026, buy: 0.025, sell: 0.027, change24h: -0.3, lastUpdate: new Date().toISOString(), type: 'fiat' },
+        { currency: 'KZT', price: 0.0022, buy: 0.0021, sell: 0.0023, change24h: 0.1, lastUpdate: new Date().toISOString(), type: 'fiat' },
+        { currency: 'ARS', price: 0.001, buy: 0.0009, sell: 0.0011, change24h: -1.2, lastUpdate: new Date().toISOString(), type: 'fiat' },
+        { currency: 'BRL', price: 0.20, buy: 0.19, sell: 0.21, change24h: 0.4, lastUpdate: new Date().toISOString(), type: 'fiat' }
     ];
 }
 
@@ -3001,3 +3029,23 @@ window.showOrderRequisites = function(orderId, paymentMethod, orderData) {
     
     document.body.insertAdjacentHTML('beforeend', modalHtml);
 }; 
+
+// 🚀 БЫСТРОЕ СКРЫТИЕ ЗАГРУЗОЧНОГО ЭКРАНА
+function hideLoadingScreen() {
+    const loadingScreen = document.getElementById('loading-screen');
+    const app = document.getElementById('app');
+    
+    if (loadingScreen && !loadingScreen.hasAttribute('data-hidden')) {
+        loadingScreen.setAttribute('data-hidden', 'true');
+        loadingScreen.style.opacity = '0';
+        
+        setTimeout(() => {
+            loadingScreen.style.display = 'none';
+            if (app) {
+                app.classList.remove('hidden');
+            }
+            console.log('🎉 Приложение полностью загружено!');
+            showNotification('Приложение готово к работе!', 'success');
+        }, 300);
+    }
+}
