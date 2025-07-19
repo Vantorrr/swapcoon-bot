@@ -8,11 +8,21 @@ console.log('📂 __dirname:', __dirname);
 console.log('🌍 NODE_ENV:', process.env.NODE_ENV || 'не установлен');
 console.log('🔌 PORT:', process.env.PORT || 3000);
 
+// 🤖 ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ БОТА
+let bot = null;
+let notifyOperators = null;
+let notifyWebsiteActivity = null;
+let db = null;
+
 // 🤖 ЗАПУСК TELEGRAM БОТА
 console.log('🤖 Инициализация Telegram бота...');
 try {
     // Импортируем бота НО не блокируем веб-сервер
-    const { bot, notifyOperators, notifyWebsiteActivity, db, googleSheetsManager, crmService } = require('./bot');
+    const botModule = require('./bot');
+    bot = botModule.bot;
+    notifyOperators = botModule.notifyOperators;
+    notifyWebsiteActivity = botModule.notifyWebsiteActivity;
+    db = botModule.db;
     console.log('✅ Telegram бот инициализирован');
     
     // Запускаем бота В ФОНЕ
@@ -104,7 +114,7 @@ app.post('/api/support-ticket', async (req, res) => {
         
         const { userId, source, subject, message, timestamp } = req.body;
         
-        // Имитация успешного создания заявки
+        // Создаем заявку
         const ticketId = `TICKET_${Date.now()}`;
         
         console.log(`📋 Заявка создана:
@@ -114,6 +124,39 @@ app.post('/api/support-ticket', async (req, res) => {
         Сообщение: ${message}
         Источник: ${source}
         Время: ${timestamp}`);
+        
+        // 🚨 ОТПРАВЛЯЕМ УВЕДОМЛЕНИЯ ВСЕМ АДМИНАМ
+        try {
+            if (!bot) {
+                console.log('⚠️ Бот еще не инициализирован, пропускаем уведомления');
+            } else {
+                const adminIds = [8141463258, 461759951, 280417617]; // ID админов
+                
+                for (const adminId of adminIds) {
+                    const notificationMessage = `🎫 <b>НОВАЯ ЗАЯВКА ПОДДЕРЖКИ</b>\n\n` +
+                        `📋 <b>ID:</b> <code>${ticketId}</code>\n` +
+                        `👤 <b>Пользователь:</b> ${userId}\n` +
+                        `📂 <b>Тема:</b> ${subject}\n` +
+                        `💬 <b>Сообщение:</b> ${message}\n` +
+                        `🌐 <b>Источник:</b> ${source}\n` +
+                        `⏰ <b>Время:</b> ${new Date(timestamp).toLocaleString('ru-RU')}`;
+                    
+                    try {
+                        await bot.api.sendMessage(adminId, notificationMessage, { 
+                            parse_mode: 'HTML',
+                            disable_web_page_preview: true 
+                        });
+                        console.log(`✅ Уведомление отправлено админу ${adminId}`);
+                    } catch (error) {
+                        console.error(`❌ Ошибка отправки админу ${adminId}:`, error.message);
+                    }
+                }
+                
+                console.log('📨 Уведомления админам отправлены');
+            }
+        } catch (error) {
+            console.error('❌ Ошибка отправки уведомлений:', error.message);
+        }
         
         res.json({ 
             success: true, 

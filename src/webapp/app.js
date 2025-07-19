@@ -65,11 +65,11 @@ document.addEventListener('DOMContentLoaded', function() {
 function initTelegramWebApp() {
     console.log('🔌 Инициализация Telegram WebApp...');
     
-    // 🛡️ БЫСТРЫЙ ТАЙМЕР БЕЗОПАСНОСТИ - 2 СЕКУНДЫ
+    // 🛡️ КРАЙНЕ БЫСТРЫЙ ТАЙМЕР БЕЗОПАСНОСТИ - 1 СЕКУНДА
     setTimeout(() => {
         console.log('🛡️ Таймер безопасности: принудительно скрываем заставку');
         hideLoadingScreen();
-    }, 2000); // Уменьшил с 5000 до 2000
+    }, 1000); // Еще быстрее для лучшего UX
     
     if (window.Telegram?.WebApp) {
         tg = window.Telegram.WebApp;
@@ -229,27 +229,16 @@ async function loadInitialData() {
         console.error('❌ Ошибка инициализации калькулятора:', error);
     }
     
-    // 🔄 ФОНОВАЯ ЗАГРУЗКА АКТУАЛЬНЫХ КУРСОВ (НЕ БЛОКИРУЕТ UI)
-    setTimeout(async () => {
-        try {
-            console.log('📡 Фоновая загрузка актуальных курсов...');
-            await loadExchangeRates();
-            console.log('✅ Актуальные курсы загружены в фоне');
-        } catch (error) {
-            console.error('❌ Ошибка фоновой загрузки курсов:', error);
-        }
-    }, 100); // Минимальная задержка
+    // 🚀 МГНОВЕННАЯ ПАРАЛЛЕЛЬНАЯ ЗАГРУЗКА КУРСОВ
+    loadExchangeRates().catch(error => {
+        console.error('❌ Ошибка загрузки курсов:', error);
+    });
     
-    // 🔄 ФОНОВАЯ ЗАГРУЗКА ПРОФИЛЯ (НЕ БЛОКИРУЕТ UI)
+    // 🚀 МГНОВЕННАЯ ПАРАЛЛЕЛЬНАЯ ЗАГРУЗКА ПРОФИЛЯ
     if (currentUserId && currentUserId !== 123456789) {
-        setTimeout(async () => {
-            try {
-                await loadUserProfile();
-                console.log('✅ Профиль загружен в фоне');
-            } catch (error) {
-                console.error('❌ Ошибка загрузки профиля:', error);
-            }
-        }, 200);
+        loadUserProfile().catch(error => {
+            console.error('❌ Ошибка загрузки профиля:', error);
+        });
     }
 }
 
@@ -258,9 +247,9 @@ async function loadExchangeRates() {
     console.log('📡 Загружаем курсы валют...');
     
     try {
-        // 🔥 СУПЕР-БЫСТРЫЙ TIMEOUT 1 СЕКУНДА!
+        // 🔥 МОЛНИЕНОСНЫЙ TIMEOUT 500МС!
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 1000);
+        const timeoutId = setTimeout(() => controller.abort(), 500);
         
         const response = await fetch('/api/rates', {
             signal: controller.signal,
@@ -293,7 +282,7 @@ async function loadExchangeRates() {
         console.error('❌ Ошибка загрузки курсов:', error.message);
         
         if (error.name === 'AbortError') {
-            console.log('⚡ Таймаут 1 сек превышен - продолжаем с тестовыми курсами');
+            console.log('⚡ Таймаут 500мс превышен - продолжаем с тестовыми курсами');
             showNotification('Используем тестовые курсы для быстрой работы', 'info');
         } else {
             console.log('⚡ Ошибка API - продолжаем с тестовыми курсами');
@@ -447,8 +436,25 @@ let currentCurrencyType = 'from';
 
 function openCurrencyModal(type) {
     currentCurrencyType = type;
+    
+    // 🚀 МГНОВЕННАЯ ПРОВЕРКА И ЗАГРУЗКА КУРСОВ
+    if (!currentRates || currentRates.length === 0) {
+        console.log('⚡ Курсы еще не загружены - используем тестовые');
+        currentRates = getTestRates();
+    }
+    
     updateCurrencyList();
     document.getElementById('currency-modal').classList.add('active');
+    
+    // 🔄 ФОРСИРУЕМ АКТУАЛЬНЫЕ КУРСЫ В ФОНЕ (не блокируем UI)
+    if (currentRates === getTestRates()) {
+        loadExchangeRates().then(() => {
+            console.log('✅ Актуальные курсы загружены - обновляем список');
+            updateCurrencyList();
+        }).catch(error => {
+            console.log('⚠️ Остаемся с тестовыми курсами:', error.message);
+        });
+    }
 }
 
 // Закрытие модала валют
@@ -460,6 +466,12 @@ function closeCurrencyModal() {
 function updateCurrencyList() {
     const currencyList = document.getElementById('currency-list');
     currencyList.innerHTML = '';
+    
+    // 🛡️ ЗАЩИТА ОТ ПУСТЫХ КУРСОВ
+    if (!currentRates || currentRates.length === 0) {
+        console.log('⚡ Нет курсов - загружаем тестовые мгновенно');
+        currentRates = getTestRates();
+    }
     
     // Разделяем валюты на избранные и обычные
     const favorites = currentRates.filter(rate => isFavorite(rate.currency));
@@ -1920,16 +1932,22 @@ function updateProfileDisplay() {
             avatarImg.src = userProfile.avatar;
         } else {
             console.log('🖼️ Создаем аватар с инициалами');
-            // Простой аватар с инициалами
+            // 🎨 ПРАВИЛЬНЫЙ АВАТАР С ИНИЦИАЛАМИ ЧЕРЕЗ SVG
             const initials = firstName.charAt(0) + (lastName.charAt(0) || '');
-            avatarImg.alt = initials;
-            avatarImg.style.background = `linear-gradient(45deg, #007AFF, #34C759)`;
-            avatarImg.style.color = 'white';
-            avatarImg.style.display = 'flex';
-            avatarImg.style.alignItems = 'center';
-            avatarImg.style.justifyContent = 'center';
-            avatarImg.style.fontSize = '20px';
-            avatarImg.style.fontWeight = 'bold';
+            const svgAvatar = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
+                <svg width="40" height="40" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#007AFF;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#34C759;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                    <circle cx="20" cy="20" r="20" fill="url(#grad)" />
+                    <text x="20" y="26" font-family="Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="middle" fill="white">${initials}</text>
+                </svg>
+            `)}`;
+            avatarImg.src = svgAvatar;
+            console.log('✅ SVG аватар создан с инициалами:', initials);
         }
     } else {
         console.log('⚠️ Элемент avatar-image не найден');
@@ -2754,27 +2772,28 @@ function requestNoAMLExchange() {
     createSupportTicket('Обмен без AML', 'Заявка на быстрый обмен без AML проверки. Клиент хочет выполнить обмен без детальной проверки адресов.');
 }
 
-// 🌟 ОТЗЫВЫ - ПЕРЕХОД НА ТЕЛЕГРАМ ГРУППУ
+// 🌟 ОТЗЫВЫ - ПРЯМОЙ ПЕРЕХОД В ТЕЛЕГРАМ
 function openReviews() {
     const reviewsUrl = 'https://t.me/ExMachinaXReviews';
     
-    console.log('📝 Открываем отзывы:', reviewsUrl);
+    console.log('📝 Открываем отзывы напрямую в Telegram:', reviewsUrl);
     
     try {
-        // 🔥 ПРИНУДИТЕЛЬНЫЙ ПЕРЕХОД В ТЕЛЕГРАМ
-        if (tg && tg.openLink) {
-            console.log('📱 Используем tg.openLink');
-            tg.openLink(reviewsUrl);
-        } else if (window.open) {
-            console.log('🌐 Используем window.open');
-            window.open(reviewsUrl, '_blank');
+        // 🚀 ПРЯМОЙ ПЕРЕХОД БЕЗ БРАУЗЕРА
+        if (tg && tg.openTelegramLink) {
+            console.log('📱 Используем tg.openTelegramLink для прямого перехода');
+            tg.openTelegramLink(reviewsUrl);
+        } else if (tg && tg.switchInlineQuery) {
+            console.log('📱 Альтернативный метод через Telegram API');
+            // Принудительно открываем в самом Telegram
+            window.location.href = reviewsUrl;
         } else {
-            console.log('🔗 Используем location.href');
+            console.log('🔗 Fallback - прямая ссылка');
             window.location.href = reviewsUrl;
         }
         
-        showNotification('Переходим к отзывам в Telegram...', 'info');
-        console.log('✅ Переход к отзывам выполнен');
+        showNotification('Открываем группу отзывов...', 'success');
+        console.log('✅ Прямой переход к отзывам выполнен');
     } catch (error) {
         console.error('❌ Ошибка открытия отзывов:', error);
         // Принудительный fallback
