@@ -7,6 +7,11 @@ console.log('🚀 Запуск комбинированного сервера (
 console.log('📂 __dirname:', __dirname);
 console.log('🌍 NODE_ENV:', process.env.NODE_ENV || 'не установлен');
 console.log('🔌 PORT:', process.env.PORT || 3000);
+console.log('🔍 ДИАГНОСТИКА RAILWAY:');
+console.log('   - Это Railway?', process.env.PORT && process.env.PORT !== '3000' ? '✅ ДА' : '❌ НЕТ (локально)');
+console.log('   - BOT_TOKEN установлен?', process.env.BOT_TOKEN ? '✅ ДА' : '❌ НЕТ');
+console.log('   - WEBHOOK_URL установлен?', process.env.WEBHOOK_URL ? '✅ ДА' : '❌ НЕТ');
+console.log('   - WEBHOOK_SECRET установлен?', process.env.WEBHOOK_SECRET ? '✅ ДА' : '❌ НЕТ');
 
 // 🤖 ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ БОТА
 let bot = null;
@@ -25,17 +30,52 @@ try {
     db = botModule.db;
     console.log('✅ Telegram бот инициализирован');
     
-    // Запускаем бота В ФОНЕ
+    // 🌐 ЗАПУСК БОТА - РАЗНАЯ ЛОГИКА ДЛЯ RAILWAY И ЛОКАЛКИ
     setTimeout(() => {
         try {
-            console.log('🔄 Запуск бота в фоновом режиме...');
-            bot.start().then(() => {
-                console.log('✅ Бот успешно запущен и готов к отправке уведомлений');
-            }).catch(error => {
-                console.error('❌ Ошибка запуска бота (продолжаем работу):', error.message);
-            });
+            const isRailway = process.env.PORT && process.env.PORT !== '3000';
+            
+            if (isRailway) {
+                console.log('🚀 RAILWAY РЕЖИМ: Бот работает только через webhook (НЕ запускаем bot.start)');
+                console.log('✅ Бот готов принимать webhook запросы на порту 3001');
+                console.log('✅ Бот готов отправлять уведомления админам');
+                
+                // 📨 УВЕДОМЛЯЕМ АДМИНОВ О ЗАПУСКЕ НА RAILWAY
+                setTimeout(async () => {
+                    try {
+                        console.log('📤 Отправляем уведомление админам о запуске на Railway...');
+                        const adminIds = [8141463258, 461759951, 280417617];
+                        const startupMessage = `🚀 <b>SwapCoon запущен на Railway!</b>\n\n` +
+                            `✅ Веб-сервер: Активен\n` +
+                            `✅ Telegram бот: Готов к webhook\n` +
+                            `✅ Уведомления: Работают\n` +
+                            `⏰ Время запуска: ${new Date().toLocaleString('ru-RU')}`;
+                        
+                        for (const adminId of adminIds) {
+                            try {
+                                const result = await bot.api.sendMessage(adminId, startupMessage, { 
+                                    parse_mode: 'HTML',
+                                    disable_web_page_preview: true 
+                                });
+                                console.log(`✅ Уведомление о запуске отправлено админу ${adminId}`);
+                            } catch (error) {
+                                console.error(`❌ Ошибка уведомления админу ${adminId}:`, error.message);
+                            }
+                        }
+                    } catch (error) {
+                        console.error('❌ Ошибка отправки уведомлений о запуске:', error.message);
+                    }
+                }, 3000); // Ждем 3 сек чтобы бот точно инициализировался
+            } else {
+                console.log('🔄 ЛОКАЛЬНЫЙ РЕЖИМ: Запуск бота через polling...');
+                bot.start().then(() => {
+                    console.log('✅ Локальный бот успешно запущен через polling');
+                }).catch(error => {
+                    console.error('❌ Ошибка запуска локального бота:', error.message);
+                });
+            }
         } catch (error) {
-            console.error('❌ Ошибка фонового запуска бота:', error.message);
+            console.error('❌ Ошибка настройки режима бота:', error.message);
         }
     }, 2000);
     
