@@ -130,11 +130,13 @@ app.post('/api/support-ticket', async (req, res) => {
         // 🚨 ОТПРАВЛЯЕМ УВЕДОМЛЕНИЯ ВСЕМ АДМИНАМ
         try {
             if (!bot) {
-                console.log('⚠️ Бот еще не инициализирован, пропускаем уведомления');
+                console.log('❌ БОТ НЕ ИНИЦИАЛИЗИРОВАН! Уведомления НЕ отправлены!');
             } else if (!bot.api) {
-                console.log('⚠️ Bot API недоступен, пропускаем уведомления');
+                console.log('❌ BOT API НЕДОСТУПЕН! Уведомления НЕ отправлены!');
             } else {
                 console.log('📨 Начинаем отправку уведомлений админам...');
+                console.log('🎯 КРИТИЧНО: User ID заявки:', userId);
+                console.log('🎯 КРИТИЧНО: Это тестовый ID?', userId === 123456789 ? 'ДА (может не работать на Railway)' : 'НЕТ (реальный пользователь)');
                 const adminIds = [8141463258, 461759951, 280417617]; // ID админов
                 
                 for (const adminId of adminIds) {
@@ -148,13 +150,24 @@ app.post('/api/support-ticket', async (req, res) => {
                     
                     try {
                         console.log(`📤 Отправляем уведомление админу ${adminId}...`);
-                        await bot.api.sendMessage(adminId, notificationMessage, { 
+                        const result = await bot.api.sendMessage(adminId, notificationMessage, { 
                             parse_mode: 'HTML',
                             disable_web_page_preview: true 
                         });
-                        console.log(`✅ Уведомление успешно отправлено админу ${adminId}`);
+                        console.log(`✅ РЕАЛЬНО ОТПРАВЛЕНО админу ${adminId}! Message ID: ${result.message_id}`);
+                        console.log(`🎯 Telegram ответил:`, result);
                     } catch (error) {
-                        console.error(`❌ Ошибка отправки админу ${adminId}:`, error.message);
+                        console.error(`❌ ПРОВАЛ отправки админу ${adminId}:`, error.message);
+                        console.error(`🔥 Детали ошибки:`, error);
+                        
+                        // КРИТИЧЕСКАЯ ПРОВЕРКА - бот заблокирован?
+                        if (error.message.includes('bot was blocked')) {
+                            console.error(`🚫 АДМИН ${adminId} ЗАБЛОКИРОВАЛ БОТА!`);
+                        } else if (error.message.includes('chat not found')) {
+                            console.error(`👻 АДМИН ${adminId} НЕ НАЙДЕН В TELEGRAM!`);
+                        } else {
+                            console.error(`💥 НЕИЗВЕСТНАЯ ОШИБКА для админа ${adminId}`);
+                        }
                     }
                 }
                 

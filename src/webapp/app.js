@@ -84,10 +84,12 @@ function initTelegramWebApp() {
         // Извлекаем User ID
         if (tg.initDataUnsafe?.user?.id) {
             currentUserId = tg.initDataUnsafe.user.id;
-            console.log('👤 User ID из Telegram:', currentUserId);
+            console.log('👤 РЕАЛЬНЫЙ User ID из Telegram:', currentUserId);
+            console.log('✅ Это настоящий пользователь - уведомления будут отправлены!');
         } else {
             console.log('⚠️ User ID не найден в initDataUnsafe, используем тестовый');
             currentUserId = 123456789; // Тестовый ID для разработки
+            console.log('🔥 ВНИМАНИЕ: Тестовый ID! На производстве может не работать!');
         }
         
         // Применяем тему
