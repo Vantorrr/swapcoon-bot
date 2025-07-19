@@ -547,29 +547,38 @@ function getCurrencyName(currency) {
 // Получение иконки валюты
 function getCurrencyIcon(currency) {
     const icons = {
+        // 🪙 КРИПТОВАЛЮТЫ С КРАСИВЫМИ ИКОНКАМИ
         'BTC': '₿',
-        'ETH': '⟠',
-        'USDT': '💵',
-        'USDC': '💵',
-        'BNB': '🟡',
-        'SOL': '☀️',
-        'ADA': '🔷',
-        'DOT': '⚫',
-        'MATIC': '🟣',
-        'AVAX': '🏔️',
-        'XRP': '💧',
-        'LTC': '🥈',
-        'BCH': '🟢',
+        'ETH': 'Ξ',
+        'USDT': '₮',
+        'USDC': 'Ⓤ',
+        'BNB': '🔸',
+        'SOL': '◎',
+        'ADA': '₳',
+        'DOT': '●',
+        'MATIC': '◇',
+        'AVAX': '▲',
+        'XRP': '✕',
+        'LTC': 'Ł',
+        'BCH': '⚡',
         'LINK': '🔗',
-        'USD': '💵',
-        'EUR': '💶',
+        'TRX': '🌊',
+        'DOGE': '🐕',
+        'SHIB': '🐱',
+        
+        // 💰 ФИАТНЫЕ ВАЛЮТЫ
+        'USD': '$',
+        'EUR': '€',
         'RUB': '₽',
         'UAH': '₴',
         'KZT': '₸',
-        'ARS': '💰',
-        'BRL': '🇧🇷'
+        'ARS': '$',
+        'BRL': 'R$',
+        'GBP': '£',
+        'JPY': '¥',
+        'CNY': '¥'
     };
-    return icons[currency] || '🪙';
+    return icons[currency] || '💱';
 }
 
 // Выбор валюты
@@ -2908,4 +2917,69 @@ setInterval(() => {
     loadExchangeRates();
 }, 30000);
 
-console.log('✅ SwapCoon App загружено успешно!'); 
+console.log('✅ SwapCoon App загружено успешно!');
+
+// 🤖 АВТООТПРАВКА РЕКВИЗИТОВ - НОВАЯ СИСТЕМА  
+window.showOrderRequisites = function(orderId, paymentMethod, orderData) {
+    const requisites = {
+        'Bybit UID': {
+            type: 'crypto_platform',
+            name: 'Bybit UID',
+            address: '47028037',
+            network: 'Bybit Exchange',
+            currency: 'USDT/USDC/BTC/ETH',
+            emoji: '💰'
+        },
+        'Сбербанк': {
+            type: 'bank_card',
+            name: 'Сбербанк',
+            card: '2202 2006 7890 1234',
+            holder: 'АЛЕКСЕЙ ПЕТРОВ',
+            emoji: '🟢'
+        },
+        'Т банк': {
+            type: 'bank_card', 
+            name: 'Т-Банк',
+            card: '5536 9138 4567 8901',
+            holder: 'АЛЕКСЕЙ ПЕТРОВ',
+            emoji: '🟡'
+        },
+        'СБП': {
+            type: 'bank_transfer',
+            name: 'СБП',
+            phone: '+7 900 123 45 67',
+            holder: 'АЛЕКСЕЙ ПЕТРОВ',
+            emoji: '⚡'
+        }
+    };
+    
+    const requisite = requisites[paymentMethod];
+    if (!requisite) return;
+    
+    const modalHtml = `
+        <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 10000;" id="requisites-modal">
+            <div style="background: white; border-radius: 12px; padding: 20px; max-width: 400px; width: 90%;">
+                <h3>${requisite.emoji} Реквизиты для оплаты</h3>
+                <p><strong>Заказ #${orderId}</strong></p>
+                <p><strong>К оплате:</strong> ${orderData.fromAmount} ${orderData.fromCurrency}</p>
+                <p><strong>К получению:</strong> ${orderData.toAmount} ${orderData.toCurrency}</p>
+                <hr>
+                <p><strong>${requisite.name}</strong></p>
+                ${requisite.type === 'crypto_platform' ? `
+                    <p><strong>UID:</strong> <code style="background: #f0f0f0; padding: 4px; border-radius: 4px;">${requisite.address}</code></p>
+                ` : requisite.type === 'bank_card' ? `
+                    <p><strong>Карта:</strong> <code style="background: #f0f0f0; padding: 4px; border-radius: 4px;">${requisite.card}</code></p>
+                    <p><strong>Владелец:</strong> ${requisite.holder}</p>
+                ` : `
+                    <p><strong>Телефон:</strong> <code style="background: #f0f0f0; padding: 4px; border-radius: 4px;">${requisite.phone}</code></p>
+                    <p><strong>Получатель:</strong> ${requisite.holder}</p>
+                `}
+                <button onclick="document.getElementById('requisites-modal').remove()" style="width: 100%; padding: 12px; background: #007AFF; color: white; border: none; border-radius: 8px; margin-top: 10px;">
+                    ✅ Понятно
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}; 

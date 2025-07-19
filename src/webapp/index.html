@@ -247,14 +247,6 @@
                         </div>
                     </div>
 
-                    <div class="aml-section" id="aml-section">
-                        <button class="secondary-button" id="aml-check-button">
-                            <i class="fas fa-shield-alt"></i>
-                            Проверить AML
-                        </button>
-                        <div class="aml-result" id="aml-result"></div>
-                    </div>
-
                     <button class="primary-button" id="create-order-button" disabled>
                         <i class="fas fa-check"></i>
                         Создать заявку
@@ -688,6 +680,13 @@
                     <div class="bank-logo" data-bank="МТС банк"></div>
                     <div class="bank-info">
                         <h4>МТС Банк</h4>
+                    </div>
+                </div>
+                <div class="bank-item" data-bank="Bybit UID" onclick="selectBank('Bybit UID')">
+                    <div class="bank-logo" data-bank="Bybit UID"></div>
+                    <div class="bank-info">
+                        <h4>Bybit UID</h4>
+                        <p>P2P торговля</p>
                     </div>
                 </div>
             </div>

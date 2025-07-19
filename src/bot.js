@@ -4,7 +4,7 @@ const express = require('express');
 const { exec } = require('child_process');
 const Database = require('./models/Database');
 const GoogleSheetsManager = require('./services/GoogleSheetsManager');
-const AMLService = require('./services/AMLService');
+// ❌ УДАЛИЛИ: const AMLService = require('./services/AMLService');
 const CRMService = require('./services/CRMService');
 const fs = require('fs');
 const path = require('path');
@@ -25,7 +25,7 @@ const chatContexts = new Map();
 
 // Инициализация сервисов
 let googleSheetsManager = null;
-const amlService = new AMLService();
+// ❌ УДАЛИЛИ: const amlService = new AMLService();
 const crmService = new CRMService();
 
 // Инициализация Google Sheets
@@ -4171,49 +4171,36 @@ async function notifyOperators(orderData) {
         
         switch (pairType) {
             case 'crypto':
-                // BTC → ETH: два адреса + AML для каждого
-                const fromAML = orderData.amlFromResult || { status: 'not_checked' };
-                const toAML = orderData.amlToResult || { status: 'not_checked' };
-                
+                // BTC → ETH: два адреса (AML удален)
                 addressSection = 
                     `📤 <b>Адрес отправки:</b> <code>${orderData.fromAddress || 'Не указан'}</code>\n` +
                     `📥 <b>Адрес получения:</b> <code>${orderData.toAddress || 'Не указан'}</code>\n`;
                     
-                amlSection = 
-                    `🛡️ <b>AML отправки:</b> ${getAMLStatusEmoji(fromAML.status)} ${fromAML.status || 'Не проверен'}\n` +
-                    `🛡️ <b>AML получения:</b> ${getAMLStatusEmoji(toAML.status)} ${toAML.status || 'Не проверен'}\n`;
+                amlSection = `✅ <b>AML проверки:</b> Отключены (быстрый обмен)\n`;
                     
                 pairTypeIcon = '🔗';
                 pairTypeText = 'Криптовалютная';
                 break;
                 
             case 'crypto-to-fiat':
-                // USDT → RUB: криптоадрес + реквизиты
-                const cryptoAML = orderData.amlFromResult || { status: 'not_checked' };
-                
+                // USDT → RUB: криптоадрес + реквизиты (AML удален)
                 addressSection = 
                     `📤 <b>Криптоадрес:</b> <code>${orderData.fromAddress || 'Не указан'}</code>\n` +
                     `📥 <b>Реквизиты получения:</b> <code>${orderData.toAddress || 'Не указан'}</code>\n`;
                     
-                amlSection = 
-                    `🛡️ <b>AML адреса:</b> ${getAMLStatusEmoji(cryptoAML.status)} ${cryptoAML.status || 'Не проверен'}\n` +
-                    `✅ <b>AML реквизитов:</b> Не требуется (фиат)\n`;
+                amlSection = `✅ <b>AML проверки:</b> Отключены (быстрый обмен)\n`;
                     
                 pairTypeIcon = '🔄';
                 pairTypeText = 'Крипто → Фиат';
                 break;
                 
             case 'fiat-to-crypto':
-                // RUB → USDT: кошелек получения + AML
-                const walletAML = orderData.amlToResult || { status: 'not_checked' };
-                
+                // RUB → USDT: кошелек получения (AML удален)
                 addressSection = 
                     `📤 <b>Реквизиты отправки:</b> Будут предоставлены оператором\n` +
                     `📥 <b>Кошелек получения:</b> <code>${orderData.toAddress || 'Не указан'}</code>\n`;
                     
-                amlSection = 
-                    `✅ <b>AML отправки:</b> Не требуется (фиат)\n` +
-                    `🛡️ <b>AML кошелька:</b> ${getAMLStatusEmoji(walletAML.status)} ${walletAML.status || 'Не проверен'}\n`;
+                amlSection = `✅ <b>AML проверки:</b> Отключены (быстрый обмен)\n`;
                     
                 pairTypeIcon = '🔁';
                 pairTypeText = 'Фиат → Крипто';
@@ -4748,7 +4735,7 @@ paymentSystem.setupCryptoHandlers(bot, paymentDetails, chatContexts);
 paymentSystem.setupBankHandlers(bot, paymentDetails, chatContexts);
 
 // Экспорт функций для использования в веб-сервере
-module.exports = { bot, notifyOperators, notifyWebsiteActivity, db, googleSheetsManager, amlService, crmService };
+module.exports = { bot, notifyOperators, notifyWebsiteActivity, db, googleSheetsManager, crmService };
 
 // Функция красивого уведомления о запуске
 async function sendStartupNotification() {

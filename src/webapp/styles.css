@@ -3027,6 +3027,24 @@ input:checked + .slider:before {
     border: 2px solid var(--border-color) !important;
 }
 
+/* 🚀 BYBIT UID ЛОГОТИП */
+.bank-logo[data-bank="Bybit UID"] {
+    background: linear-gradient(135deg, #f6b600 0%, #ff8c00 100%) !important;
+    color: white !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-weight: bold !important;
+    font-size: 16px !important;
+    border: 2px solid #f6b600 !important;
+}
+
+.bank-logo[data-bank="Bybit UID"]::before {
+    content: "₿" !important;
+    color: white !important;
+    font-size: 20px !important;
+}
+
 /* НАСТОЯЩИЕ ЛОГОТИПЫ КРИПТОСЕТЕЙ ИЗ ПАПКИ ASSETS! */
 .network-logo[data-network="TRC20"] {
     background: white url('/assets/images/networks/tron.png') center/contain no-repeat !important;
@@ -3308,4 +3326,222 @@ input:checked + .slider:before {
 .referral-link .copy-btn:hover {
     background: linear-gradient(135deg, var(--success-color), rgba(16, 185, 129, 0.8));
     box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
-} 
+}
+
+/* 🤖 СТИЛИ ДЛЯ АВТООТПРАВКИ РЕКВИЗИТОВ */
+.auto-requisites-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.auto-requisites-modal.show {
+    opacity: 1;
+}
+
+.auto-requisites-content {
+    background: var(--surface-color);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    max-width: 500px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.auto-requisites-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.auto-requisites-header h3 {
+    margin: 0;
+    font-size: var(--font-lg);
+    color: var(--text-primary);
+}
+
+.close-auto-requisites {
+    background: none;
+    border: none;
+    font-size: var(--font-lg);
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    transition: all 0.2s ease;
+}
+
+.close-auto-requisites:hover {
+    background: var(--border-color);
+    color: var(--text-primary);
+}
+
+.order-details {
+    background: var(--background-color);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.order-details h4 {
+    margin: 0 0 var(--spacing-md) 0;
+    color: var(--primary-color);
+    font-size: var(--font-md);
+}
+
+.order-info p {
+    margin: var(--spacing-sm) 0;
+    font-size: var(--font-sm);
+    color: var(--text-primary);
+}
+
+.order-info code {
+    background: var(--surface-color);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    font-family: 'Monaco', 'Consolas', monospace;
+    font-size: var(--font-xs);
+    color: var(--primary-color);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.order-info code:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
+.requisites-info {
+    background: linear-gradient(135deg, 
+        rgba(0, 122, 255, 0.1), 
+        rgba(0, 122, 255, 0.05));
+    border: 1px solid rgba(0, 122, 255, 0.2);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    font-size: var(--font-sm);
+    line-height: 1.6;
+}
+
+.requisites-info code {
+    background: rgba(0, 122, 255, 0.2);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    font-family: 'Monaco', 'Consolas', monospace;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--primary-color);
+}
+
+.requisites-info code:hover {
+    background: var(--primary-color);
+    color: white;
+    transform: scale(1.05);
+}
+
+.instructions {
+    margin-bottom: var(--spacing-lg);
+}
+
+.instructions h4 {
+    margin: 0 0 var(--spacing-md) 0;
+    font-size: var(--font-md);
+    color: var(--text-primary);
+}
+
+.instructions ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.instructions li {
+    padding: var(--spacing-sm) 0;
+    font-size: var(--font-sm);
+    color: var(--text-secondary);
+    position: relative;
+    padding-left: var(--spacing-lg);
+}
+
+.instructions li::before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: var(--success-color);
+    font-weight: bold;
+}
+
+.action-buttons {
+    display: flex;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+}
+
+.action-buttons .primary-button,
+.action-buttons .secondary-button {
+    flex: 1;
+    min-width: 150px;
+    padding: var(--spacing-md);
+    font-size: var(--font-sm);
+    border-radius: var(--radius-md);
+    transition: all 0.2s ease;
+}
+
+.action-buttons .primary-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 122, 255, 0.3);
+}
+
+.action-buttons .secondary-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* 📱 АДАПТИВ ДЛЯ АВТОРЕКВИЗИТОВ */
+@media (max-width: 768px) {
+    .auto-requisites-content {
+        max-width: 95%;
+        padding: var(--spacing-md);
+        max-height: 90vh;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .action-buttons .primary-button,
+    .action-buttons .secondary-button {
+        width: 100%;
+        min-width: auto;
+    }
+}
+
+/* ... existing code ... 

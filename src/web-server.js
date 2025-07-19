@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const { bot, notifyOperators, notifyWebsiteActivity, db, googleSheetsManager, amlService, crmService } = require('./bot');
+const { bot, notifyOperators, notifyWebsiteActivity, db, googleSheetsManager, crmService } = require('./bot');
 const RatesService = require('./services/RatesService');
 
 const app = express();
@@ -87,30 +87,6 @@ app.post('/api/calculate', async (req, res) => {
     }
 });
 
-// API для AML проверки
-app.post('/api/aml-check', async (req, res) => {
-    try {
-        const { address, currency, userId } = req.body;
-        
-        const amlResult = await amlService.checkAddress(address, currency);
-        
-        // Уведомляем об AML проверке (всегда, если проверка проводилась)
-        await notifyWebsiteActivity('aml_check', {
-            address,
-            currency,
-            result: amlResult.status,
-            detailedResult: amlResult, // Передаем полный результат
-            addressType: req.body.type || 'to', // Передаем тип адреса (from/to)
-            userId: userId || 'anonymous'
-        });
-        
-        res.json({ success: true, data: amlResult });
-    } catch (error) {
-        console.error('Ошибка AML проверки:', error);
-        res.status(500).json({ success: false, error: 'Ошибка AML проверки' });
-    }
-});
-
 // API для создания заявки
 app.post('/api/create-order', async (req, res) => {
     try {
@@ -124,9 +100,9 @@ app.post('/api/create-order', async (req, res) => {
             toAmount,
             fromAddress,
             toAddress,
-            amlResult,
             exchangeRate,
-            fee
+            fee,
+            paymentMethod
         } = req.body;
         
         console.log('🏦 ИЗВЛЕЧЕННЫЕ ДАННЫЕ - toAddress:', toAddress, 'pairType:', req.body.pairType);
@@ -142,7 +118,6 @@ app.post('/api/create-order', async (req, res) => {
             toAddress,
             exchangeRate: exchangeRate || (toAmount / fromAmount),
             fee: fee || 0,
-            amlStatus: amlResult?.status || 'clean',
             status: 'pending'
         });
 
@@ -165,8 +140,6 @@ app.post('/api/create-order', async (req, res) => {
             toCurrency: order.toCurrency,
             fromAddress: order.fromAddress || '',
             toAddress: order.toAddress || '',
-            amlFromResult: req.body.amlFromResult || { status: 'not_checked' },
-            amlToResult: req.body.amlToResult || { status: 'not_checked' },
             pairType: req.body.pairType || 'fiat'
         });
 
