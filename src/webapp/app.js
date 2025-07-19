@@ -119,12 +119,21 @@ function initEventListeners() {
     navItems.forEach(item => {
         item.addEventListener('click', (e) => {
             e.preventDefault();
-            const screen = item.dataset.screen;
-            showScreen(screen);
             
-            // Обновляем активную вкладку
-            navItems.forEach(nav => nav.classList.remove('active'));
-            item.classList.add('active');
+            // Проверяем если это кнопка сайта
+            if (item.dataset.action === 'website') {
+                // Для кнопки сайта ничего не делаем, она использует onclick
+                return;
+            }
+            
+            const screen = item.dataset.screen;
+            if (screen) {
+                showScreen(screen);
+                
+                // Обновляем активную вкладку
+                navItems.forEach(nav => nav.classList.remove('active'));
+                item.classList.add('active');
+            }
         });
     });
 
@@ -3057,4 +3066,25 @@ function hideLoadingScreen() {
             showNotification('Приложение готово к работе!', 'success');
         }, 300);
     }
+}
+
+// 🌐 ФУНКЦИЯ ДЛЯ ПОКАЗА СООБЩЕНИЯ О САЙТЕ В РАЗРАБОТКЕ
+function showWebsiteMessage() {
+    if (tg && tg.showAlert) {
+        // Используем Telegram WebApp API
+        tg.showAlert('🚧 Сайт находится в разработке\n\nСкоро будет доступен полный функционал!');
+    } else {
+        // Обычный alert для браузера
+        alert('🚧 Сайт находится в разработке\n\nСкоро будет доступен полный функционал!');
+    }
+    
+    console.log('🌐 Показано сообщение о сайте в разработке');
+    
+    // Убираем активный класс с кнопки сайта
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    // Возвращаем активный класс на главную
+    document.querySelector('[data-screen="calculator-screen"]').classList.add('active');
 }
