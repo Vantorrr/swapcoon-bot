@@ -63,56 +63,50 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Инициализация Telegram Web App
 function initTelegramWebApp() {
-    try {
-        if (tg && typeof tg.ready === 'function') {
-            tg.ready();
-            
-            // Безопасная проверка expand
-            if (typeof tg.expand === 'function') {
-                tg.expand();
-            }
-            
-            // Получаем ID пользователя из параметров или Telegram
-            const urlParams = new URLSearchParams(window.location.search);
-            currentUserId = urlParams.get('user') || tg.initDataUnsafe?.user?.id;
-            
-            // Безопасная настройка темы
-            if (tg.themeParams) {
-                document.documentElement.style.setProperty('--tg-theme-bg-color', tg.themeParams.bg_color || '#F2F2F7');
-                document.documentElement.style.setProperty('--tg-theme-text-color', tg.themeParams.text_color || '#000000');
-                document.documentElement.style.setProperty('--tg-theme-hint-color', tg.themeParams.hint_color || '#8E8E93');
-                document.documentElement.style.setProperty('--tg-theme-link-color', tg.themeParams.link_color || '#007AFF');
-                document.documentElement.style.setProperty('--tg-theme-button-color', tg.themeParams.button_color || '#007AFF');
-                document.documentElement.style.setProperty('--tg-theme-button-text-color', tg.themeParams.button_text_color || '#FFFFFF');
-            }
-            
-            // Безопасная настройка кнопок Telegram
-            if (tg.MainButton && typeof tg.MainButton.hide === 'function') {
-                tg.MainButton.hide();
-            }
-            if (tg.BackButton && typeof tg.BackButton.hide === 'function') {
-                tg.BackButton.hide();
-            }
-            
-            console.log('✅ Telegram Web App инициализировано');
-            console.log('👤 User ID:', currentUserId);
-            console.log('👤 User data:', tg.initDataUnsafe?.user);
-        } else {
-            console.log('⚠️ Telegram Web App недоступно, режим разработки');
-            const urlParams = new URLSearchParams(window.location.search);
-            currentUserId = urlParams.get('user') || 123456789; // Тестовый ID для разработки
-        }
-    } catch (error) {
-        console.error('❌ Ошибка инициализации Telegram Web App:', error);
-        console.log('🔄 Переключение в режим разработки');
-        const urlParams = new URLSearchParams(window.location.search);
-        currentUserId = urlParams.get('user') || 123456789;
-    }
+    console.log('🔌 Инициализация Telegram WebApp...');
     
-    // Дополнительная проверка и установка userId если он не определен
-    if (!currentUserId) {
-        console.log('⚠️ userId не определен, устанавливаем тестовый ID');
-        currentUserId = 123456789; // Тестовый ID для разработки
+    // 🛡️ ТАЙМЕР БЕЗОПАСНОСТИ - СКРЫВАЕМ ЗАСТАВКУ ЧЕРЕЗ 5 СЕКУНД В ЛЮБОМ СЛУЧАЕ
+    setTimeout(() => {
+        console.log('🛡️ Таймер безопасности: принудительно скрываем заставку');
+        hideLoadingScreen();
+    }, 5000);
+    
+    if (window.Telegram?.WebApp) {
+        tg = window.Telegram.WebApp;
+        
+        console.log('✅ Telegram WebApp API обнаружен');
+        console.log('📱 initData:', tg.initData ? 'Есть данные' : 'Нет данных');
+        console.log('🎨 colorScheme:', tg.colorScheme);
+        console.log('📏 viewportHeight:', tg.viewportHeight);
+        
+        // Готовим WebApp
+        tg.ready();
+        tg.expand();
+        
+        // Извлекаем User ID
+        if (tg.initDataUnsafe?.user?.id) {
+            currentUserId = tg.initDataUnsafe.user.id;
+            console.log('👤 User ID из Telegram:', currentUserId);
+        } else {
+            console.log('⚠️ User ID не найден в initDataUnsafe, используем тестовый');
+            currentUserId = 123456789; // Тестовый ID для разработки
+        }
+        
+        // Применяем тему
+        applyTelegramTheme();
+        
+        // Настройка главной кнопки
+        tg.MainButton.setText('🚀 Открыть приложение');
+        tg.MainButton.show();
+        tg.MainButton.onClick(() => {
+            console.log('🔘 Главная кнопка нажата');
+            showScreen('calculator-screen');
+        });
+        
+    } else {
+        console.log('⚠️ Telegram WebApp API недоступен');
+        console.log('🌐 Запуск в режиме браузера с тестовыми данными');
+        currentUserId = 123456789;
     }
     
     console.log('🔑 Финальный User ID:', currentUserId);
@@ -299,6 +293,9 @@ async function loadExchangeRates() {
             updateRatesTime();
             console.log('✅ Курсы валют загружены:', currentRates.length, 'валют');
             showNotification('Курсы валют обновлены!', 'success');
+            
+            // 🔥 ПРИНУДИТЕЛЬНОЕ СКРЫТИЕ ЗАСТАВКИ ПОСЛЕ ЗАГРУЗКИ КУРСОВ
+            hideLoadingScreen();
         } else {
             throw new Error(data.error || 'Пустой ответ от сервера');
         }
@@ -318,6 +315,9 @@ async function loadExchangeRates() {
         }
         
         console.log('✅ Тестовые курсы загружены:', currentRates.length, 'валют');
+        
+        // 🔥 ПРИНУДИТЕЛЬНОЕ СКРЫТИЕ ЗАСТАВКИ ДАЖЕ ПРИ ОШИБКЕ
+        hideLoadingScreen();
     }
 }
 

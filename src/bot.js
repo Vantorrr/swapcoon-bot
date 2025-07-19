@@ -4,7 +4,6 @@ const express = require('express');
 const { exec } = require('child_process');
 const Database = require('./models/Database');
 const GoogleSheetsManager = require('./services/GoogleSheetsManager');
-// ❌ УДАЛИЛИ: const AMLService = require('./services/AMLService');
 const CRMService = require('./services/CRMService');
 const fs = require('fs');
 const path = require('path');
@@ -25,7 +24,6 @@ const chatContexts = new Map();
 
 // Инициализация сервисов
 let googleSheetsManager = null;
-// ❌ УДАЛИЛИ: const amlService = new AMLService();
 const crmService = new CRMService();
 
 // Инициализация Google Sheets
@@ -147,7 +145,7 @@ bot.command('start', async (ctx) => {
             `💱 Обменять криптовалюты\n` +
             `💵 Обмен наличных в офисах\n` +
             `🌍 Переводы по всему миру\n` +
-            `🛡️ AML проверка адресов\n` +
+            `🛡️ Быстрый обмен\n` +
             `📊 История всех операций\n` +
             `👥 Реферальная программа (0.2%)\n` +
             `📱 Удобное приложение\n\n` +
@@ -434,7 +432,7 @@ bot.command('help', async (ctx) => {
     helpText += `<b>🔥 Возможности нашего енота:</b>\n` +
         `💱 Обмен криптовалют (42 пары)\n` +
         `💵 Обмен наличных в офисах\n` +
-        `🛡️ AML проверка адресов\n` +
+        `🛡️ Быстрый обмен\n` +
         `📊 История всех операций\n` +
         `👥 Реферальная программа (0.2%)\n\n` +
         `🚀 Нажмите кнопку ниже для открытия приложения:`;
@@ -465,7 +463,7 @@ bot.on('callback_query:data', async (ctx) => {
                 '🚀 <b>SwapCoon приветствует тебя!</b>\n\n' +
                 '🌟 Удобное приложение для обмена валют\n' +
                 '💱 42 валютные пары доступны\n' +
-                '🛡️ AML проверка адресов\n' +
+                '🛡️ Быстрый обмен\n' +
                 '📊 История всех операций\n' +
                 '👥 Реферальная программа\n\n' +
                 '📱 Нажмите кнопку ниже, чтобы открыть приложение прямо в Telegram!',
@@ -1443,9 +1441,9 @@ bot.on('callback_query:data', async (ctx) => {
                 `<b>🔥 Енот поможет тебе:</b>\n` +
                 `💱 Обмен криптовалют (42 пары)\n` +
                 `💵 Обмен наличных в офисах\n` +
-                `🛡️ AML проверка адресов\n` +
+                `🛡️ Быстрый обмен\n` +
                 `📊 История всех операций\n` +
-                `👥 Реферальная программа (0.5%)\n` +
+                `👥 Реферальная программа (0.2%)\n` +
                 `📱 Удобное приложение\n\n` +
                 `🎯 Выберите действие:`,
             parse_mode: 'HTML',
@@ -1465,9 +1463,9 @@ bot.on('callback_query:data', async (ctx) => {
                 `<b>🔥 Енот поможет тебе:</b>\n` +
                 `💱 Обмен криптовалют (42 пары)\n` +
                 `💵 Обмен наличных в офисах\n` +
-                `🛡️ AML проверка адресов\n` +
+                `🛡️ Быстрый обмен\n` +
                 `📊 История всех операций\n` +
-                `👥 Реферальная программа (0.5%)\n` +
+                `👥 Реферальная программа (0.2%)\n` +
                 `📱 Удобное приложение\n\n` +
                 `🎯 Выберите действие:`,
             parse_mode: 'HTML',
@@ -4300,17 +4298,6 @@ async function notifyOperators(orderData) {
     }
 }
 
-// Функция для получения эмодзи статуса AML
-function getAMLStatusEmoji(status) {
-    const statusMap = {
-        'clean': '✅',
-        'warning': '⚠️',
-        'risky': '🔴',
-        'blocked': '⛔'
-    };
-    return statusMap[status] || '❓';
-}
-
 // Функция для определения приоритета заявки
 function getPriorityText(amount) {
     if (amount >= 10000) return '🔥 ВЫСОКИЙ (от $10K)';
@@ -4377,77 +4364,6 @@ async function notifyWebsiteActivity(activityType, data) {
                          `Сумма: ${data.amount}\n` +
                          `Время: ${new Date().toLocaleString('ru-RU')}\n\n` +
                          `#курс #сайт`;
-                break;
-                
-            case 'aml_check':
-                // Получаем детальную информацию из AML сервиса
-                const detailedAML = data.detailedResult || {};
-                const connections = detailedAML.connections || [];
-                const blockchain = detailedAML.blockchain || data.currency;
-                const riskScore = detailedAML.riskScore || 0;
-                const riskLevel = riskScore <= 50 ? 'Низкий' : riskScore <= 80 ? 'Средний' : 'Высокий';
-                const riskIcon = riskScore <= 50 ? '🟢' : riskScore <= 80 ? '🟡' : '🔴';
-                
-                // Определяем тип адреса
-                const addressType = data.addressType || 'to';
-                const addressTypeText = addressType === 'from' ? 'ОТПРАВКИ' : 'ПОЛУЧЕНИЯ';
-                const addressTypeEmoji = addressType === 'from' ? '📤' : '📥';
-                
-                let connectionsText = '';
-                if (connections.length > 0) {
-                    // Основные связи (1% и выше)
-                    const mainConnections = connections.filter(c => c.percentage >= 1.0);
-                    // Минорные связи (менее 1%)
-                    const minorConnections = connections.filter(c => c.percentage < 1.0 && c.percentage >= 0.1);
-                    // Очень малые связи (менее 0.1%)
-                    const tinyConnections = connections.filter(c => c.percentage < 0.1);
-                    
-                    connectionsText = '\n\n<b>Связи адреса:</b>\n';
-                    
-                    // Основные связи
-                    if (mainConnections.length > 0) {
-                        mainConnections.forEach(conn => {
-                            connectionsText += `  •   ${conn.category} - ${conn.percentage}%\n`;
-                        });
-                    }
-                    
-                    // Минорные связи
-                    if (minorConnections.length > 0) {
-                        minorConnections.forEach(conn => {
-                            connectionsText += `  •   ${conn.category} - ${conn.percentage}%\n`;
-                        });
-                    }
-                    
-                    // Очень малые связи (менее 0.1%)
-                    if (tinyConnections.length > 0) {
-                        connectionsText += `\n<b>Менее 0.1%:</b>\n`;
-                        tinyConnections.forEach(conn => {
-                            connectionsText += `  •   ${conn.category}\n`;
-                        });
-                    }
-                } else {
-                    // Если нет детальных данных, показываем базовую информацию
-                    connectionsText = '\n\n<b>Связи адреса:</b>\n' +
-                        `  •   Анализ данных недоступен\n`;
-                }
-                
-                // Большой индикатор риска для привлечения внимания
-                let topIndicator = '';
-                if (riskScore >= 80) {
-                    topIndicator = `🔴⚠️ <b>ВЫСОКИЙ РИСК АДРЕСА ${addressTypeText}!</b> ⚠️🔴`;
-                } else if (riskScore >= 50) {
-                    topIndicator = `🟡⚠️ <b>СРЕДНИЙ РИСК АДРЕСА ${addressTypeText}</b> ⚠️🟡`;
-                } else {
-                    topIndicator = `🟢✅ <b>НИЗКИЙ РИСК АДРЕСА ${addressTypeText}</b> ✅🟢`;
-                }
-
-                message = `${topIndicator}\n\n` +
-                         `${addressTypeEmoji} <b>Адрес ${addressTypeText.toLowerCase()}:</b> <code>${data.address}</code>\n\n` +
-                         `⛓️ <b>Блокчейн:</b> ${blockchain}\n` +
-                         `${connectionsText}\n\n` +
-                         `📈 <b>Уровень риска:</b> ${riskLevel} (${riskScore.toFixed(1)}%)\n\n` +
-                         `⏰ <b>Время:</b> ${new Date().toLocaleString('ru-RU')}\n\n` +
-                         `#aml #${addressType}_адрес #риск_${riskLevel.toLowerCase()}`;
                 break;
         }
         
@@ -4567,6 +4483,13 @@ const paymentDetails = {
             holder: 'АЛЕКСЕЙ ПЕТРОВ',
             icon: '🔴',
             description: 'Банк с телеком-возможностями'
+        },
+        'Bybit UID': {
+            name: 'Bybit UID',
+            address: '47028037',
+            icon: '🐱',
+            fee: 'Без комиссии',
+            description: 'P2P торговля ByBit'
         }
     }
 };
@@ -5249,7 +5172,7 @@ webhookApp.post('/test/notify-operators', async (req, res) => {
 });
 
 // Запуск webhook сервера
-const port = process.env.PORT || 3001;
+const port = process.env.WEBHOOK_PORT || 3001; // Используем отдельный порт для webhook
 webhookApp.listen(port, () => {
     console.log(`🔗 Webhook сервер запущен на порту ${port}`);
 });
