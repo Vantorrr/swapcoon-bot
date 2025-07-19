@@ -2811,22 +2811,32 @@ function requestNoAMLExchange() {
 function openReviews() {
     const reviewsUrl = 'https://t.me/ExMachinaXReviews';
     
+    console.log('📝 Открываем отзывы:', reviewsUrl);
+    
     try {
-        // Для Telegram WebApp используем специальный метод
-        if (tg && typeof tg.openTelegramLink === 'function') {
-            tg.openTelegramLink(reviewsUrl);
-        } else if (tg && typeof tg.openLink === 'function') {
+        // 🔥 ПРИНУДИТЕЛЬНЫЙ ПЕРЕХОД В ТЕЛЕГРАМ
+        if (tg && tg.openLink) {
+            console.log('📱 Используем tg.openLink');
             tg.openLink(reviewsUrl);
-        } else {
-            // Fallback для обычного браузера
+        } else if (window.open) {
+            console.log('🌐 Используем window.open');
             window.open(reviewsUrl, '_blank');
+        } else {
+            console.log('🔗 Используем location.href');
+            window.location.href = reviewsUrl;
         }
         
-        showNotification('Переходим к отзывам...', 'info');
+        showNotification('Переходим к отзывам в Telegram...', 'info');
+        console.log('✅ Переход к отзывам выполнен');
     } catch (error) {
-        console.error('Ошибка открытия отзывов:', error);
-        // Запасной вариант - просто открываем ссылку
-        window.open(reviewsUrl, '_blank');
+        console.error('❌ Ошибка открытия отзывов:', error);
+        // Принудительный fallback
+        try {
+            window.location.href = reviewsUrl;
+        } catch (e) {
+            console.error('❌ Критическая ошибка перехода:', e);
+            showNotification('Ошибка перехода. Откройте: @ExMachinaXReviews', 'error');
+        }
     }
 }
 
