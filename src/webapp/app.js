@@ -93,13 +93,11 @@ function initTelegramWebApp() {
         // Применяем тему
         applyTelegramTheme();
         
-        // Настройка главной кнопки
-        tg.MainButton.setText('🚀 Открыть приложение');
-        tg.MainButton.show();
-        tg.MainButton.onClick(() => {
-            console.log('🔘 Главная кнопка нажата');
-            showScreen('calculator-screen');
-        });
+        // ❌ УБРАЛ ГЛАВНУЮ КНОПКУ - ОНА НЕ НУЖНА
+        // tg.MainButton скрыта по умолчанию
+        if (tg.MainButton) {
+            tg.MainButton.hide();
+        }
         
     } else {
         console.log('⚠️ Telegram WebApp API недоступен');
