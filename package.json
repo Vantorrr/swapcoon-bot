@@ -2,9 +2,9 @@
   "name": "swapcoon-bot",
   "version": "1.0.0",
   "description": "Telegram bot with mini app for currency exchange",
-  "main": "src/bot.js",
+  "main": "src/web-server.js",
   "scripts": {
-    "start": "node src/bot.js",
+    "start": "node src/web-server-simple.js",
     "bot": "node src/bot.js",
     "dev": "nodemon src/bot.js",
     "web": "node src/web-server-standalone.js",
