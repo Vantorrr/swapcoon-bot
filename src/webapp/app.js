@@ -1852,26 +1852,61 @@ async function loadUserProfile() {
 
 // Обновление отображения профиля
 function updateProfileDisplay() {
+    console.log('👤 Обновление отображения профиля...');
+    console.log('📱 tg:', tg ? 'доступен' : 'недоступен');
+    console.log('👤 currentUserId:', currentUserId);
+    console.log('📄 userProfile:', userProfile);
+    
     // Получаем данные пользователя из Telegram WebApp API
     const telegramUser = tg?.initDataUnsafe?.user;
+    console.log('📱 telegramUser:', telegramUser);
     
     // Основная информация (приоритет данным из Telegram)
     const firstName = telegramUser?.first_name || userProfile?.first_name || 'Пользователь';
     const lastName = telegramUser?.last_name || userProfile?.last_name || '';
     const fullName = `${firstName} ${lastName}`.trim();
-    const username = telegramUser?.username || userProfile?.username || currentUserId;
+    const username = telegramUser?.username || userProfile?.username || `user${currentUserId}`;
+    
+    console.log('✨ Данные для отображения:', { firstName, lastName, fullName, username });
+    
+    // Обновляем имя в заголовке (ПРИОРИТЕТ!)
+    const headerUserName = document.getElementById('header-user-name');
+    if (headerUserName) {
+        headerUserName.textContent = firstName;
+        console.log('✅ Обновлен header-user-name:', firstName);
+    } else {
+        console.log('⚠️ Элемент header-user-name не найден');
+    }
     
     // Обновляем профиль (если элементы существуют)
     const profileName = document.getElementById('profile-name');
     const profileUsername = document.getElementById('profile-username');
     
-    if (profileName) profileName.textContent = fullName;
-    if (profileUsername) profileUsername.textContent = `@${username}`;
+    if (profileName) {
+        profileName.textContent = fullName;
+        console.log('✅ Обновлен profile-name:', fullName);
+    } else {
+        console.log('⚠️ Элемент profile-name не найден');
+    }
     
-    // Обновляем имя в заголовке
-    const headerUserName = document.getElementById('header-user-name');
-    if (headerUserName) {
-        headerUserName.textContent = firstName; // Используем только имя в заголовке
+    if (profileUsername) {
+        profileUsername.textContent = `@${username}`;
+        console.log('✅ Обновлен profile-username:', `@${username}`);
+    } else {
+        console.log('⚠️ Элемент profile-username не найден');
+    }
+    
+    // Обновляем статус профиля
+    const profileStatus = document.querySelector('.profile-status');
+    if (profileStatus) {
+        if (currentUserId && currentUserId !== 123456789) {
+            profileStatus.textContent = '✅ Верифицирован';
+            profileStatus.className = 'profile-status verified';
+        } else {
+            profileStatus.textContent = 'Гость';
+            profileStatus.className = 'profile-status guest';
+        }
+        console.log('✅ Обновлен статус профиля');
     }
     
     // Аватар (если есть фото в Telegram, используем его)
@@ -1884,111 +1919,23 @@ function updateProfileDisplay() {
             console.log('🖼️ Используем аватар из профиля:', userProfile.avatar);
             avatarImg.src = userProfile.avatar;
         } else {
-            console.log('🖼️ Используем аватар по умолчанию');
-            // Создаем аватар с инициалами пользователя
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = 100;
-            canvas.height = 100;
-            
-            // Фон градиентом
-            const gradient = ctx.createLinearGradient(0, 0, 100, 100);
-            gradient.addColorStop(0, '#007AFF');
-            gradient.addColorStop(1, '#5856D6');
-            
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, 100, 100);
-            
-            // Инициалы
-            ctx.fillStyle = 'white';
-            ctx.font = 'bold 40px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            
-            const initials = firstName.charAt(0) + (lastName ? lastName.charAt(0) : '');
-            ctx.fillText(initials.toUpperCase(), 50, 50);
-            
-            avatarImg.src = canvas.toDataURL();
+            console.log('🖼️ Создаем аватар с инициалами');
+            // Простой аватар с инициалами
+            const initials = firstName.charAt(0) + (lastName.charAt(0) || '');
+            avatarImg.alt = initials;
+            avatarImg.style.background = `linear-gradient(45deg, #007AFF, #34C759)`;
+            avatarImg.style.color = 'white';
+            avatarImg.style.display = 'flex';
+            avatarImg.style.alignItems = 'center';
+            avatarImg.style.justifyContent = 'center';
+            avatarImg.style.fontSize = '20px';
+            avatarImg.style.fontWeight = 'bold';
         }
-        
-        avatarImg.onerror = () => {
-            console.log('❌ Ошибка загрузки аватара, создаем аватар с инициалами');
-            // Создаем аватар с инициалами при ошибке
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = 100;
-            canvas.height = 100;
-            
-            ctx.fillStyle = '#6B7280';
-            ctx.fillRect(0, 0, 100, 100);
-            
-            ctx.fillStyle = 'white';
-            ctx.font = 'bold 40px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            
-            const initials = firstName.charAt(0) + (lastName ? lastName.charAt(0) : '');
-            ctx.fillText(initials.toUpperCase(), 50, 50);
-            
-            avatarImg.src = canvas.toDataURL();
-        };
+    } else {
+        console.log('⚠️ Элемент avatar-image не найден');
     }
     
-    // Статистика в профиле (если userProfile загружен и элементы существуют)
-    if (userProfile) {
-        const stats = userProfile.stats || {};
-        const profileOrders = document.getElementById('profile-orders');
-        const profileVolume = document.getElementById('profile-volume');
-        
-        if (profileOrders) profileOrders.textContent = stats.ordersCount || 0;
-        if (profileVolume) profileVolume.textContent = `$${formatNumber(stats.totalVolume || 0)}`;
-    }
-    
-    // Уровень пользователя (всегда показываем, даже для новых)
-    const stats = userProfile?.stats || { ordersCount: 0, totalVolume: 0 };
-    let level = userProfile?.level;
-    
-    // Проверка на админа - если админ, то показываем статус АДМИН
-    if (userProfile?.role === 'admin') {
-        level = {
-            level: 'АДМИН',
-            name: 'Администратор',
-            color: '#FF3B30',
-            benefits: ['Полный доступ к системе', 'Управление пользователями', 'Статистика и аналитика']
-        };
-        console.log('👨‍💼 Установлен статус администратора для пользователя', currentUserId);
-    } else if (!level) {
-        // Если нет уровня, устанавливаем новичка
-        level = { 
-            level: 'NEWBIE', 
-            name: 'Новичок', 
-            color: '#6B7280',
-            benefits: ['Доступ к базовым функциям', 'Поддержка 24/7']
-        };
-        console.log('👶 Установлен уровень новичка для пользователя', currentUserId);
-    }
-    
-    updateLevelDisplay(level, stats);
-    
-    // Реферальная статистика (только если есть userProfile)
-    if (userProfile) {
-        const referralStats = userProfile.referralStats || {};
-        const referralCount = document.getElementById('referral-count');
-        const referralEarnings = document.getElementById('referral-earnings');
-        
-        if (referralCount) referralCount.textContent = referralStats.total_referrals || 0;
-        if (referralEarnings) referralEarnings.textContent = `$${formatNumber(referralStats.total_commission || 0)}`;
-    }
-    
-    // Реферальная ссылка (всегда показываем, если есть currentUserId)
-    if (currentUserId) {
-        const referralLinkInput = document.getElementById('referral-link-input');
-        if (referralLinkInput) {
-            const botUsername = 'swapcoon_bot'; // Или получить из env
-            const referralLink = `https://t.me/${botUsername}?start=${currentUserId}`;
-            referralLinkInput.value = referralLink;
-        }
-    }
+    console.log('✅ Обновление профиля завершено');
 }
 
 // Обновление отображения уровня
