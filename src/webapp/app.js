@@ -2783,9 +2783,27 @@ function requestNoAMLExchange() {
     createSupportTicket('Обмен без AML', 'Заявка на быстрый обмен без AML проверки. Клиент хочет выполнить обмен без детальной проверки адресов.');
 }
 
-// Банковские карты
-function requestBankCards() {
-    createSupportTicket('Банковские карты', 'Заявка на обмен с банковскими картами. Клиент интересуется пополнением или выводом средств на банковские карты.');
+// 🌟 ОТЗЫВЫ - ПЕРЕХОД НА ТЕЛЕГРАМ ГРУППУ
+function openReviews() {
+    const reviewsUrl = 'https://t.me/ExMachinaXReviews';
+    
+    try {
+        // Для Telegram WebApp используем специальный метод
+        if (tg && typeof tg.openTelegramLink === 'function') {
+            tg.openTelegramLink(reviewsUrl);
+        } else if (tg && typeof tg.openLink === 'function') {
+            tg.openLink(reviewsUrl);
+        } else {
+            // Fallback для обычного браузера
+            window.open(reviewsUrl, '_blank');
+        }
+        
+        showNotification('Переходим к отзывам...', 'info');
+    } catch (error) {
+        console.error('Ошибка открытия отзывов:', error);
+        // Запасной вариант - просто открываем ссылку
+        window.open(reviewsUrl, '_blank');
+    }
 }
 
 // OTC торговля
