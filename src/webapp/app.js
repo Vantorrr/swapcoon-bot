@@ -65,19 +65,17 @@ document.addEventListener('DOMContentLoaded', function() {
 function initTelegramWebApp() {
     console.log('🔌 Инициализация Telegram WebApp...');
     
-    // 🛡️ ТАЙМЕР БЕЗОПАСНОСТИ - СКРЫВАЕМ ЗАСТАВКУ ЧЕРЕЗ 5 СЕКУНД В ЛЮБОМ СЛУЧАЕ
+    // 🛡️ БЫСТРЫЙ ТАЙМЕР БЕЗОПАСНОСТИ - 2 СЕКУНДЫ
     setTimeout(() => {
         console.log('🛡️ Таймер безопасности: принудительно скрываем заставку');
         hideLoadingScreen();
-    }, 5000);
+    }, 2000); // Уменьшил с 5000 до 2000
     
     if (window.Telegram?.WebApp) {
         tg = window.Telegram.WebApp;
         
         console.log('✅ Telegram WebApp API обнаружен');
         console.log('📱 initData:', tg.initData ? 'Есть данные' : 'Нет данных');
-        console.log('🎨 colorScheme:', tg.colorScheme);
-        console.log('📏 viewportHeight:', tg.viewportHeight);
         
         // Готовим WebApp
         tg.ready();
@@ -120,19 +118,21 @@ function initEventListeners() {
         item.addEventListener('click', (e) => {
             e.preventDefault();
             
-            // Проверяем если это кнопка сайта
+            // Проверяем если это кнопка сайта - она работает через onclick
             if (item.dataset.action === 'website') {
-                // Для кнопки сайта ничего не делаем, она использует onclick
-                return;
+                return; // Для кнопки сайта используется onclick в HTML
             }
             
             const screen = item.dataset.screen;
             if (screen) {
+                console.log('📱 Переключение на экран:', screen);
                 showScreen(screen);
                 
                 // Обновляем активную вкладку
                 navItems.forEach(nav => nav.classList.remove('active'));
                 item.classList.add('active');
+            } else {
+                console.log('⚠️ Экран не найден для:', item);
             }
         });
     });
@@ -211,36 +211,10 @@ async function loadInitialData() {
     updateRatesTime();
     console.log('✅ Защитные тестовые курсы загружены');
     
-    // Скрываем загрузочный экран СРАЗУ
+    // 🔥 МГНОВЕННОЕ СКРЫТИЕ ЗАГРУЗОЧНОГО ЭКРАНА
     hideLoadingScreen();
     
-    // Загружаем курсы валют (попытка получить актуальные)
-    try {
-        await loadExchangeRates();
-        console.log('✅ Попытка загрузки актуальных курсов завершена');
-    } catch (error) {
-        console.error('❌ Ошибка загрузки актуальных курсов:', error);
-        console.log('ℹ️ Продолжаем с тестовыми курсами');
-    }
-    
-    // Загружаем профиль пользователя (не критично)
-    if (currentUserId) {
-        try {
-            await loadUserProfile();
-            console.log('✅ Попытка загрузки профиля завершена');
-        } catch (error) {
-            console.error('❌ Ошибка загрузки профиля:', error);
-        }
-        
-        // Загружаем новости (не критично)
-        try {
-            await loadNews();
-            console.log('✅ Новости загружены');
-        } catch (error) {
-            console.error('❌ Ошибка загрузки новостей:', error);
-        }
-    }
-    
+    // ⚡ УСКОРЕННАЯ ИНИЦИАЛИЗАЦИЯ - ВСЕ ПАРАЛЛЕЛЬНО
     // Обновляем отображение профиля с данными из Telegram
     try {
         updateProfileDisplay();
@@ -257,19 +231,28 @@ async function loadInitialData() {
         console.error('❌ Ошибка инициализации калькулятора:', error);
     }
     
-    // Загружаем сохраненные настройки (не критично)
-    setTimeout(() => {
+    // 🔄 ФОНОВАЯ ЗАГРУЗКА АКТУАЛЬНЫХ КУРСОВ (НЕ БЛОКИРУЕТ UI)
+    setTimeout(async () => {
         try {
-            loadSavedSettings();
-            console.log('✅ Настройки загружены');
+            console.log('📡 Фоновая загрузка актуальных курсов...');
+            await loadExchangeRates();
+            console.log('✅ Актуальные курсы загружены в фоне');
         } catch (error) {
-            console.error('❌ Ошибка загрузки настроек:', error);
+            console.error('❌ Ошибка фоновой загрузки курсов:', error);
         }
-    }, 500);
+    }, 100); // Минимальная задержка
     
-    // 🚀 БЫСТРОЕ СКРЫТИЕ ЗАГРУЗОЧНОГО ЭКРАНА
-    console.log('🎬 Скрываем загрузочный экран...');
-    hideLoadingScreen();
+    // 🔄 ФОНОВАЯ ЗАГРУЗКА ПРОФИЛЯ (НЕ БЛОКИРУЕТ UI)
+    if (currentUserId && currentUserId !== 123456789) {
+        setTimeout(async () => {
+            try {
+                await loadUserProfile();
+                console.log('✅ Профиль загружен в фоне');
+            } catch (error) {
+                console.error('❌ Ошибка загрузки профиля:', error);
+            }
+        }, 200);
+    }
 }
 
 // 🚀 БЫСТРАЯ ЗАГРУЗКА КУРСОВ С TIMEOUT И FALLBACK
@@ -277,9 +260,9 @@ async function loadExchangeRates() {
     console.log('📡 Загружаем курсы валют...');
     
     try {
-        // 🔥 УЛЬТРА-БЫСТРЫЙ TIMEOUT 2 СЕКУНДЫ!
+        // 🔥 СУПЕР-БЫСТРЫЙ TIMEOUT 1 СЕКУНДА!
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 2000);
+        const timeoutId = setTimeout(() => controller.abort(), 1000);
         
         const response = await fetch('/api/rates', {
             signal: controller.signal,
@@ -300,7 +283,7 @@ async function loadExchangeRates() {
             currentRates = data.data;
             updateCurrencyList();
             updateRatesTime();
-            console.log('✅ Курсы валют загружены:', currentRates.length, 'валют');
+            console.log('✅ Актуальные курсы заменили тестовые:', currentRates.length, 'валют');
             showNotification('Курсы валют обновлены!', 'success');
             
             // 🔥 ПРИНУДИТЕЛЬНОЕ СКРЫТИЕ ЗАСТАВКИ ПОСЛЕ ЗАГРУЗКИ КУРСОВ
@@ -311,19 +294,13 @@ async function loadExchangeRates() {
     } catch (error) {
         console.error('❌ Ошибка загрузки курсов:', error.message);
         
-        // 🎯 МГНОВЕННО ИСПОЛЬЗУЕМ ТЕСТОВЫЕ КУРСЫ
-        console.log('🔄 Мгновенно переключаемся на тестовые курсы...');
-        currentRates = getTestRates();
-        updateCurrencyList();
-        updateRatesTime();
-        
         if (error.name === 'AbortError') {
-            showNotification('Превышен таймаут загрузки курсов. Используем тестовые данные.', 'warning');
+            console.log('⚡ Таймаут 1 сек превышен - продолжаем с тестовыми курсами');
+            showNotification('Используем тестовые курсы для быстрой работы', 'info');
         } else {
-            showNotification('Не удалось загрузить актуальные курсы. Используем тестовые данные.', 'warning');
+            console.log('⚡ Ошибка API - продолжаем с тестовыми курсами');
+            showNotification('Не удалось загрузить актуальные курсы', 'warning');
         }
-        
-        console.log('✅ Тестовые курсы загружены:', currentRates.length, 'валют');
         
         // 🔥 ПРИНУДИТЕЛЬНОЕ СКРЫТИЕ ЗАСТАВКИ ДАЖЕ ПРИ ОШИБКЕ
         hideLoadingScreen();
@@ -540,9 +517,12 @@ function createCurrencyItem(rate, isFav) {
         priceDisplay = `$${rate.price.toFixed(6)}`;
     }
 
+    // 🪙 КРАСИВЫЕ ИКОНКИ ВАЛЮТ
+    const currencyIcon = getCurrencyIcon(rate.currency);
+
     item.innerHTML = `
         <div class="currency-info" onclick="selectCurrency('${rate.currency}')">
-            <div class="currency-icon">${rate.currency.substr(0, 2)}</div>
+            <div class="currency-icon">${currencyIcon}</div>
             <div class="currency-details">
                 <h4>${rate.currency}</h4>
                 <p>${getCurrencyName(rate.currency)}</p>
@@ -3087,4 +3067,41 @@ function showWebsiteMessage() {
     
     // Возвращаем активный класс на главную
     document.querySelector('[data-screen="calculator-screen"]').classList.add('active');
+}
+
+// 🎨 ПРИМЕНЕНИЕ ТЕМЫ TELEGRAM
+function applyTelegramTheme() {
+    if (!tg || !tg.themeParams) {
+        console.log('🎨 Тема Telegram недоступна, используем стандартную');
+        return;
+    }
+    
+    try {
+        const theme = tg.themeParams;
+        console.log('🎨 Применяем тему Telegram:', tg.colorScheme);
+        
+        // Применяем цвета темы
+        if (theme.bg_color) {
+            document.documentElement.style.setProperty('--tg-theme-bg-color', theme.bg_color);
+        }
+        if (theme.text_color) {
+            document.documentElement.style.setProperty('--tg-theme-text-color', theme.text_color);
+        }
+        if (theme.hint_color) {
+            document.documentElement.style.setProperty('--tg-theme-hint-color', theme.hint_color);
+        }
+        if (theme.link_color) {
+            document.documentElement.style.setProperty('--tg-theme-link-color', theme.link_color);
+        }
+        if (theme.button_color) {
+            document.documentElement.style.setProperty('--tg-theme-button-color', theme.button_color);
+        }
+        if (theme.button_text_color) {
+            document.documentElement.style.setProperty('--tg-theme-button-text-color', theme.button_text_color);
+        }
+        
+        console.log('✅ Тема Telegram применена');
+    } catch (error) {
+        console.error('❌ Ошибка применения темы:', error);
+    }
 }
