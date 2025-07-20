@@ -119,43 +119,96 @@ async function initializeBotAndAdmins() {
         console.log('✅ КРИТИЧНО! Бот успешно запущен и готов к отправке уведомлений');
         console.log('🎯 БОТ ЗАПУЩЕН! Переходим к отправке уведомления о запуске...');
         
-        // 📨 УВЕДОМЛЯЕМ АДМИНОВ О ЗАПУСКЕ СРАЗУ
-        console.log('📤 НАЧАЛАСЬ отправка уведомлений админам о запуске...');
-        console.log('🔍 Проверяем bot.api перед отправкой:', !!bot.api);
+        // 📨 УВЕДОМЛЯЕМ АДМИНОВ О ЗАПУСКЕ С МАКСИМАЛЬНОЙ ДИАГНОСТИКОЙ
+        console.log('📤 🔥 НАЧАЛАСЬ отправка уведомлений админам о запуске...');
+        console.log('🔍 ДИАГНОСТИКА:');
+        console.log('   - bot существует?', !!bot);
+        console.log('   - bot.api существует?', !!bot.api);
+        console.log('   - db существует?', !!db);
+        console.log('   - db.getStaffList функция?', typeof db.getStaffList);
         
-        // Получаем админов из базы данных
-        const staffList = await db.getStaffList();
-        const admins = staffList.filter(s => s.role === 'admin');
-        console.log(`📋 Найдено админов в БД: ${admins.length}`);
-        
-        if (admins.length === 0) {
-            console.log('⚠️ АДМИНЫ НЕ НАЙДЕНЫ В БД! Используем аварийный список');
-            // Аварийный список если в БД нет админов
+        try {
+            // Получаем админов из базы данных
+            console.log('🔍 Получаем список персонала из БД...');
+            const staffList = await db.getStaffList();
+            console.log(`📊 Всего персонала в БД: ${staffList.length}`);
+            
+            const admins = staffList.filter(s => s.role === 'admin');
+            const operators = staffList.filter(s => s.role === 'operator');
+            console.log(`👑 Найдено админов в БД: ${admins.length}`);
+            console.log(`👨‍💼 Найдено операторов в БД: ${operators.length}`);
+            
+            // Показываем всех админов
+            console.log('📋 СПИСОК АДМИНОВ:');
+            admins.forEach((admin, index) => {
+                console.log(`   ${index + 1}. ${admin.first_name} (@${admin.username || 'null'}) - ID: ${admin.telegram_id}`);
+            });
+            
+            if (admins.length === 0) {
+                console.log('⚠️ КРИТИЧНО! АДМИНЫ НЕ НАЙДЕНЫ В БД! Используем аварийный список');
+                const emergencyAdmins = [8141463258, 461759951, 280417617];
+                for (const adminId of emergencyAdmins) {
+                    admins.push({ telegram_id: adminId, first_name: `Админ ${adminId}` });
+                }
+                console.log(`🆘 Добавлено аварийных админов: ${admins.length}`);
+            }
+            
+            const startupMessage = `🚀 <b>SwapCoon запущен успешно!</b>\n\n` +
+                `✅ Веб-сервер: Активен\n` +
+                `✅ Telegram бот: РАБОТАЕТ\n` +
+                `✅ Уведомления: ВКЛЮЧЕНЫ\n` +
+                `👑 Админов: ${admins.length}\n` +
+                `👨‍💼 Операторов: ${operators.length}\n` +
+                `⏰ Время: ${new Date().toLocaleString('ru-RU')}`;
+            
+            console.log('📝 Текст уведомления подготовлен, начинаем отправку...');
+            
+            let successCount = 0;
+            let errorCount = 0;
+            
+            for (const admin of admins) {
+                try {
+                    console.log(`📤 Отправляю уведомление админу ${admin.telegram_id} (${admin.first_name})...`);
+                    
+                    const result = await bot.api.sendMessage(admin.telegram_id, startupMessage, { 
+                        parse_mode: 'HTML',
+                        disable_web_page_preview: true 
+                    });
+                    
+                    console.log(`✅ УСПЕХ! Админ ${admin.telegram_id} получил уведомление! Message ID: ${result.message_id}`);
+                    successCount++;
+                    
+                } catch (error) {
+                    console.error(`❌ ПРОВАЛ для админа ${admin.telegram_id}:`, error.message);
+                    console.error(`🔥 Детали ошибки:`, error);
+                    errorCount++;
+                }
+            }
+            
+            console.log(`📊 ИТОГИ ОТПРАВКИ:`);
+            console.log(`   ✅ Успешно: ${successCount}`);
+            console.log(`   ❌ Ошибок: ${errorCount}`);
+            console.log(`   📨 Всего попыток: ${admins.length}`);
+            console.log('📨 🎉 ЗАВЕРШЕНА отправка уведомлений о запуске');
+            
+        } catch (dbError) {
+            console.error('❌ КРИТИЧЕСКАЯ ОШИБКА получения админов из БД:', dbError.message);
+            console.error('🔥 Детали ошибки БД:', dbError);
+            
+            // Пробуем аварийную отправку
+            console.log('🆘 Пробуем аварийную отправку...');
             const emergencyAdmins = [8141463258, 461759951, 280417617];
             for (const adminId of emergencyAdmins) {
-                admins.push({ telegram_id: adminId, first_name: `Админ ${adminId}` });
+                try {
+                    await bot.api.sendMessage(adminId, '🚨 SwapCoon запущен (аварийное уведомление)', { 
+                        parse_mode: 'HTML' 
+                    });
+                    console.log(`✅ Аварийное уведомление отправлено админу ${adminId}`);
+                } catch (error) {
+                    console.error(`❌ Аварийная отправка не удалась для ${adminId}:`, error.message);
+                }
             }
         }
-        
-        const startupMessage = `🚀 <b>SwapCoon запущен с админами!</b>\n\n` +
-            `✅ Веб-сервер: Активен\n` +
-            `✅ Telegram бот: РАБОТАЕТ СЕЙЧАС\n` +
-            `✅ Уведомления: ВКЛЮЧЕНЫ МГНОВЕННО\n` +
-            `👑 Админов в системе: ${admins.length}\n` +
-            `⏰ Время запуска: ${new Date().toLocaleString('ru-RU')}`;
-        
-        for (const admin of admins) {
-            try {
-                const result = await bot.api.sendMessage(admin.telegram_id, startupMessage, { 
-                    parse_mode: 'HTML',
-                    disable_web_page_preview: true 
-                });
-                console.log(`✅ УСПЕШНО! Уведомление о запуске отправлено админу ${admin.telegram_id}! Message ID: ${result.message_id}`);
-            } catch (error) {
-                console.error(`❌ Ошибка уведомления админу ${admin.telegram_id}:`, error.message);
-            }
-        }
-        console.log('📨 ЗАВЕРШЕНА отправка уведомлений о запуске');
         
     } catch (error) {
         console.error('❌ КРИТИЧНО! Ошибка запуска бота:', error.message);
