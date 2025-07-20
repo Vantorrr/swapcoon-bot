@@ -7,11 +7,6 @@ console.log('🚀 Запуск комбинированного сервера (
 console.log('📂 __dirname:', __dirname);
 console.log('🌍 NODE_ENV:', process.env.NODE_ENV || 'не установлен');
 console.log('🔌 PORT:', process.env.PORT || 3000);
-console.log('🔍 ДИАГНОСТИКА RAILWAY:');
-console.log('   - Это Railway?', process.env.PORT && process.env.PORT !== '3000' ? '✅ ДА' : '❌ НЕТ (локально)');
-console.log('   - BOT_TOKEN установлен?', process.env.BOT_TOKEN ? '✅ ДА' : '❌ НЕТ');
-console.log('   - WEBHOOK_URL установлен?', process.env.WEBHOOK_URL ? '✅ ДА' : '❌ НЕТ');
-console.log('   - WEBHOOK_SECRET установлен?', process.env.WEBHOOK_SECRET ? '✅ ДА' : '❌ НЕТ');
 
 // 🤖 ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ БОТА
 let bot = null;
@@ -30,30 +25,27 @@ try {
     db = botModule.db;
     console.log('✅ Telegram бот инициализирован');
     
-    // 🌐 ЗАПУСК БОТА - РАЗНАЯ ЛОГИКА ДЛЯ RAILWAY И ЛОКАЛКИ
+    // 🤖 ПРОСТОЙ ЗАПУСК БОТА - КАК БЫЛО РАНЬШЕ
     setTimeout(() => {
         try {
-            const isRailway = process.env.PORT && process.env.PORT !== '3000';
-            
-            if (isRailway) {
-                console.log('🚀 RAILWAY РЕЖИМ: Бот работает только через webhook (НЕ запускаем bot.start)');
-                console.log('✅ Бот готов принимать webhook запросы на порту 3001');
-                console.log('✅ Бот готов отправлять уведомления админам');
+            console.log('🔄 Запуск бота...');
+            bot.start().then(() => {
+                console.log('✅ Бот успешно запущен и готов к отправке уведомлений');
                 
-                // 📨 УВЕДОМЛЯЕМ АДМИНОВ О ЗАПУСКЕ НА RAILWAY
+                // 📨 УВЕДОМЛЯЕМ АДМИНОВ О ЗАПУСКЕ
                 setTimeout(async () => {
                     try {
-                        console.log('📤 Отправляем уведомление админам о запуске на Railway...');
+                        console.log('📤 Отправляем уведомление админам о запуске...');
                         const adminIds = [8141463258, 461759951, 280417617];
-                        const startupMessage = `🚀 <b>SwapCoon запущен на Railway!</b>\n\n` +
+                        const startupMessage = `🚀 <b>SwapCoon запущен!</b>\n\n` +
                             `✅ Веб-сервер: Активен\n` +
-                            `✅ Telegram бот: Готов к webhook\n` +
-                            `✅ Уведомления: Работают\n` +
+                            `✅ Telegram бот: Работает\n` +
+                            `✅ Уведомления: Включены\n` +
                             `⏰ Время запуска: ${new Date().toLocaleString('ru-RU')}`;
                         
                         for (const adminId of adminIds) {
                             try {
-                                const result = await bot.api.sendMessage(adminId, startupMessage, { 
+                                await bot.api.sendMessage(adminId, startupMessage, { 
                                     parse_mode: 'HTML',
                                     disable_web_page_preview: true 
                                 });
@@ -65,17 +57,12 @@ try {
                     } catch (error) {
                         console.error('❌ Ошибка отправки уведомлений о запуске:', error.message);
                     }
-                }, 3000); // Ждем 3 сек чтобы бот точно инициализировался
-            } else {
-                console.log('🔄 ЛОКАЛЬНЫЙ РЕЖИМ: Запуск бота через polling...');
-                bot.start().then(() => {
-                    console.log('✅ Локальный бот успешно запущен через polling');
-                }).catch(error => {
-                    console.error('❌ Ошибка запуска локального бота:', error.message);
-                });
-            }
+                }, 3000);
+            }).catch(error => {
+                console.error('❌ Ошибка запуска бота (продолжаем работу):', error.message);
+            });
         } catch (error) {
-            console.error('❌ Ошибка настройки режима бота:', error.message);
+            console.error('❌ Ошибка запуска бота:', error.message);
         }
     }, 2000);
     
@@ -229,6 +216,16 @@ app.post('/api/support-ticket', async (req, res) => {
         console.error('❌ Ошибка создания заявки поддержки:', error.message);
         res.status(500).json({ success: false, error: 'Ошибка создания заявки' });
     }
+});
+
+// 🚨 ПРОСТЕЙШИЙ ТЕСТ ЖИВОСТИ СЕРВЕРА
+app.get('/health', (req, res) => {
+    res.json({ 
+        status: 'OK', 
+        time: new Date().toISOString(),
+        version: '2024-07-19-FINAL',
+        bot: bot ? 'READY' : 'NOT_READY'
+    });
 });
 
 // 🧪 ТЕСТОВЫЙ ENDPOINT ДЛЯ ПРОВЕРКИ УВЕДОМЛЕНИЙ
