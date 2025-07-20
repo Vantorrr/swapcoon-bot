@@ -65,6 +65,54 @@ async function initializeBotAndAdmins() {
             }
         }
         
+        // 👨‍💼 ПРИНУДИТЕЛЬНАЯ ИНИЦИАЛИЗАЦИЯ ОПЕРАТОРОВ
+        console.log('👨‍💼 Инициализируем операторов...');
+        try {
+            // Добавляем известных операторов
+            const knownOperators = [
+                {
+                    telegramId: 7692725312,
+                    username: 'SwapCoonSupport',
+                    firstName: 'Оператор',
+                    lastName: 'SwapCoon'
+                }
+            ];
+            
+            for (const operator of knownOperators) {
+                try {
+                    // Проверяем не существует ли уже
+                    const existing = await db.getStaffById(operator.telegramId);
+                    if (existing) {
+                        console.log(`   ✅ Оператор @${operator.username} (${operator.telegramId}) уже существует`);
+                        continue;
+                    }
+                    
+                    await db.addStaff({
+                        telegramId: operator.telegramId,
+                        username: operator.username,
+                        firstName: operator.firstName,
+                        lastName: operator.lastName,
+                        role: 'operator',
+                        addedBy: 8141463258
+                    });
+                    console.log(`✅ Добавлен оператор @${operator.username} (${operator.telegramId})`);
+                } catch (addError) {
+                    console.log(`⚠️ Не удалось добавить оператора @${operator.username}:`, addError.message);
+                }
+            }
+            
+            // Проверяем итоговое количество операторов
+            const finalStaffList = await db.getStaffList();
+            const operators = finalStaffList.filter(s => s.role === 'operator');
+            console.log(`👨‍💼 Найдено операторов: ${operators.length}`);
+            operators.forEach(op => {
+                console.log(`   - ${op.first_name} @${op.username || 'null'} (ID: ${op.telegram_id})`);
+            });
+            
+        } catch (error) {
+            console.error('❌ Ошибка инициализации операторов:', error.message);
+        }
+        
         // 🔥 ЗАПУСКАЕМ БОТ СРАЗУ - НЕ ЖДЕМ!
         console.log('🔄 Запуск бота СЕЙЧАС ЖЕ...');
         await bot.start();
