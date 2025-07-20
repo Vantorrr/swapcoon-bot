@@ -19,6 +19,39 @@ bot.catch((err) => {
 // Инициализация базы данных
 const db = new Database();
 
+// 🛡️ ХАРДКОД АДМИНОВ - НИКОГДА НЕ ПОТЕРЯЮТСЯ!
+const HARDCODED_ADMINS = [8141463258, 461759951, 280417617];
+const HARDCODED_OPERATORS = [7692725312]; // @SwapCoonSupport
+
+// 🔥 ГАРАНТИРОВАННАЯ ПРОВЕРКА РОЛЕЙ (БЕЗ БАЗЫ ДАННЫХ)
+async function isAdmin(userId) {
+    const isHardcodedAdmin = HARDCODED_ADMINS.includes(userId);
+    console.log(`🛡️ Проверка админа ${userId}: ${isHardcodedAdmin ? 'ДА (хардкод)' : 'НЕТ'}`);
+    
+    // Дополнительная проверка через БД (если доступна)
+    try {
+        const dbRole = await db.getUserRole(userId);
+        console.log(`📋 Роль в БД: ${dbRole || 'не найдена'}`);
+        return isHardcodedAdmin || dbRole === 'admin';
+    } catch (error) {
+        console.log('⚠️ БД недоступна, используем хардкод');
+        return isHardcodedAdmin;
+    }
+}
+
+async function isOperator(userId) {
+    const isHardcodedOperator = HARDCODED_OPERATORS.includes(userId);
+    console.log(`👨‍💼 Проверка оператора ${userId}: ${isHardcodedOperator ? 'ДА (хардкод)' : 'НЕТ'}`);
+    
+    try {
+        const dbRole = await db.getUserRole(userId);
+        return isHardcodedOperator || dbRole === 'operator' || dbRole === 'admin';
+    } catch (error) {
+        console.log('⚠️ БД недоступна для проверки оператора');
+        return isHardcodedOperator;
+    }
+}
+
 // Хранилище контекстов чата для операторов
 const chatContexts = new Map();
 
@@ -567,8 +600,7 @@ bot.on('callback_query:data', async (ctx) => {
     
     // Полная статистика
     if (data === 'admin_full_stats') {
-        const userRole = await db.getUserRole(userId);
-        if (userRole !== 'admin') return ctx.answerCallbackQuery('❌ Нет прав');
+        if (!(await isAdmin(userId))) return ctx.answerCallbackQuery('❌ Нет прав');
         
         await ctx.answerCallbackQuery();
         const stats = await db.getAdminStats();
@@ -3706,10 +3738,8 @@ bot.command('ref', async (ctx) => {
 bot.command('admin', async (ctx) => {
     const userId = ctx.from.id;
     
-    // Проверяем роль пользователя в базе данных
-    const userRole = await db.getUserRole(userId);
-    
-    if (!userRole || userRole !== 'admin') {
+    // 🛡️ ГАРАНТИРОВАННАЯ ПРОВЕРКА АДМИНА
+    if (!(await isAdmin(userId))) {
         return ctx.reply('❌ У вас нет прав администратора');
     }
     
@@ -3763,9 +3793,8 @@ bot.command('admin', async (ctx) => {
 bot.command('operator', async (ctx) => {
     const userId = ctx.from.id;
     
-    const userRole = await db.getUserRole(userId);
-    
-    if (!userRole || !['admin', 'operator'].includes(userRole)) {
+    // 🛡️ ГАРАНТИРОВАННАЯ ПРОВЕРКА ОПЕРАТОРА
+    if (!(await isOperator(userId))) {
         return ctx.reply('❌ У вас нет прав оператора');
     }
     
@@ -3806,9 +3835,8 @@ bot.command('ping', async (ctx) => {
 // Команда для тестирования системы (только для админов)
 bot.command('test_system', async (ctx) => {
     const userId = ctx.from.id;
-    const userRole = await db.getUserRole(userId);
-    
-    if (userRole !== 'admin') {
+    // 🛡️ ГАРАНТИРОВАННАЯ ПРОВЕРКА АДМИНА
+    if (!(await isAdmin(userId))) {
         return ctx.reply('❌ Только админы могут тестировать систему');
     }
     
@@ -3863,8 +3891,8 @@ bot.command('test_system', async (ctx) => {
 bot.command('add_operator', async (ctx) => {
     const userId = ctx.from.id;
     
-    const userRole = await db.getUserRole(userId);
-    if (userRole !== 'admin') {
+    // 🛡️ ГАРАНТИРОВАННАЯ ПРОВЕРКА АДМИНА
+    if (!(await isAdmin(userId))) {
         return ctx.reply('❌ Только админы могут добавлять операторов');
     }
     
