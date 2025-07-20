@@ -7,6 +7,9 @@ console.log('🚀 Запуск комбинированного сервера (
 console.log('📂 __dirname:', __dirname);
 console.log('🌍 NODE_ENV:', process.env.NODE_ENV || 'не установлен');
 console.log('🔌 PORT:', process.env.PORT || 3000);
+console.log('🔑 BOT_TOKEN установлен?', process.env.BOT_TOKEN ? 'ДА' : 'НЕТ');
+console.log('🔑 BOT_TOKEN длина:', process.env.BOT_TOKEN ? process.env.BOT_TOKEN.length : 0);
+console.log('🔑 BOT_TOKEN начинается с:', process.env.BOT_TOKEN ? process.env.BOT_TOKEN.substring(0, 10) + '...' : 'НЕТ');
 
 // 🤖 ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ БОТА
 let bot = null;
