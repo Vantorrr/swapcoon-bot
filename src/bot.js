@@ -4715,84 +4715,11 @@ async function sendStartupNotification() {
     }
 }
 
-// Функция красивого уведомления об остановке
-async function sendShutdownNotification() {
-    try {
-        const staff = await db.getStaffList();
-        const admins = staff.filter(s => s.role === 'admin');
-        
-        const shutdownTime = new Date().toLocaleString('ru-RU', {
-            timeZone: 'Europe/Moscow',
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric', 
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit'
-        });
-        
-        // Получаем статистику перед остановкой
-        const stats = await db.getAdminStats();
-        
-        const shutdownMessage =
-            `🛑 <b>SWAPCOON BOT ОСТАНОВЛЕН</b>\n\n` +
-            `⚠️ <b>Система выключается...</b>\n\n` +
-            `📅 <b>Время остановки:</b> ${shutdownTime}\n` +
-            `⏱️ <b>Статус:</b> Плановая остановка\n\n` +
-            `📊 <b>Статистика сессии:</b>\n` +
-            `• Заявок сегодня: ${stats.ordersToday || 0}\n` +
-            `• Оборот: $${(stats.volumeToday || 0).toFixed(2)}\n` +
-            `• Активных заказов: ${(stats.pendingOrders || 0) + (stats.processingOrders || 0)}\n\n` +
-            `🔧 <b>Техническое обслуживание</b>\n` +
-            `⏰ Время перезапуска: ~1-2 минуты\n\n` +
-            `💤 <b>Енот ушел спать, но скоро вернется!</b>\n\n` +
-            `#shutdown #system #maintenance`;
-            
-        for (const admin of admins) {
-            try {
-                await bot.api.sendMessage(admin.telegram_id, shutdownMessage, {
-                    parse_mode: 'HTML'
-                });
-            } catch (error) {
-                console.log(`Не удалось отправить уведомление об остановке админу ${admin.telegram_id}`);
-            }
-        }
-        
-        console.log(`🛑 Уведомления об остановке отправлены ${admins.length} админам`);
-        
-    } catch (error) {
-        console.error('Ошибка отправки уведомлений об остановке:', error);
-    }
-}
+// ❌ УВЕДОМЛЕНИЯ ОБ ОСТАНОВКЕ ОТКЛЮЧЕНЫ
+// Причина: Railway перезапускает приложение автоматически, 
+// это вызывало ложные уведомления об остановке вместо запуска
 
-// Флаг для предотвращения множественных уведомлений об остановке
-let isShuttingDown = false;
-
-// Обработка сигналов завершения
-process.on('SIGINT', async () => {
-    if (isShuttingDown) return;
-    isShuttingDown = true;
-    
-    console.log('\n🛑 Получен сигнал SIGINT, останавливаем бота...');
-    await sendShutdownNotification();
-    setTimeout(() => {
-        console.log('✅ SwapCoon Bot остановлен корректно');
-        process.exit(0);
-    }, 3000);
-});
-
-process.on('SIGTERM', async () => {
-    if (isShuttingDown) return;
-    isShuttingDown = true;
-    
-    console.log('\n🛑 Получен сигнал SIGTERM, останавливаем бота...');
-    await sendShutdownNotification();
-    setTimeout(() => {
-        console.log('✅ SwapCoon Bot остановлен корректно');
-        process.exit(0);
-    }, 3000);
-});
+console.log('🔇 Уведомления об остановке отключены (Railway автоперезапуск)');
 
 // Функция настройки Menu Button
 async function setupMenuButton() {
