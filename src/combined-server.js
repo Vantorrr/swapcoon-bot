@@ -29,40 +29,66 @@ async function initializeBotAndAdmins() {
         db = botModule.db;
         console.log('✅ Telegram бот инициализирован');
         
-        // 👑 ПРИНУДИТЕЛЬНАЯ ИНИЦИАЛИЗАЦИЯ АДМИНОВ ИЗ ПЕРЕМЕННЫХ СРЕДЫ
-        console.log('👑 Инициализируем админов из переменных среды...');
-        try {
-            await db.initializeMainAdmin();
-            console.log('✅ Админы инициализированы из переменных среды');
-            
-            // Проверяем сколько админов добавилось
-            const staffList = await db.getStaffList();
-            const admins = staffList.filter(s => s.role === 'admin');
-            console.log(`👑 Найдено админов: ${admins.length}`);
-            admins.forEach(admin => {
-                console.log(`   - ${admin.first_name} (ID: ${admin.telegram_id})`);
-            });
-        } catch (error) {
-            console.error('❌ Ошибка инициализации админов:', error.message);
-            console.log('🔧 Добавляю админов напрямую...');
-            
-            // АВАРИЙНОЕ ДОБАВЛЕНИЕ АДМИНОВ НАПРЯМУЮ
-            const emergencyAdmins = [8141463258, 461759951, 280417617];
-            for (const adminId of emergencyAdmins) {
+        // 👑 ГАРАНТИРОВАННОЕ ДОБАВЛЕНИЕ АДМИНОВ (ВСЕГДА РАБОТАЕТ)
+        console.log('👑 Гарантированная инициализация админов...');
+        
+        // СПИСОК ВСЕХ АДМИНОВ - ДОБАВЛЯЕМ ПРИНУДИТЕЛЬНО
+        const allAdmins = [
+            { id: 8141463258, name: 'Главный Админ', username: 'main_admin' },
+            { id: 461759951, name: 'Админ Павел', username: 'pavel_admin' },
+            { id: 280417617, name: 'Админ 3', username: null }
+        ];
+        
+        for (const adminData of allAdmins) {
+            try {
+                // Проверяем есть ли уже
+                const existing = await db.getStaffById(adminData.id);
+                if (existing) {
+                    console.log(`   ✅ Админ ${adminData.name} (${adminData.id}) уже есть в системе`);
+                    continue;
+                }
+                
+                // Добавляем админа
+                await db.addStaff({
+                    telegramId: adminData.id,
+                    username: adminData.username,
+                    firstName: adminData.name,
+                    lastName: null,
+                    role: 'admin',
+                    addedBy: 8141463258
+                });
+                console.log(`✅ ДОБАВЛЕН админ ${adminData.name} (${adminData.id})`);
+                
+            } catch (addError) {
+                console.log(`⚠️ Ошибка добавления админа ${adminData.name}:`, addError.message);
+                
+                // КРИТИЧНО! Если не получается добавить - пробуем без проверки existing
                 try {
                     await db.addStaff({
-                        telegramId: adminId,
-                        username: null,
-                        firstName: `Админ ${adminId}`,
+                        telegramId: adminData.id,
+                        username: adminData.username,
+                        firstName: adminData.name,
                         lastName: null,
                         role: 'admin',
                         addedBy: 8141463258
                     });
-                    console.log(`✅ Аварийно добавлен админ ${adminId}`);
-                } catch (addError) {
-                    console.log(`⚠️ Не удалось добавить админа ${adminId}:`, addError.message);
+                    console.log(`✅ ПРИНУДИТЕЛЬНО добавлен админ ${adminData.name} (${adminData.id})`);
+                } catch (forceError) {
+                    console.log(`❌ КРИТИЧНО! Не удалось добавить админа ${adminData.name}:`, forceError.message);
                 }
             }
+        }
+        
+        // Показываем итоговый список админов
+        try {
+            const finalStaffList = await db.getStaffList();
+            const finalAdmins = finalStaffList.filter(s => s.role === 'admin');
+            console.log(`👑 ИТОГО АДМИНОВ В СИСТЕМЕ: ${finalAdmins.length}`);
+            finalAdmins.forEach(admin => {
+                console.log(`   - ${admin.first_name} (@${admin.username || 'null'}) - ID: ${admin.telegram_id}`);
+            });
+        } catch (error) {
+            console.log('⚠️ Не удалось получить итоговый список админов:', error.message);
         }
         
         // 👨‍💼 ПРИНУДИТЕЛЬНАЯ ИНИЦИАЛИЗАЦИЯ ОПЕРАТОРОВ
