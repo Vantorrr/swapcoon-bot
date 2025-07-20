@@ -32,11 +32,13 @@ try {
     console.log('🔄 Запуск бота СЕЙЧАС ЖЕ...');
     bot.start().then(() => {
         console.log('✅ КРИТИЧНО! Бот успешно запущен и готов к отправке уведомлений');
+        console.log('🎯 БОТ ЗАПУЩЕН! Переходим к отправке уведомления о запуске...');
         
         // 📨 УВЕДОМЛЯЕМ АДМИНОВ О ЗАПУСКЕ СРАЗУ
         setTimeout(async () => {
             try {
-                console.log('📤 Отправляем уведомление админам о запуске...');
+                console.log('📤 НАЧАЛАСЬ отправка уведомлений админам о запуске...');
+                console.log('🔍 Проверяем bot.api перед отправкой:', !!bot.api);
                 const adminIds = [8141463258, 461759951, 280417617];
                 const startupMessage = `🚀 <b>SwapCoon запущен НЕМЕДЛЕННО!</b>\n\n` +
                     `✅ Веб-сервер: Активен\n` +
@@ -46,21 +48,24 @@ try {
                 
                 for (const adminId of adminIds) {
                     try {
-                        await bot.api.sendMessage(adminId, startupMessage, { 
+                        const result = await bot.api.sendMessage(adminId, startupMessage, { 
                             parse_mode: 'HTML',
                             disable_web_page_preview: true 
                         });
-                        console.log(`✅ Уведомление о запуске отправлено админу ${adminId}`);
+                        console.log(`✅ УСПЕШНО! Уведомление о запуске отправлено админу ${adminId}! Message ID: ${result.message_id}`);
                     } catch (error) {
                         console.error(`❌ Ошибка уведомления админу ${adminId}:`, error.message);
                     }
                 }
+                console.log('📨 ЗАВЕРШЕНА отправка уведомлений о запуске');
             } catch (error) {
                 console.error('❌ Ошибка отправки уведомлений о запуске:', error.message);
             }
         }, 1000); // Уменьшил до 1 секунды
     }).catch(error => {
         console.error('❌ КРИТИЧНО! Ошибка запуска бота:', error.message);
+        console.error('🔥 Детали ошибки запуска бота:', error);
+        console.log('🌐 Веб-сервер продолжает работу БЕЗ уведомлений о запуске');
     });
     
 } catch (error) {
@@ -196,7 +201,13 @@ app.post('/api/support-ticket', async (req, res) => {
                     
                     const result = await bot.api.sendMessage(adminId, notificationMessage, { 
                         parse_mode: 'HTML',
-                        disable_web_page_preview: true 
+                        disable_web_page_preview: true,
+                        reply_markup: {
+                            inline_keyboard: [[
+                                { text: '💬 Написать клиенту', url: `tg://user?id=${userId}` },
+                                { text: '✅ Закрыть тикет', callback_data: `close_ticket_${ticketId}` }
+                            ]]
+                        }
                     });
                     console.log(`✅ УСПЕШНО ОТПРАВЛЕНО админу ${adminId}! Message ID: ${result.message_id}`);
                     console.log(`🎯 Telegram ответил:`, result);
