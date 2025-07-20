@@ -231,6 +231,36 @@ app.post('/api/support-ticket', async (req, res) => {
     }
 });
 
+// 🧪 ТЕСТОВЫЙ ENDPOINT ДЛЯ ПРОВЕРКИ УВЕДОМЛЕНИЙ
+app.get('/test-notification', async (req, res) => {
+    try {
+        console.log('🧪 ТЕСТ УВЕДОМЛЕНИЙ ЗАПУЩЕН');
+        console.log('🔍 BOT_TOKEN на сервере:', process.env.BOT_TOKEN ? 'ЕСТЬ' : 'НЕТ');
+        console.log('🔍 Bot объект:', bot ? 'ЕСТЬ' : 'НЕТ');
+        console.log('🔍 Bot.api:', bot?.api ? 'ЕСТЬ' : 'НЕТ');
+        
+        if (!bot || !bot.api) {
+            return res.json({ success: false, error: 'Бот не инициализирован' });
+        }
+        
+        const testMessage = `🧪 <b>ТЕСТ УВЕДОМЛЕНИЙ</b>\n\n` +
+            `⏰ Время: ${new Date().toLocaleString('ru-RU')}\n` +
+            `🌐 Источник: Railway Test\n` +
+            `✅ Бот работает!`;
+            
+        const result = await bot.api.sendMessage(8141463258, testMessage, { 
+            parse_mode: 'HTML' 
+        });
+        
+        console.log('✅ ТЕСТ УСПЕШЕН! Message ID:', result.message_id);
+        res.json({ success: true, messageId: result.message_id });
+        
+    } catch (error) {
+        console.error('❌ ТЕСТ ПРОВАЛЕН:', error.message);
+        res.json({ success: false, error: error.message });
+    }
+});
+
 // API для профиля пользователя
 app.get('/api/profile/:userId', async (req, res) => {
     try {

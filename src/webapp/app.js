@@ -2790,11 +2790,15 @@ function contactOperator() {
 
 // Обмен наличных
 function requestCashExchange() {
+    console.log('💰 НАЖАЛИ: Обмен наличных');
+    console.log('👤 currentUserId:', currentUserId);
     createSupportTicket('Обмен наличных', 'Заявка на обмен физических денег в офисах. Клиент интересуется обменом наличных валют.');
 }
 
 // Обмен без AML
 function requestNoAMLExchange() {
+    console.log('🚫 НАЖАЛИ: Обмен без AML');
+    console.log('👤 currentUserId:', currentUserId);
     createSupportTicket('Обмен без AML', 'Заявка на быстрый обмен без AML проверки. Клиент хочет выполнить обмен без детальной проверки адресов.');
 }
 
@@ -2805,14 +2809,20 @@ function openReviews() {
     console.log('📝 Открываем отзывы в Telegram:', reviewsUrl);
     
     try {
-        // 🚀 ПРАВИЛЬНЫЙ МЕТОД TELEGRAM WEBAPP API
-        if (tg && tg.openLink) {
-            console.log('📱 Используем tg.openLink() - правильный метод');
-            tg.openLink(reviewsUrl);
-        } else {
-            console.log('🔗 Fallback через window.location');
-            window.location.href = reviewsUrl;
+        // 🚀 ПРИНУДИТЕЛЬНОЕ ОТКРЫТИЕ В TELEGRAM БЕЗ БРАУЗЕРА
+        console.log('📱 Тестируем доступные методы Telegram WebApp:');
+        console.log('- tg.openLink:', typeof tg?.openLink);
+        console.log('- tg.openTelegramLink:', typeof tg?.openTelegramLink);
+        console.log('- tg.switchInlineQuery:', typeof tg?.switchInlineQuery);
+        
+        // Используем haptic feedback для подтверждения
+        if (tg && tg.HapticFeedback) {
+            tg.HapticFeedback.impactOccurred('light');
         }
+        
+        // Прямой переход без использования tg.openLink (чтобы избежать браузера)
+        console.log('🔗 ПРЯМОЙ переход в Telegram приложение');
+        window.location.href = reviewsUrl;
         
         showNotification('Открываем группу отзывов...', 'success');
         console.log('✅ Переход к отзывам выполнен');
@@ -2830,6 +2840,8 @@ function openReviews() {
 
 // OTC торговля
 function requestOTCTrading() {
+    console.log('📈 НАЖАЛИ: OTC торговля');
+    console.log('👤 currentUserId:', currentUserId);
     createSupportTicket('OTC торговля', 'Заявка на OTC торговлю большими объемами. Клиент интересуется обменом крупных сумм с индивидуальными условиями.');
 }
 
