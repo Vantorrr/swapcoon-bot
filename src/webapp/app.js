@@ -174,7 +174,15 @@ function initEventListeners() {
     // Поиск валют удален
     
     // Адрес кошелька
-    document.getElementById('wallet-address').addEventListener('input', validateWalletAddress);
+    const walletAddressField = document.getElementById('wallet-address');
+    if (walletAddressField) {
+        walletAddressField.addEventListener('input', function() {
+            console.log('💡 Поле адреса изменено, запускаем валидацию...');
+            validateWalletAddress();
+        });
+    } else {
+        console.log('⚠️ Поле wallet-address не найдено при инициализации');
+    }
     
     // Обработчики настроек для немедленного применения
     const themeSelect = document.getElementById('theme-select');
