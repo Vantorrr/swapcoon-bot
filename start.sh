@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "🚀 Запуск SwapCoon Bot..."
+echo "🚀 Запуск ExMachinaX Bot..."
 
 # Проверяем наличие Node.js
 if ! command -v node &> /dev/null; then
@@ -40,7 +40,7 @@ echo "🤖 Запускаем Telegram бота..."
 npm run dev &
 BOT_PID=$!
 
-echo "✅ SwapCoon запущен!"
+echo "✅ ExMachinaX запущен!"
 echo "📱 Мини-приложение: http://localhost:3000"
 echo "🤖 Telegram бот активен"
 echo ""

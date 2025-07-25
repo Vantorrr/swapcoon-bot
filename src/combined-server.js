@@ -98,9 +98,9 @@ async function initializeBotAndAdmins() {
             const knownOperators = [
                 {
                     telegramId: 7692725312,
-                    username: 'SwapCoonSupport',
+                    username: 'ExMachinaXSupport',
                     firstName: 'Оператор',
-                    lastName: 'SwapCoon'
+                    lastName: 'ExMachinaX'
                 }
             ];
             
@@ -179,7 +179,7 @@ async function initializeBotAndAdmins() {
                 console.log(`🆘 Добавлено аварийных админов: ${admins.length}`);
             }
             
-            const startupMessage = `🚀 <b>SwapCoon запущен успешно!</b>\n\n` +
+            const startupMessage = `🚀 <b>ExMachinaX запущен успешно!</b>\n\n` +
                 `✅ Веб-сервер: Активен\n` +
                 `✅ Telegram бот: РАБОТАЕТ\n` +
                 `✅ Уведомления: ВКЛЮЧЕНЫ\n` +
@@ -226,7 +226,7 @@ async function initializeBotAndAdmins() {
             const emergencyAdmins = [8141463258, 461759951, 280417617];
             for (const adminId of emergencyAdmins) {
                 try {
-                    await bot.api.sendMessage(adminId, '🚨 SwapCoon запущен (аварийное уведомление)', { 
+                    await bot.api.sendMessage(adminId, '🚨 ExMachinaX запущен (аварийное уведомление)', { 
                         parse_mode: 'HTML' 
                     });
                     console.log(`✅ Аварийное уведомление отправлено админу ${adminId}`);

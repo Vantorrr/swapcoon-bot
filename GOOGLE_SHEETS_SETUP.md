@@ -1,4 +1,4 @@
-# 📋 Настройка Google Sheets интеграции для SwapCoon
+# 📋 Настройка Google Sheets интеграции для ExMachinaX
 
 ## 🎯 Что будет создано
 
@@ -20,7 +20,7 @@
 ### Шаг 2: Service Account
 1. Перейдите в "IAM & Admin" → "Service Accounts"
 2. Нажмите "Create Service Account"
-3. Введите имя (например: `swapcoon-sheets`)
+3. Введите имя (например: `exmachinax-sheets`)
 4. Выберите роль "Editor"
 5. Нажмите "Done"
 
@@ -33,7 +33,7 @@
 ### Шаг 4: Создание таблицы
 1. Перейдите на [sheets.google.com](https://sheets.google.com)
 2. Создайте новую таблицу
-3. Дайте ей название "SwapCoon Analytics"
+3. Дайте ей название "ExMachinaX Analytics"
 4. Скопируйте ID таблицы из URL (часть между `/d/` и `/edit`)
 
 ### Шаг 5: Предоставление доступа
@@ -66,7 +66,7 @@ node src/bot.js
     "project_id": "your-project-123456",
     "private_key_id": "abc123...",
     "private_key": "-----BEGIN PRIVATE KEY-----\nYOUR_KEY_HERE\n-----END PRIVATE KEY-----\n",
-    "client_email": "swapcoon-sheets@your-project-123456.iam.gserviceaccount.com",
+    "client_email": "exmachinax-sheets@your-project-123456.iam.gserviceaccount.com",
     "client_id": "123456789...",
     "auth_uri": "https://accounts.google.com/o/oauth2/auth",
     "token_uri": "https://oauth2.googleapis.com/token"
@@ -144,4 +144,4 @@ node src/bot.js
 - ✅ Экспорт в CSV/Excel из Google Sheets
 - ✅ Совместный доступ для команды
 
-Ваши данные SwapCoon теперь всегда под рукой! 🚀 
+Ваши данные ExMachinaX теперь всегда под рукой! 🚀 

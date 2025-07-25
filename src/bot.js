@@ -21,7 +21,7 @@ const db = new Database();
 
 // 🛡️ ХАРДКОД АДМИНОВ - НИКОГДА НЕ ПОТЕРЯЮТСЯ!
 const HARDCODED_ADMINS = [8141463258, 461759951, 280417617];
-const HARDCODED_OPERATORS = [7692725312]; // @SwapCoonSupport
+const HARDCODED_OPERATORS = [7692725312]; // @ExMachinaXSupport
 
 // 🔥 ГАРАНТИРОВАННАЯ ПРОВЕРКА РОЛЕЙ (БЕЗ БАЗЫ ДАННЫХ)
 async function isAdmin(userId) {
@@ -100,10 +100,10 @@ async function createMainKeyboard(userId) {
     // Добавляем WebApp кнопку только если URL поддерживает HTTPS
     const webappUrl = process.env.WEBAPP_URL;
     if (webappUrl && webappUrl.startsWith('https://')) {
-        keyboard.webApp('🚀 Открыть SwapCoon', `${webappUrl}?user=${userId}`).row();
+        keyboard.webApp('🚀 Открыть ExMachinaX', `${webappUrl}?user=${userId}`).row();
     } else {
         // Кнопка для приложения 
-        keyboard.text('🚀 Открыть SwapCoon', 'webapp_launch').row();
+        keyboard.text('🚀 Открыть ExMachinaX', 'webapp_launch').row();
     }
     
     // Проверяем роль пользователя и добавляем соответствующие кнопки
@@ -171,9 +171,9 @@ bot.command('start', async (ctx) => {
     const keyboard = await createMainKeyboard(userId);
 
     await ctx.replyWithPhoto('https://i.ibb.co/hP0PbvF/IMAGE-2025-07-09-12-57-19.jpg', {
-        caption: `🦝 SwapCoon приветствует тебя!\n\n` +
-            `🚀 Быстрый и безопасный сервис обмена валют\n\n` +
-            `🔥 Енот поможет тебе:\n` +
+        caption: `🚀 ExMachinaX приветствует тебя!\n\n` +
+            `⚡ Быстрый и безопасный сервис обмена валют\n\n` +
+            `🔥 Наша система поможет тебе:\n` +
             `💱 Обменять рубли\n` +
             `💱 Обменять криптовалюты\n` +
             `💵 Обмен наличных в офисах\n` +
@@ -262,7 +262,7 @@ bot.command('check_env', async (ctx) => {
         `👑 Админы: ${currentAdmins.length} (${currentAdmins.map(a => a.telegram_id).join(', ')})\n` +
         `👨‍💼 Операторы: ${currentOperators.length} (${currentOperators.map(o => o.telegram_id).join(', ')})\n\n` +
         `<b>Рекомендуемые переменные для Railway:</b>\n` +
-        `• WEBAPP_URL = https://swapcoon-bot-production.up.railway.app\n` +
+        `• WEBAPP_URL = https://exmachinax-bot-production.up.railway.app\n` +
         `• BOT_TOKEN = ваш_токен\n` +
         `• MAIN_ADMIN_ID = ${userId}\n` +
         `• ADMIN_IDS = 461759951,280417617\n` +
@@ -329,7 +329,7 @@ bot.command('setup_webapp', async (ctx) => {
         await bot.api.setChatMenuButton({
             menu_button: {
                 type: 'web_app',
-                text: '🚀 Открыть SwapCoon',
+                text: '🚀 Открыть ExMachinaX',
                 web_app: {
                     url: webappUrl
                 }
@@ -340,7 +340,7 @@ bot.command('setup_webapp', async (ctx) => {
             `✅ <b>WebApp успешно настроен!</b>\n\n` +
             `🌐 URL: ${webappUrl}\n` +
             `📱 Menu Button активирована\n\n` +
-            `Теперь у всех пользователей появится кнопка "🚀 Открыть SwapCoon" возле поля ввода сообщения!`,
+            `Теперь у всех пользователей появится кнопка "🚀 Открыть ExMachinaX" возле поля ввода сообщения!`,
             { parse_mode: 'HTML' }
         );
         
@@ -432,14 +432,14 @@ bot.command('help', async (ctx) => {
     let helpKeyboard = new InlineKeyboard();
     
     if (webappUrl && webappUrl.startsWith('https://')) {
-        helpKeyboard.webApp('🚀 Открыть SwapCoon', `${webappUrl}?user=${userId}`);
+        helpKeyboard.webApp('🚀 Открыть ExMachinaX', `${webappUrl}?user=${userId}`);
     } else {
-        helpKeyboard.text('🚀 Открыть SwapCoon', 'webapp_launch');
+        helpKeyboard.text('🚀 Открыть ExMachinaX', 'webapp_launch');
     }
 
-    let helpText = `🦝 <b>Справка по SwapCoon Bot</b>\n\n` +
+    let helpText = `⚡ <b>Справка по ExMachinaX Bot</b>\n\n` +
         `<b>🎮 Основные команды:</b>\n` +
-        `/start - Запуск енота и мини-приложения\n` +
+        `/start - Запуск системы и мини-приложения\n` +
         `/ref - Реферальная ссылка и заработок\n` +
         `/help - Эта справка\n\n`;
 
@@ -462,7 +462,7 @@ bot.command('help', async (ctx) => {
             `📋 Принимайте заказы и обрабатывайте клиентов\n\n`;
     }
 
-    helpText += `<b>🔥 Возможности нашего енота:</b>\n` +
+            helpText += `<b>🔥 Возможности нашей системы:</b>\n` +
         `💱 Обмен криптовалют (42 пары)\n` +
         `💵 Обмен наличных в офисах\n` +
         `🛡️ Быстрый обмен\n` +
@@ -493,7 +493,7 @@ bot.on('callback_query:data', async (ctx) => {
             if (webappUrl && webappUrl.startsWith('https://')) {
             // Отправляем сообщение с WebApp кнопкой
             await ctx.reply(
-                '🚀 <b>SwapCoon приветствует тебя!</b>\n\n' +
+                '🚀 <b>ExMachinaX приветствует тебя!</b>\n\n' +
                 '🌟 Удобное приложение для обмена валют\n' +
                 '💱 42 валютные пары доступны\n' +
                 '🛡️ Быстрый обмен\n' +
@@ -503,7 +503,7 @@ bot.on('callback_query:data', async (ctx) => {
                 { 
                     parse_mode: 'HTML',
                     reply_markup: new InlineKeyboard()
-                        .webApp('🚀 Открыть SwapCoon', `${webappUrl}?user=${userId}`)
+                        .webApp('🚀 Открыть ExMachinaX', `${webappUrl}?user=${userId}`)
                         .row()
                         .text('🏠 Назад к боту', 'back_to_main')
                 }
@@ -532,9 +532,9 @@ bot.on('callback_query:data', async (ctx) => {
         await ctx.reply(
             '📞 <b>Связь с оператором</b>\n\n' +
             'Наши операторы готовы помочь вам 24/7!\n\n' +
-            '✈️ Telegram: @SwapCoonSupport\n' +
-            '📧 Email: support@swapcoon.com\n' +
-            '📱 Канал: https://t.me/SwapCoon\n' +
+                    '✈️ Telegram: @ExMachinaXSupport\n' +
+        '📧 Email: support@exmachinax.com\n' +
+        '📱 Канал: https://t.me/ExMachinaX\n' +
             '⏰ Время ответа: до 15 минут',
             { 
                 parse_mode: 'HTML',
@@ -547,15 +547,15 @@ bot.on('callback_query:data', async (ctx) => {
     if (data === 'info') {
         await ctx.answerCallbackQuery();
         await ctx.reply(
-            'ℹ️ <b>О сервисе SwapCoon</b>\n\n' +
+            'ℹ️ <b>О сервисе ExMachinaX</b>\n\n' +
             '🌟 Быстрый и безопасный обмен валют\n' +
             '🛡️ Проверка AML для безопасности\n' +
             '💰 Выгодные курсы обмена\n' +
             '🎁 Реферальная программа\n' +
             '📱 Удобное приложение\n\n' +
             '📞 <b>Контакты:</b>\n' +
-            '✈️ Поддержка: @SwapCoonSupport\n' +
-            '📱 Канал: https://t.me/SwapCoon\n\n' +
+            '✈️ Поддержка: @ExMachinaXSupport\n' +
+            '📱 Канал: https://t.me/ExMachinaX\n\n' +
             '💡 Все операции проходят через нашу безопасную систему!',
             { 
                 parse_mode: 'HTML',
@@ -739,7 +739,7 @@ bot.on('callback_query:data', async (ctx) => {
         const staffInfo = {
             '461759951': { name: 'NIC Admin', username: 'simeply', role: 'admin' },
             '280417617': { name: 'ART Admin', username: 'MISTERNECH', role: 'admin' },
-            '7692725312': { name: 'Оператор', username: 'SwapCoonSupport', role: 'operator' },
+            '7692725312': { name: 'Оператор', username: 'ExMachinaXSupport', role: 'operator' },
             '8141463258': { name: 'DEV', username: 'pavel_xdev', role: 'admin' }
         };
         
@@ -1343,7 +1343,7 @@ bot.on('callback_query:data', async (ctx) => {
         
         try {
             const result = await db.updateOrderStatusWithMessage(orderId, 'completed', userId,
-                '🎉 Заказ успешно завершен! Спасибо за использование SwapCoon!');
+                '🎉 Заказ успешно завершен! Спасибо за использование ExMachinaX!');
             
             const order = await db.getOrderWithClient(orderId);
             
@@ -1352,9 +1352,9 @@ bot.on('callback_query:data', async (ctx) => {
                 `🆔 Заказ #${orderId}\n` +
                 `✅ Обмен успешно завершен\n` +
                 `💰 Получено: ${order.to_amount} ${order.to_currency}\n\n` +
-                `🙏 Спасибо за использование SwapCoon!\n` +
+                `🙏 Спасибо за использование ExMachinaX!\n` +
                 `⭐ Оцените наш сервис: /feedback\n` +
-                `🦝 Приглашайте друзей: /ref`,
+                `💰 Приглашайте друзей: /ref`,
                 { parse_mode: 'HTML' }
             );
             
@@ -1468,9 +1468,9 @@ bot.on('callback_query:data', async (ctx) => {
         const keyboard = await createMainKeyboard(userId);
 
         await ctx.replyWithPhoto('https://i.ibb.co/hP0PbvF/IMAGE-2025-07-09-12-57-19.jpg', {
-            caption: `🦝 <b>SwapCoon снова приветствует тебя!</b>\n\n` +
-                `🚀 Быстрый и безопасный сервис обмена валют\n\n` +
-                `<b>🔥 Енот поможет тебе:</b>\n` +
+            caption: `🚀 <b>ExMachinaX снова приветствует тебя!</b>\n\n` +
+                `⚡ Быстрый и безопасный сервис обмена валют\n\n` +
+                `<b>🔥 Наша система поможет тебе:</b>\n` +
                 `💱 Обмен криптовалют (42 пары)\n` +
                 `💵 Обмен наличных в офисах\n` +
                 `🛡️ Быстрый обмен\n` +
@@ -1490,9 +1490,9 @@ bot.on('callback_query:data', async (ctx) => {
         const keyboard = await createMainKeyboard(userId);
 
         await ctx.replyWithPhoto('https://i.ibb.co/hP0PbvF/IMAGE-2025-07-09-12-57-19.jpg', {
-            caption: `🦝 <b>SwapCoon приветствует тебя!</b>\n\n` +
-                `🚀 Быстрый и безопасный сервис обмена валют\n\n` +
-                `<b>🔥 Енот поможет тебе:</b>\n` +
+                        caption: `🚀 <b>ExMachinaX приветствует тебя!</b>\n\n` +
+            `⚡ Быстрый и безопасный сервис обмена валют\n\n` +
+            `<b>🔥 Наша система поможет тебе:</b>\n` +
                 `💱 Обмен криптовалют (42 пары)\n` +
                 `💵 Обмен наличных в офисах\n` +
                 `🛡️ Быстрый обмен\n` +
@@ -1540,7 +1540,7 @@ bot.on('callback_query:data', async (ctx) => {
             .text('🏠 Назад к боту', 'back_to_main');
         
         await ctx.reply(
-            `🛡️ <b>АДМИН ПАНЕЛЬ SwapCoon</b>\n\n` +
+            `🛡️ <b>АДМИН ПАНЕЛЬ ExMachinaX</b>\n\n` +
             `📈 <b>Статистика за сегодня:</b>\n` +
             `👥 Новых пользователей: ${stats.newUsersToday}\n` +
             `📝 Заявок: ${stats.ordersToday}\n` +
@@ -1743,7 +1743,7 @@ bot.on('callback_query:data', async (ctx) => {
             .text('🏠 Назад к боту', 'back_to_main');
         
         await ctx.reply(
-            `🛡️ <b>АДМИН ПАНЕЛЬ SwapCoon</b>\n\n` +
+            `🛡️ <b>АДМИН ПАНЕЛЬ ExMachinaX</b>\n\n` +
             `📈 <b>Статистика за сегодня:</b>\n` +
             `👥 Новых пользователей: ${stats.newUsersToday}\n` +
             `📝 Заявок: ${stats.ordersToday}\n` +
@@ -1838,7 +1838,7 @@ bot.on('callback_query:data', async (ctx) => {
             // Уведомляем удаленного сотрудника
             try {
                 await bot.api.sendMessage(staffId,
-                    `❌ <b>Вы исключены из персонала SwapCoon</b>\n\n` +
+                    `❌ <b>Вы исключены из персонала ExMachinaX</b>\n\n` +
                     `📅 ${new Date().toLocaleString('ru')}\n` +
                     `🛡️ Админ отозвал ваши права оператора\n\n` +
                     `💼 Спасибо за работу в нашей команде!`,
@@ -2310,7 +2310,7 @@ bot.on('callback_query:data', async (ctx) => {
             };
             
             const exportText = 
-                `📊 <b>ЭКСПОРТ ДАННЫХ SWAPCOON</b>\n\n` +
+                `📊 <b>ЭКСПОРТ ДАННЫХ EXMACHINAX</b>\n\n` +
                 `📅 <b>Дата экспорта:</b> ${new Date().toLocaleString('ru-RU')}\n` +
                 `👤 <b>Выполнил:</b> ${ctx.from.first_name}\n\n` +
                 `📈 <b>ОСНОВНАЯ СТАТИСТИКА:</b>\n` +
@@ -3708,13 +3708,13 @@ bot.on('message:web_app_data', async (ctx) => {
 // Команда для получения реферальной ссылки
 bot.command('ref', async (ctx) => {
     const userId = ctx.from.id;
-    const botUsername = process.env.BOT_USERNAME || 'swapcoon_bot';
+    const botUsername = process.env.BOT_USERNAME || 'exmachinax_bot';
     const referralLink = `https://t.me/${botUsername}?start=${userId}`;
     
     const stats = await db.getReferralStats(userId);
     
     await ctx.reply(
-        `🦝💰 <b>Реферальная программа SwapCoon</b>\n\n` +
+        `💰 <b>Реферальная программа ExMachinaX</b>\n\n` +
         `🔗 Ваша ссылка: <code>${referralLink}</code>\n\n` +
         `📊 <b>Ваша статистика:</b>\n` +
         `👤 Рефералов: ${stats.total_referrals}\n` +
@@ -3725,7 +3725,7 @@ bot.command('ref', async (ctx) => {
         `💸 За каждый их обмен получаете 0.5%\n` +
         `⚡ Деньги зачисляются автоматически\n` +
         `🎁 Без лимитов и ограничений\n\n` +
-        `🚀 Приглашайте друзей и зарабатывайте вместе с енотом!`,
+        `🚀 Приглашайте друзей и зарабатывайте с нашей системой!`,
         { 
             parse_mode: 'HTML',
             reply_markup: new InlineKeyboard()
@@ -3766,7 +3766,7 @@ bot.command('admin', async (ctx) => {
         .text('🏠 Назад к боту', 'back_to_main');
     
     await ctx.reply(
-        `🛡️ <b>АДМИН ПАНЕЛЬ SwapCoon</b>\n\n` +
+        `🛡️ <b>АДМИН ПАНЕЛЬ ExMachinaX</b>\n\n` +
         `📈 <b>Статистика за сегодня:</b>\n` +
         `👥 Новых пользователей: ${stats.newUsersToday}\n` +
         `📝 Заявок: ${stats.ordersToday}\n` +
@@ -3840,7 +3840,7 @@ bot.command('test_system', async (ctx) => {
         return ctx.reply('❌ Только админы могут тестировать систему');
     }
     
-    await ctx.reply('🧪 <b>Тестирование системы SwapCoon...</b>', { parse_mode: 'HTML' });
+    await ctx.reply('🧪 <b>Тестирование системы ExMachinaX...</b>', { parse_mode: 'HTML' });
     
     try {
         // Тест 1: Проверка базы данных
@@ -3935,10 +3935,10 @@ bot.command('add_operator', async (ctx) => {
         // Уведомляем нового оператора
         try {
             await bot.api.sendMessage(operatorId,
-                `🎉 <b>Вы назначены оператором SwapCoon!</b>\n\n` +
+                `🎉 <b>Вы назначены оператором ExMachinaX!</b>\n\n` +
                 `👨‍💼 Теперь вы можете обрабатывать заказы клиентов.\n` +
                 `📋 Используйте команду /operator для доступа к панели.\n\n` +
-                `🚀 Добро пожаловать в команду SwapCoon!`,
+                `🚀 Добро пожаловать в команду ExMachinaX!`,
                 { parse_mode: 'HTML' }
             );
         } catch (error) {
@@ -4150,10 +4150,10 @@ bot.on('message', async (ctx) => {
             // Уведомляем нового оператора
             try {
                 await bot.api.sendMessage(operatorId,
-                    `🎉 <b>Вы назначены оператором SwapCoon!</b>\n\n` +
+                    `🎉 <b>Вы назначены оператором ExMachinaX!</b>\n\n` +
                     `👨‍💼 Теперь вы можете обрабатывать заказы клиентов.\n` +
                     `📋 Используйте команду /operator для доступа к панели.\n\n` +
-                    `🚀 Добро пожаловать в команду SwapCoon!`,
+                    `🚀 Добро пожаловать в команду ExMachinaX!`,
                     { parse_mode: 'HTML' }
                 );
             } catch (error) {
@@ -4669,7 +4669,7 @@ bot.callbackQuery('back_to_main', async (ctx) => {
     const keyboard = await createMainKeyboard(userId);
     
     await ctx.editMessageText(
-        `🦝 <b>SwapCoon</b> - Главное меню\n\n` +
+        `⚡ <b>ExMachinaX</b> - Главное меню\n\n` +
         `Выберите действие:`,
         {
             parse_mode: 'HTML',
@@ -4706,7 +4706,7 @@ async function sendStartupNotification() {
         });
         
         const startupMessage = 
-            `🚀 <b>SWAPCOON BOT ЗАПУЩЕН!</b>\n\n` +
+            `🚀 <b>EXMACHINAX BOT ЗАПУЩЕН!</b>\n\n` +
             `🎉 <b>Система успешно инициализирована</b>\n\n` +
             `📅 <b>Время запуска:</b> ${startTime}\n` +
             `🌐 <b>Веб-сервер:</b> http://localhost:3000\n` +
@@ -4718,7 +4718,7 @@ async function sendStartupNotification() {
             `✅ Уведомления операторам\n` +
             `✅ Обработка платежей\n` +
             `✅ Реферальная система\n\n` +
-            `🎯 <b>SwapCoon готов к покорению крипто-мира!</b>\n\n` +
+            `🎯 <b>ExMachinaX готов к покорению крипто-мира!</b>\n\n` +
             `#startup #system #online`;
             
         // Создаем кнопку для открытия меню
@@ -4757,7 +4757,7 @@ async function setupMenuButton() {
             await bot.api.setChatMenuButton({
                 menu_button: {
                     type: 'web_app',
-                    text: '🚀 Открыть SwapCoon',
+                    text: '🚀 Открыть ExMachinaX',
                     web_app: {
                         url: webappUrl
                     }
@@ -5172,7 +5172,7 @@ bot.callbackQuery('cancel_restart', async (ctx) => {
 // Запуск бота
 if (require.main === module) {
     (async () => {
-        console.log('🚀 SwapCoon Bot запускается...');
+        console.log('🚀 ExMachinaX Bot запускается...');
         
         // Инициализируем Google Sheets
         initGoogleSheets();

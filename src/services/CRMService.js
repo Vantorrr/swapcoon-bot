@@ -90,7 +90,7 @@ class CRMService {
             metadata: {
                 bot_version: '1.0.0',
                 platform: 'telegram',
-                created_by: 'swapcoon_bot'
+                created_by: 'exmachinax_bot'
             }
         };
     }
@@ -171,7 +171,7 @@ class CRMService {
                 title: activityData.title,
                 description: activityData.description,
                 created_at: new Date().toISOString(),
-                created_by: 'swapcoon_bot'
+                created_by: 'exmachinax_bot'
             }, {
                 headers: {
                     'Authorization': `Bearer ${this.apiKey}`,

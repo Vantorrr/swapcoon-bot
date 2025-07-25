@@ -1,5 +1,5 @@
 {
-  "name": "swapcoon-bot",
+  "name": "exmachinax-bot",
   "version": "1.0.0",
   "description": "Telegram bot with mini app for currency exchange",
   "main": "src/web-server.js",
@@ -18,7 +18,7 @@
     "currency",
     "exchange"
   ],
-  "author": "SwapCoon Team",
+  "author": "ExMachinaX Team",
   "license": "MIT",
   "engines": {
     "node": ">=18.0.0"

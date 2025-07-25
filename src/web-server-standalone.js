@@ -211,7 +211,7 @@ app.get('/api/profile/:userId', async (req, res) => {
 app.get('/api/referral/:userId', async (req, res) => {
     try {
         const { userId } = req.params;
-        const referralLink = `https://t.me/${process.env.BOT_USERNAME || 'swapcoon_bot'}?start=${userId}`;
+        const referralLink = `https://t.me/${process.env.BOT_USERNAME || 'exmachinax_bot'}?start=${userId}`;
         
         res.json({ success: true, data: { referralLink } });
     } catch (error) {
@@ -560,7 +560,7 @@ app.listen(PORT, async () => {
                     await bot.api.setChatMenuButton({
                         menu_button: {
                             type: 'web_app',
-                            text: '🚀 Открыть SwapCoon',
+                            text: '🚀 Открыть ExMachinaX',
                             web_app: {
                                 url: webappUrl
                             }
@@ -582,7 +582,7 @@ app.listen(PORT, async () => {
             console.log('✅ Google Sheets готов');
         }
         
-        console.log('🎉 SwapCoon полностью готов к работе!');
+        console.log('🎉 ExMachinaX полностью готов к работе!');
     } catch (error) {
         console.error('❌ Ошибка запуска бота:', error);
     }

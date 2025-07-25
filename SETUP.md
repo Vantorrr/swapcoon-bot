@@ -1,4 +1,4 @@
-# 🚀 Инструкция по настройке SwapCoon Bot
+# 🚀 Инструкция по настройке ExMachinaX Bot
 
 ## 📋 Требования
 
@@ -16,7 +16,7 @@
 ```bash
 # Если вы клонируете репозиторий
 git clone <your-repo-url>
-cd swapcoon
+cd exmachinax
 
 # Установка зависимостей
 npm install
@@ -26,15 +26,15 @@ npm install
 
 1. Откройте [@BotFather](https://t.me/BotFather) в Telegram
 2. Отправьте команду `/newbot`
-3. Выберите имя для бота (например: "SwapCoon Exchange Bot")
-4. Выберите username (например: "swapcoon_exchange_bot")
+3. Выберите имя для бота (например: "ExMachinaX Exchange Bot")
+4. Выберите username (например: "exmachinax_exchange_bot")
 5. Скопируйте полученный токен
 
 ### 3. Настройка мини-приложения
 
 1. Отправьте `/setmenubutton` в @BotFather
 2. Выберите вашего бота
-3. Отправьте название кнопки: "🚀 Открыть SwapCoon"
+3. Отправьте название кнопки: "🚀 Открыть ExMachinaX"
 4. Отправьте URL: `https://your-domain.com` (или `http://localhost:3000` для тестирования)
 
 ### 4. Настройка переменных окружения
@@ -102,7 +102,7 @@ CRM_API_KEY=your_crm_api_key
 ## 🏗 Структура проекта
 
 ```
-swapcoon/
+exmachinax/
 ├── src/
 │   ├── bot.js              # Основной файл бота
 │   ├── web-server.js       # Веб-сервер
@@ -142,7 +142,7 @@ npm install -g pm2
 
 ```bash
 git clone <your-repo-url>
-cd swapcoon
+cd exmachinax
 npm install --production
 ```
 
@@ -158,10 +158,10 @@ PORT=3000
 
 ```bash
 # Запуск веб-сервера
-pm2 start src/web-server.js --name "swapcoon-web"
+pm2 start src/web-server.js --name "exmachinax-web"
 
 # Запуск бота
-pm2 start src/bot.js --name "swapcoon-bot"
+pm2 start src/bot.js --name "exmachinax-bot"
 
 # Сохранение конфигурации
 pm2 save
@@ -198,8 +198,8 @@ server {
 pm2 logs
 
 # Логи конкретного процесса
-pm2 logs swapcoon-bot
-pm2 logs swapcoon-web
+pm2 logs exmachinax-bot
+pm2 logs exmachinax-web
 
 # Остановка процессов
 pm2 stop all

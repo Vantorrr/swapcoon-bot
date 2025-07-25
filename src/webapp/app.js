@@ -2909,12 +2909,12 @@ async function createSupportTicket(subject = 'Помощь оператора', 
         
     } catch (error) {
         console.error('❌ Ошибка создания заявки в поддержку:', error);
-        showNotification('Ошибка создания заявки. Пишите @SwapCoonSupport', 'error');
+        showNotification('Ошибка создания заявки. Пишите @ExMachinaXSupport', 'error');
         
         // Откатываемся к старому способу
         if (window && window.open) {
             setTimeout(() => {
-                window.open('https://t.me/SwapCoonSupport', '_blank');
+                window.open('https://t.me/ExMachinaXSupport', '_blank');
             }, 1000);
         }
     }
@@ -2981,7 +2981,7 @@ setInterval(() => {
     loadExchangeRates();
 }, 30000);
 
-console.log('✅ SwapCoon App загружено успешно!');
+        console.log('✅ ExMachinaX App загружено успешно!');
 
 // 🤖 АВТООТПРАВКА РЕКВИЗИТОВ - НОВАЯ СИСТЕМА  
 window.showOrderRequisites = function(orderId, paymentMethod, orderData) {
@@ -3191,7 +3191,7 @@ function generateReferralLink() {
         }
         
         // Генерируем реферальную ссылку
-        const referralLink = `https://t.me/SwapCoonBot?start=ref_${currentUserId}`;
+        const referralLink = `https://t.me/ExMachinaXBot?start=ref_${currentUserId}`;
         console.log('🔗 Сгенерирована реферальная ссылка:', referralLink);
         
         // Заполняем поле
@@ -3364,7 +3364,7 @@ function exportData() {
         
         const link = document.createElement('a');
         link.href = URL.createObjectURL(dataBlob);
-        link.download = `swapcoon_data_${currentUserId}_${Date.now()}.json`;
+        link.download = `exmachinax_data_${currentUserId}_${Date.now()}.json`;
         link.click();
         
         showNotification('📤 Данные экспортированы!', 'success');

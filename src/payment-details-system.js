@@ -61,7 +61,7 @@ function setupBackButton(bot, createMainKeyboard) {
         const keyboard = await createMainKeyboard(userId);
         
         await ctx.editMessageText(
-            `🦝 <b>SwapCoon</b> - Главное меню\n\n` +
+            `⚡ <b>ExMachinaX</b> - Главное меню\n\n` +
             `Выберите действие:`,
             {
                 parse_mode: 'HTML',
@@ -211,7 +211,7 @@ async function sendAllDetailsToClient(ctx, clientId, paymentDetails, bot) {
         message += `• Проверяйте сеть перед отправкой\n`;
         message += `• Переводите точную сумму\n`;
         message += `• Уведомляйте оператора о платеже\n\n`;
-        message += `📞 Поддержка: @swapcoon_support`;
+        message += `📞 Поддержка: @exmachinax_support`;
         
         await bot.api.sendMessage(clientId, message, { 
             parse_mode: 'HTML'

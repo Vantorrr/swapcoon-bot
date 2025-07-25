@@ -1,8 +1,8 @@
-# 🦝 SwapCoon - Premium Web3 Exchange Bot
+# ⚡ ExMachinaX - Premium Web3 Exchange Bot
 
 > **Самый продвинутый Telegram бот для обмена криптовалют с мини-приложением нового поколения!**
 
-![SwapCoon](assets/images/logo.png)
+![ExMachinaX](assets/images/logo.png)
 
 ## 🔥 **НОВЫЕ КРУТЫЕ ВОЗМОЖНОСТИ**
 
@@ -157,7 +157,7 @@ GET  /api/history/:userId      # История операций
 ### **Установка:**
 ```bash
 # Клонируем репозиторий
-git clone https://github.com/your-repo/swapcoon
+git clone https://github.com/your-repo/exmachinax
 
 # Устанавливаем зависимости
 npm install
@@ -274,8 +274,8 @@ AML_API_KEY=optional
 
 ## 📞 **ПОДДЕРЖКА**
 
-- **Telegram**: @swapcoon_support
-- **Email**: support@swapcoon.com
+- **Telegram**: @exmachinax_support
+- **Email**: support@exmachinax.com
 - **Документация**: /docs
 - **GitHub Issues**: для багов
 - **Feature Requests**: в Issues
@@ -300,4 +300,4 @@ AML_API_KEY=optional
 
 ---
 
-*Создано с ❤️ командой SwapCoon* 
+*Создано с ❤️ командой ExMachinaX* 
