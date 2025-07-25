@@ -59,6 +59,18 @@ document.addEventListener('DOMContentLoaded', function() {
     initEventListeners();
     loadFavorites(); // Загружаем избранные валюты
     loadInitialData();
+    
+    // 🧪 ГЛОБАЛЬНАЯ ОТЛАДОЧНАЯ ФУНКЦИЯ ДЛЯ КОНСОЛИ
+    window.debugCreateButton = function() {
+        console.log('🧪 РУЧНАЯ ОТЛАДКА КНОПКИ ЗАЯВКИ');
+        testCreateButton();
+        setTimeout(() => {
+            console.log('🧪 ЗАПУСКАЕМ ВАЛИДАЦИЮ...');
+            validateWalletAddress();
+        }, 100);
+    };
+    
+    console.log('🧪 Доступна команда: debugCreateButton() - для отладки кнопки из консоли');
 });
 
 // Инициализация Telegram Web App
@@ -894,14 +906,27 @@ function proceedToOrder() {
 function setCreateButtonState(enabled) {
     const createButton = document.getElementById('create-order-button');
     if (createButton) {
+        console.log('🔧 ========== ИЗМЕНЕНИЕ СОСТОЯНИЯ КНОПКИ ==========');
+        console.log('🔧 Текущее состояние disabled:', createButton.disabled);
+        console.log('🔧 Текущие классы:', createButton.className);
+        console.log('🔧 Запрошенное состояние:', enabled);
+        
         if (enabled) {
             createButton.removeAttribute('disabled');
             createButton.classList.remove('disabled');
+            console.log('🔧 ✅ АКТИВИРОВАЛИ кнопку');
         } else {
             createButton.setAttribute('disabled', 'disabled');
             createButton.classList.add('disabled');
+            console.log('🔧 ❌ ДЕАКТИВИРОВАЛИ кнопку');
         }
+        
+        console.log('🔧 Новое состояние disabled:', createButton.disabled);
+        console.log('🔧 Новые классы:', createButton.className);
         console.log(`🔄 КНОПКА ЗАЯВКИ: ${enabled ? '✅ АКТИВНА' : '❌ НЕАКТИВНА'}`);
+        console.log('🔧 ========== КОНЕЦ ИЗМЕНЕНИЯ СОСТОЯНИЯ ==========');
+    } else {
+        console.log('❌ setCreateButtonState: кнопка не найдена!');
     }
 }
 
@@ -1218,14 +1243,21 @@ function validateWalletAddress() {
     const addressInput = document.getElementById('wallet-address');
     const address = addressInput?.value?.trim() || '';
     
+    console.log('🔍 ========== НАЧАЛО ВАЛИДАЦИИ ==========');
+    console.log('🔍 createButton найдена:', !!createButton);
+    console.log('🔍 addressInput найден:', !!addressInput);
+    console.log('🔍 address:', address);
+    console.log('🔍 currentCalculation:', !!currentCalculation);
     console.log(`🔍 validateWalletAddress: адрес длиной ${address.length} символов`);
     
     if (!currentCalculation) {
         console.log('❌ validateWalletAddress: currentCalculation отсутствует, но проверяем базовую валидацию');
         // Базовая валидация без currentCalculation
         const shouldEnable = address.length > 20;
+        console.log('🔍 shouldEnable:', shouldEnable, '(адрес больше 20 символов?)');
         setCreateButtonState(shouldEnable);
         console.log(`🔄 БАЗОВАЯ ВАЛИДАЦИЯ: адрес ${address.length} символов`);
+        console.log('🔍 ========== КОНЕЦ БАЗОВОЙ ВАЛИДАЦИИ ==========');
         return;
     }
     
@@ -2794,6 +2826,12 @@ function showScreen(screenId) {
                 setCreateButtonState(address.length > 20);
                 validateWalletAddress();
             }, 100);
+            
+            // 🧪 ТЕСТОВАЯ АКТИВАЦИЯ ЧЕРЕЗ 2 СЕКУНДЫ
+            setTimeout(() => {
+                console.log('🧪 ЗАПУСКАЕМ ТЕСТОВУЮ АКТИВАЦИЮ КНОПКИ...');
+                testCreateButton();
+            }, 2000);
         }
     }
 }
@@ -3491,3 +3529,47 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('🚀 Настройки и реферальная ссылка инициализированы');
     }, 1000);
 });
+
+// 🧪 ОТЛАДОЧНАЯ ФУНКЦИЯ - ПРИНУДИТЕЛЬНАЯ АКТИВАЦИЯ КНОПКИ
+function testCreateButton() {
+    const createButton = document.getElementById('create-order-button');
+    if (createButton) {
+        createButton.removeAttribute('disabled');
+        createButton.classList.remove('disabled');
+        createButton.style.background = '#28a745 !important';
+        createButton.style.cursor = 'pointer !important';
+        createButton.style.pointerEvents = 'auto !important';
+        createButton.style.opacity = '1 !important';
+        console.log('🧪 ТЕСТОВАЯ КНОПКА АКТИВИРОВАНА ПРИНУДИТЕЛЬНО!');
+    } else {
+        console.log('❌ Кнопка create-order-button не найдена!');
+    }
+}
+
+// Управление состоянием кнопки создания заявки
+function setCreateButtonState(enabled) {
+    const createButton = document.getElementById('create-order-button');
+    if (createButton) {
+        console.log('🔧 ========== ИЗМЕНЕНИЕ СОСТОЯНИЯ КНОПКИ ==========');
+        console.log('🔧 Текущее состояние disabled:', createButton.disabled);
+        console.log('🔧 Текущие классы:', createButton.className);
+        console.log('🔧 Запрошенное состояние:', enabled);
+        
+        if (enabled) {
+            createButton.removeAttribute('disabled');
+            createButton.classList.remove('disabled');
+            console.log('🔧 ✅ АКТИВИРОВАЛИ кнопку');
+        } else {
+            createButton.setAttribute('disabled', 'disabled');
+            createButton.classList.add('disabled');
+            console.log('🔧 ❌ ДЕАКТИВИРОВАЛИ кнопку');
+        }
+        
+        console.log('🔧 Новое состояние disabled:', createButton.disabled);
+        console.log('🔧 Новые классы:', createButton.className);
+        console.log(`🔄 КНОПКА ЗАЯВКИ: ${enabled ? '✅ АКТИВНА' : '❌ НЕАКТИВНА'}`);
+        console.log('🔧 ========== КОНЕЦ ИЗМЕНЕНИЯ СОСТОЯНИЯ ==========');
+    } else {
+        console.log('❌ setCreateButtonState: кнопка не найдена!');
+    }
+}
