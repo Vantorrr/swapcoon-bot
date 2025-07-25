@@ -3806,3 +3806,25 @@ input:checked + .slider:before {
 .theme-dark .currency-input:focus-within {
     border-color: var(--primary-color);
 }
+
+
+/* 🔥 СПЕЦИАЛЬНЫЕ СТИЛИ ДЛЯ КНОПКИ СОЗДАНИЯ ЗАЯВКИ */
+#create-order-button:disabled,
+#create-order-button.disabled {
+    background: var(--text-tertiary) !important;
+    cursor: not-allowed !important;
+    pointer-events: none !important;
+    opacity: 0.5 !important;
+}
+
+#create-order-button:not(:disabled):not(.disabled) {
+    background: var(--primary-color) !important;
+    cursor: pointer !important;
+    pointer-events: auto !important;
+    opacity: 1 !important;
+}
+
+#create-order-button:not(:disabled):not(.disabled):hover {
+    background: var(--primary-dark) !important;
+    transform: translateY(-1px) !important;
+}
