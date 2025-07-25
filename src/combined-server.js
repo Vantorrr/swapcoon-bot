@@ -511,6 +511,31 @@ app.post('/api/create-order', async (req, res) => {
     }
 });
 
+// 🔍 ДИАГНОСТИКА ФАЙЛОВ
+app.get('/api/check-files', (req, res) => {
+    const fs = require('fs');
+    const assetsPath = path.join(__dirname, '..', 'assets', 'images', 'currencies');
+    
+    try {
+        const files = fs.readdirSync(assetsPath);
+        const pngFiles = files.filter(f => f.endsWith('.png'));
+        
+        res.json({
+            success: true,
+            assetsPath: assetsPath,
+            totalFiles: files.length,
+            pngFiles: pngFiles,
+            first5: pngFiles.slice(0, 5)
+        });
+    } catch (error) {
+        res.json({
+            success: false,
+            error: error.message,
+            assetsPath: assetsPath
+        });
+    }
+});
+
 // Тестовые курсы как fallback
 function getTestRates() {
     return [
