@@ -427,11 +427,11 @@ function swapCurrencies() {
     
     fromButton.querySelector('.currency-name').textContent = fromCurrency;
     fromButton.querySelector('.currency-desc').textContent = getCurrencyName(fromCurrency);
-    fromButton.querySelector('.currency-icon').textContent = getCurrencyIcon(fromCurrency);
+    fromButton.querySelector('.currency-icon').innerHTML = getCurrencyIcon(fromCurrency);
     
     toButton.querySelector('.currency-name').textContent = toCurrency;
     toButton.querySelector('.currency-desc').textContent = getCurrencyName(toCurrency);
-    toButton.querySelector('.currency-icon').textContent = getCurrencyIcon(toCurrency);
+    toButton.querySelector('.currency-icon').innerHTML = getCurrencyIcon(toCurrency);
     
     // Анимация кнопки
     const swapButton = document.getElementById('swap-currencies');
@@ -594,18 +594,19 @@ function getCurrencyName(currency) {
 
 // Получение иконки валюты
 function getCurrencyIcon(currency) {
-    const icons = {
-        // 🪙 КРИПТОВАЛЮТЫ С КРАСИВЫМИ ИКОНКАМИ
-        'BTC': '₿',
-        'ETH': 'Ξ',
-        'USDT': '₮',
-        'USDC': 'Ⓤ',
-        'BNB': '🔸',
-        'SOL': '◎',
-        'ADA': '₳',
-        'DOT': '●',
-        'MATIC': '◇',
-        'AVAX': '▲',
+    // 🎨 ОРИГИНАЛЬНЫЕ ИКОНКИ ВАЛЮТ (48x48px)
+    const availableIcons = [
+        'BTC', 'ETH', 'USDT', 'USDC', 'BNB', 'SOL', 'ADA', 'DOT', 'MATIC', 'AVAX',
+        'USD', 'EUR', 'RUB', 'UAH', 'KZT', 'ARS', 'BRL'
+    ];
+    
+    // Если есть оригинальная иконка - используем её
+    if (availableIcons.includes(currency)) {
+        return `<img src="../assets/images/currencies/${currency.toLowerCase()}.png" alt="${currency}" class="currency-icon-img">`;
+    }
+    
+    // Фоллбэк - символы для остальных валют
+    const fallbackIcons = {
         'XRP': '✕',
         'LTC': 'Ł',
         'BCH': '⚡',
@@ -613,20 +614,12 @@ function getCurrencyIcon(currency) {
         'TRX': '🌊',
         'DOGE': '🐕',
         'SHIB': '🐱',
-        
-        // 💰 ФИАТНЫЕ ВАЛЮТЫ
-        'USD': '$',
-        'EUR': '€',
-        'RUB': '₽',
-        'UAH': '₴',
-        'KZT': '₸',
-        'ARS': '$',
-        'BRL': 'R$',
         'GBP': '£',
         'JPY': '¥',
         'CNY': '¥'
     };
-    return icons[currency] || '💱';
+    
+    return fallbackIcons[currency] || '💱';
 }
 
 // Выбор валюты
@@ -671,7 +664,7 @@ function finalizeCurrencySelection(currency, additionalInfo = null) {
         const button = document.querySelector('#from-currency');
         button.querySelector('.currency-name').textContent = displayText;
         button.querySelector('.currency-desc').textContent = desc;
-        button.querySelector('.currency-icon').textContent = getCurrencyIcon(currency);
+        button.querySelector('.currency-icon').innerHTML = getCurrencyIcon(currency);
     } else {
         toCurrency = currency;
         let displayText = currency;
@@ -684,7 +677,7 @@ function finalizeCurrencySelection(currency, additionalInfo = null) {
         const button = document.querySelector('#to-currency');
         button.querySelector('.currency-name').textContent = displayText;
         button.querySelector('.currency-desc').textContent = desc;
-        button.querySelector('.currency-icon').textContent = getCurrencyIcon(currency);
+        button.querySelector('.currency-icon').innerHTML = getCurrencyIcon(currency);
     }
     
     // Сбрасываем состояние

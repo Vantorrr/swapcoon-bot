@@ -3701,3 +3701,50 @@ input:checked + .slider:before {
         --border-color: #38383A;
     }
 }
+/* 🎨 СТИЛИ ДЛЯ ОРИГИНАЛЬНЫХ ИКОНОК ВАЛЮТ */
+
+/* Иконки в кнопках валют (главная страница) */
+.currency-icon-img {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    border-radius: 50%;
+    background: white;
+    padding: 2px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.currency-button:hover .currency-icon {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.05);
+}
+
+.currency-button:hover .currency-icon-img {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Иконки в списке валют (модальное окно) */
+.currency-info .currency-icon-img {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    border-radius: 50%;
+    background: white;
+    padding: 1px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.currency-item:hover .currency-icon-img {
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Темная тема для иконок */
+.theme-dark .currency-icon-img,
+.theme-dark .currency-info .currency-icon-img {
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+}
