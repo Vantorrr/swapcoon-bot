@@ -824,6 +824,7 @@ function proceedToOrder() {
     // ОТЛАДКА: выводим информацию о классификации пары
     console.log(`🔍 ПРОВЕРКА ПАРЫ: ${currentCalculation.fromCurrency} → ${currentCalculation.toCurrency}`);
     console.log(`🔍 Тип пары: ${pairType}`);
+    console.log(`🔍 currentCalculation:`, currentCalculation);
     
     let interfaceDescription = '';
     switch (pairType) {
@@ -1187,9 +1188,13 @@ function updateOrderSummary() {
 
 // Валидация адреса кошелька (старая функция для совместимости)
 function validateWalletAddress() {
-    if (!currentCalculation) return;
+    if (!currentCalculation) {
+        console.log('❌ validateWalletAddress: currentCalculation отсутствует');
+        return;
+    }
     
     const pairType = getPairType(currentCalculation.fromCurrency, currentCalculation.toCurrency);
+    console.log(`🔍 validateWalletAddress: ${currentCalculation.fromCurrency} → ${currentCalculation.toCurrency} = ${pairType}`);
     
     switch (pairType) {
         case 'crypto':
