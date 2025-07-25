@@ -992,7 +992,7 @@ function updateOrderInterfaceForPairType(pairType) {
                 if (receivingInput) receivingInput.addEventListener('input', () => validateCryptoToFiatAddresses());
             }, 100);
                  }
-         if (inputHelp) inputHelp.textContent = 'Сначала проверим криптоадрес на AML, затем укажите реквизиты';
+         if (inputHelp) inputHelp.textContent = 'Сначала укажите криптоадрес, затем реквизиты получения';
          
      } else if (pairType === 'fiat-to-crypto') {
          // Смешанная пара (RUB → USDT) - только кошелек получения + AML
@@ -1022,7 +1022,7 @@ function updateOrderInterfaceForPairType(pairType) {
                  if (walletInput) walletInput.addEventListener('input', () => validateFiatToCryptoAddresses());
              }, 100);
          }
-         if (inputHelp) inputHelp.textContent = 'Укажите адрес кошелька для получения криптовалюты и проверьте его на AML';
+         if (inputHelp) inputHelp.textContent = 'Укажите адрес кошелька для получения криптовалюты';
          
           } else {
          // Фиатная пара - проверяем специальные случаи
