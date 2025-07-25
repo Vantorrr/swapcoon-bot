@@ -597,6 +597,7 @@ function getCurrencyIcon(currency) {
     // 🎨 ОРИГИНАЛЬНЫЕ ИКОНКИ ВАЛЮТ (48x48px)
     const availableIcons = [
         'BTC', 'ETH', 'USDT', 'USDC', 'BNB', 'SOL', 'ADA', 'DOT', 'MATIC', 'AVAX',
+        'XRP', 'LTC', 'BCH', 'LINK',
         'USD', 'EUR', 'RUB', 'UAH', 'KZT', 'ARS', 'BRL'
     ];
     
@@ -607,10 +608,6 @@ function getCurrencyIcon(currency) {
     
     // Фоллбэк - символы для остальных валют
     const fallbackIcons = {
-        'XRP': '✕',
-        'LTC': 'Ł',
-        'BCH': '⚡',
-        'LINK': '🔗',
         'TRX': '🌊',
         'DOGE': '🐕',
         'SHIB': '🐱',
