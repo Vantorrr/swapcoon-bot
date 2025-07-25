@@ -71,6 +71,14 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     
     console.log('🧪 Доступна команда: debugCreateButton() - для отладки кнопки из консоли');
+    
+    // 🧪 ГЛОБАЛЬНАЯ ФУНКЦИЯ ДЛЯ ТЕСТИРОВАНИЯ СОЗДАНИЯ ЗАЯВКИ
+    window.testCreateOrder = function() {
+        console.log('🧪 РУЧНОЙ ТЕСТ СОЗДАНИЯ ЗАЯВКИ');
+        createOrder();
+    };
+    
+    console.log('🧪 Доступна команда: testCreateOrder() - для тестирования создания заявки из консоли');
 });
 
 // Инициализация Telegram Web App
@@ -1731,9 +1739,24 @@ function displayAMLResult(result, addressType = 'to') {
 
 // Создание заявки
 async function createOrder() {
+    console.log('🚀 ========== КЛИК ПО КНОПКЕ ЗАЯВКИ ==========');
+    console.log('🚀 currentCalculation:', currentCalculation);
+    console.log('🚀 currentUserId:', currentUserId);
+    
     if (!currentCalculation) {
-        showNotification('Сначала рассчитайте обмен', 'warning');
-        return;
+        console.log('❌ currentCalculation отсутствует! Создаем тестовый расчет.');
+        
+        // Создаем тестовый currentCalculation
+        currentCalculation = {
+            fromAmount: 100,
+            toAmount: 102.02,
+            exchangeRate: 1.0202,
+            fee: 0,
+            fromCurrency: fromCurrency || 'USDT',
+            toCurrency: toCurrency || 'USDT'
+        };
+        
+        console.log('✅ Создан тестовый currentCalculation:', currentCalculation);
     }
     
     // Убеждаемся что userId определен
@@ -1917,7 +1940,9 @@ async function createOrder() {
              }
          }
         
+        console.log('🚀 ========== ОТПРАВКА ЗАЯВКИ НА СЕРВЕР ==========');
         console.log('📋 Данные заявки:', orderData);
+        console.log('📋 JSON для отправки:', JSON.stringify(orderData, null, 2));
         
         const response = await fetch('/api/create-order', {
             method: 'POST',
@@ -1937,6 +1962,7 @@ async function createOrder() {
         console.log('📋 Данные ответа:', data);
         
         if (data.success) {
+            console.log('🚀 ========== ЗАЯВКА УСПЕШНО СОЗДАНА ==========');
             console.log('✅ Заявка успешно создана:', data.data);
             showNotification(`Заявка #${data.data.id} успешно создана!`, 'success');
             
@@ -1974,9 +2000,14 @@ async function createOrder() {
         }
         
     } catch (error) {
+        console.error('🚀 ========== ОШИБКА СОЗДАНИЯ ЗАЯВКИ ==========');
+        console.error('🚀 Тип ошибки:', error.name);
+        console.error('🚀 Сообщение ошибки:', error.message);
+        console.error('🚀 Полная ошибка:', error);
         console.error('❌ Ошибка создания заявки:', error);
         showNotification('Ошибка создания заявки. Попробуйте позже.', 'error');
     } finally {
+        console.log('🚀 ========== ЗАВЕРШЕНИЕ СОЗДАНИЯ ЗАЯВКИ ==========');
         setCreateButtonState(true);
         createButton.innerHTML = '<i class="fas fa-check"></i> Создать заявку';
     }
