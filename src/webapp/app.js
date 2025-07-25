@@ -1188,8 +1188,20 @@ function updateOrderSummary() {
 
 // Валидация адреса кошелька (старая функция для совместимости)
 function validateWalletAddress() {
+    const createButton = document.getElementById('create-order-button');
+    const addressInput = document.getElementById('wallet-address');
+    const address = addressInput?.value?.trim() || '';
+    
+    console.log(`🔍 validateWalletAddress: адрес длиной ${address.length} символов`);
+    
     if (!currentCalculation) {
-        console.log('❌ validateWalletAddress: currentCalculation отсутствует');
+        console.log('❌ validateWalletAddress: currentCalculation отсутствует, но проверяем базовую валидацию');
+        // Базовая валидация без currentCalculation
+        if (createButton) {
+            const shouldEnable = address.length > 20;
+            createButton.disabled = !shouldEnable;
+            console.log(`🔄 БАЗОВАЯ ВАЛИДАЦИЯ КНОПКИ: ${shouldEnable ? 'АКТИВНА' : 'НЕАКТИВНА'} (адрес: ${address.length} символов)`);
+        }
         return;
     }
     
@@ -2748,6 +2760,12 @@ function showScreen(screenId) {
             loadAchievements();
         } else if (screenId === 'browser-screen') {
             loadNews();
+        } else if (screenId === 'order-screen') {
+            // Запускаем валидацию кнопки заявки при показе экрана
+            setTimeout(() => {
+                console.log('🔄 Экран заявки показан, запускаем валидацию...');
+                validateWalletAddress();
+            }, 100);
         }
     }
 }
