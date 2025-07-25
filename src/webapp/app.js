@@ -1222,9 +1222,9 @@ function validateCryptoAddresses() {
         toButton.disabled = toAddress.length <= 20;
     }
     
-    // Разрешаем создание заявки если оба адреса заполнены
+    // Разрешаем создание заявки если основной адрес заполнен
     if (createButton) {
-        createButton.disabled = !(fromAddress.length > 20 && toAddress.length > 20);
+        createButton.disabled = !(fromAddress.length > 20);
     }
     
     // Обновляем сводку заказа
