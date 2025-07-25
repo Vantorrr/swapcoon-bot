@@ -78,7 +78,65 @@ document.addEventListener('DOMContentLoaded', function() {
         createOrder();
     };
     
+    // 🔧 ГЛОБАЛЬНАЯ ФУНКЦИЯ ДЛЯ ПРИНУДИТЕЛЬНОЙ ПРИВЯЗКИ ОБРАБОТЧИКА
+    window.forceBindCreateButton = function() {
+        console.log('🔧 ПРИНУДИТЕЛЬНАЯ ПРИВЯЗКА ОБРАБОТЧИКА КНОПКИ');
+        const createOrderButton = document.getElementById('create-order-button');
+        if (createOrderButton) {
+            console.log('✅ Кнопка найдена');
+            
+            // Удаляем все предыдущие обработчики
+            createOrderButton.replaceWith(createOrderButton.cloneNode(true));
+            const newButton = document.getElementById('create-order-button');
+            
+            // Добавляем новые обработчики
+            newButton.addEventListener('click', function(event) {
+                console.log('🔥 НОВЫЙ ОБРАБОТЧИК CLICK СРАБОТАЛ');
+                event.preventDefault();
+                event.stopPropagation();
+                createOrder();
+            });
+            
+            newButton.onclick = function(event) {
+                console.log('🔥 НОВЫЙ ОБРАБОТЧИК ONCLICK СРАБОТАЛ');
+                event.preventDefault();
+                event.stopPropagation();
+                createOrder();
+            };
+            
+            console.log('✅ Обработчики успешно перепривязаны');
+        } else {
+            console.error('❌ Кнопка не найдена!');
+        }
+    };
+    
+    // 🤖 ГЛОБАЛЬНАЯ ФУНКЦИЯ ДЛЯ ПРОГРАММНОГО КЛИКА
+    window.simulateClick = function() {
+        console.log('🤖 СИМУЛЯЦИЯ КЛИКА ПО КНОПКЕ');
+        const createOrderButton = document.getElementById('create-order-button');
+        if (createOrderButton) {
+            console.log('✅ Кнопка найдена, симулируем клик...');
+            
+            // Несколько способов симуляции клика
+            createOrderButton.click();
+            
+            // Альтернативный способ
+            const clickEvent = new MouseEvent('click', {
+                view: window,
+                bubbles: true,
+                cancelable: true
+            });
+            createOrderButton.dispatchEvent(clickEvent);
+            
+            console.log('✅ Клик отправлен');
+        } else {
+            console.error('❌ Кнопка не найдена!');
+        }
+    };
+    
     console.log('🧪 Доступна команда: testCreateOrder() - для тестирования создания заявки из консоли');
+    console.log('🔧 Доступна команда: forceBindCreateButton() - для принудительной привязки обработчика');
+    console.log('🤖 Доступна команда: simulateClick() - для программного клика по кнопке');
 });
 
 // Инициализация Telegram Web App
@@ -188,7 +246,22 @@ function initEventListeners() {
     document.getElementById('aml-check-button').addEventListener('click', performAMLCheck);
     
     // Создание заявки
-    document.getElementById('create-order-button').addEventListener('click', createOrder);
+    const createOrderButton = document.getElementById('create-order-button');
+    if (createOrderButton) {
+        console.log('✅ Кнопка create-order-button найдена, привязываем обработчик');
+        createOrderButton.addEventListener('click', function(event) {
+            console.log('🔥 ========== КЛИК ЗАФИКСИРОВАН ==========');
+            console.log('🔥 Event:', event);
+            console.log('🔥 Target:', event.target);
+            console.log('🔥 Button disabled:', createOrderButton.disabled);
+            console.log('🔥 Button classes:', createOrderButton.className);
+            console.log('🔥 Вызываем createOrder...');
+            createOrder();
+        });
+        console.log('✅ Обработчик клика успешно привязан');
+    } else {
+        console.error('❌ Кнопка create-order-button НЕ НАЙДЕНА при инициализации!');
+    }
     
     // Поиск валют
     // Поиск валют удален
@@ -2856,6 +2929,24 @@ function showScreen(screenId) {
                 // Принудительная валидация состояния кнопки
                 setCreateButtonState(address.length > 20);
                 validateWalletAddress();
+                
+                // 🔧 ПОВТОРНАЯ ПРОВЕРКА ОБРАБОТЧИКА СОБЫТИЯ
+                const createOrderButton = document.getElementById('create-order-button');
+                if (createOrderButton) {
+                    console.log('🔧 Кнопка найдена на экране заявки');
+                    console.log('🔧 Обработчики событий:', getEventListeners ? getEventListeners(createOrderButton) : 'DevTools не поддерживает getEventListeners');
+                    
+                    // Добавляем onclick как дополнительный обработчик
+                    createOrderButton.onclick = function(event) {
+                        console.log('🔥 ========== ONCLICK СРАБОТАЛ ==========');
+                        event.preventDefault();
+                        event.stopPropagation();
+                        createOrder();
+                    };
+                    console.log('✅ Добавлен onclick обработчик как запасной');
+                } else {
+                    console.error('❌ Кнопка НЕ НАЙДЕНА на экране заявки!');
+                }
             }, 100);
             
             // 🧪 ТЕСТОВАЯ АКТИВАЦИЯ ЧЕРЕЗ 2 СЕКУНДЫ
@@ -3565,13 +3656,40 @@ document.addEventListener('DOMContentLoaded', function() {
 function testCreateButton() {
     const createButton = document.getElementById('create-order-button');
     if (createButton) {
+        console.log('🧪 ========== ДИАГНОСТИКА КНОПКИ ==========');
+        console.log('🧪 Disabled:', createButton.disabled);
+        console.log('🧪 ClassName:', createButton.className);
+        console.log('🧪 Style display:', getComputedStyle(createButton).display);
+        console.log('🧪 Style pointerEvents:', getComputedStyle(createButton).pointerEvents);
+        console.log('🧪 Style zIndex:', getComputedStyle(createButton).zIndex);
+        console.log('🧪 Style position:', getComputedStyle(createButton).position);
+        console.log('🧪 Parent element:', createButton.parentElement);
+        console.log('🧪 Rect:', createButton.getBoundingClientRect());
+        
         createButton.removeAttribute('disabled');
         createButton.classList.remove('disabled');
         createButton.style.background = '#28a745 !important';
         createButton.style.cursor = 'pointer !important';
         createButton.style.pointerEvents = 'auto !important';
         createButton.style.opacity = '1 !important';
+        createButton.style.zIndex = '9999 !important';
+        createButton.style.position = 'relative !important';
+        
+        // 🔥 ПРИНУДИТЕЛЬНОЕ ПЕРЕОПРЕДЕЛЕНИЕ ВСЕХ CSS БЛОКИРОВОК
+        createButton.style.setProperty('pointer-events', 'auto', 'important');
+        createButton.style.setProperty('cursor', 'pointer', 'important');
+        createButton.style.setProperty('background', '#28a745', 'important');
+        createButton.style.setProperty('opacity', '1', 'important');
+        
+        // Убираем класс и атрибут disabled принудительно
+        createButton.removeAttribute('disabled');
+        createButton.disabled = false;
+        createButton.classList.remove('disabled');
+        
         console.log('🧪 ТЕСТОВАЯ КНОПКА АКТИВИРОВАНА ПРИНУДИТЕЛЬНО!');
+        console.log('🧪 Новый style pointerEvents:', getComputedStyle(createButton).pointerEvents);
+        console.log('🧪 Новый disabled атрибут:', createButton.disabled);
+        console.log('🧪 Новые классы:', createButton.className);
     } else {
         console.log('❌ Кнопка create-order-button не найдена!');
     }
