@@ -3701,6 +3701,22 @@ input:checked + .slider:before {
         --border-color: #38383A;
     }
 }
+
+/* 🎨 ДОПОЛНИТЕЛЬНЫЕ СТИЛИ ДЛЯ ИКОНОК ВАЛЮТ В СПИСКЕ */
+.currency-info .currency-icon-img {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    border-radius: 50%;
+    background: white;
+    padding: 1px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.currency-item:hover .currency-icon-img {
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
 /* 🎨 СТИЛИ ДЛЯ ОРИГИНАЛЬНЫХ ИКОНОК ВАЛЮТ */
 
 /* Иконки в кнопках валют (главная страница) */
@@ -3765,4 +3781,28 @@ input:checked + .slider:before {
     visibility: visible !important;
     position: relative !important;
     z-index: 10 !important;
+}
+
+/* 🔧 ИСПРАВЛЕНИЕ ДВОЙНОЙ РАМКИ В ТЕМНОЙ ТЕМЕ */
+.theme-dark .currency-input input {
+    background: none !important;
+    border: none !important;
+    color: var(--text-primary) !important;
+    box-shadow: none !important;
+}
+
+.theme-dark .currency-input input:focus {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* Убираем лишние стили для input внутри currency-input блоков */
+.theme-dark .currency-input {
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+}
+
+.theme-dark .currency-input:focus-within {
+    border-color: var(--primary-color);
 }
