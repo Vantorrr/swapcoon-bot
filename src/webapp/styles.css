@@ -3748,3 +3748,21 @@ input:checked + .slider:before {
     background: var(--surface-color);
     border: 1px solid var(--border-color);
 }
+
+/* 🔧 ПРИНУДИТЕЛЬНЫЕ СТИЛИ ДЛЯ PNG ИКОНОК */
+.currency-icon-img {
+    width: 32px !important;
+    height: 32px !important;
+    object-fit: contain !important;
+    border-radius: 50% !important;
+    background: white !important;
+    padding: 2px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+    transition: all 0.3s ease !important;
+    display: block !important;
+    margin: 0 auto !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    position: relative !important;
+    z-index: 10 !important;
+}

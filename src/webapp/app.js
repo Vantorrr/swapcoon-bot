@@ -656,9 +656,24 @@ function getCurrencyIcon(currency) {
         'USD', 'EUR', 'RUB', 'UAH', 'KZT', 'ARS', 'BRL'
     ];
     
-    // 🔧 ВРЕМЕННО: ИСПОЛЬЗУЕМ СИМВОЛЫ ПОКА PNG НЕ РАБОТАЮТ  
-    console.log(`🎨 Используем символ для ${currency}`);
-    return getFallbackIcon(currency);
+    // Если есть оригинальная иконка - используем её
+    if (availableIcons.includes(currency)) {
+        const imgPath = `/assets/images/currencies/${currency.toLowerCase()}.png`;
+        console.log(`🎨 Загружаем PNG иконку для ${currency}: ${imgPath}`);
+        return `<img src="${imgPath}" alt="${currency}" class="currency-icon-img" onerror="console.error('❌ PNG не загрузился: ${imgPath}'); this.style.display='none'; this.parentNode.innerHTML='${getFallbackIcon(currency)}';">`;
+    }
+    
+    // Фоллбэк - символы для остальных валют
+    const fallbackIcons = {
+        'TRX': '🌊',
+        'DOGE': '🐕',
+        'SHIB': '🐱',
+        'GBP': '£',
+        'JPY': '¥',
+        'CNY': '¥'
+    };
+    
+    return fallbackIcons[currency] || '💱';
 }
 
 // Выбор валюты
