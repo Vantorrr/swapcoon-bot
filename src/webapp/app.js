@@ -209,6 +209,25 @@ function initEventListeners() {
     console.log('✅ Обработчики событий инициализированы');
 }
 
+// 🎨 ОБНОВЛЕНИЕ ИКОНОК ВАЛЮТ ПО УМОЛЧАНИЮ
+function updateDefaultCurrencyIcons() {
+    console.log('🎨 Обновляем иконки валют по умолчанию...');
+    
+    // Обновляем иконку BTC (fromCurrency)
+    const fromButton = document.querySelector('#from-currency');
+    if (fromButton) {
+        fromButton.querySelector('.currency-icon').innerHTML = getCurrencyIcon(fromCurrency);
+        console.log(`✅ Иконка ${fromCurrency} обновлена`);
+    }
+    
+    // Обновляем иконку USDT (toCurrency)  
+    const toButton = document.querySelector('#to-currency');
+    if (toButton) {
+        toButton.querySelector('.currency-icon').innerHTML = getCurrencyIcon(toCurrency);
+        console.log(`✅ Иконка ${toCurrency} обновлена`);
+    }
+}
+
 // Загрузка начальных данных
 async function loadInitialData() {
     console.log('🚀 Начинаем загрузку начальных данных...');
@@ -239,6 +258,14 @@ async function loadInitialData() {
         console.log('✅ Калькулятор инициализирован');
     } catch (error) {
         console.error('❌ Ошибка инициализации калькулятора:', error);
+    }
+    
+    // 🎨 ОБНОВЛЯЕМ ИКОНКИ ПО УМОЛЧАНИЮ НА PNG
+    try {
+        updateDefaultCurrencyIcons();
+        console.log('✅ Иконки валют обновлены на PNG');
+    } catch (error) {
+        console.error('❌ Ошибка обновления иконок:', error);
     }
     
     // 🚀 МГНОВЕННАЯ ПАРАЛЛЕЛЬНАЯ ЗАГРУЗКА КУРСОВ
