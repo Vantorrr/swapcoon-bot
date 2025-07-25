@@ -881,6 +881,9 @@ function proceedToOrder() {
     document.getElementById('aml-result').innerHTML = '';
     currentAMLResult = null;
     
+    // Принудительно деактивируем кнопку пока не введен адрес
+    setCreateButtonState(false);
+    
     // Запускаем первичную валидацию
     setTimeout(() => {
         validateWalletAddress();
@@ -2783,6 +2786,12 @@ function showScreen(screenId) {
             // Запускаем валидацию кнопки заявки при показе экрана
             setTimeout(() => {
                 console.log('🔄 Экран заявки показан, запускаем валидацию...');
+                const addressField = document.getElementById('wallet-address');
+                const address = addressField?.value?.trim() || '';
+                console.log('🔍 Текущий адрес в поле:', address);
+                
+                // Принудительная валидация состояния кнопки
+                setCreateButtonState(address.length > 20);
                 validateWalletAddress();
             }, 100);
         }
