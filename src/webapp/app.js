@@ -619,6 +619,34 @@ function getCurrencyName(currency) {
     return names[currency] || currency;
 }
 
+// 🔄 FALLBACK ИКОНКИ ДЛЯ СЛУЧАЕВ КОГДА PNG НЕ ЗАГРУЖАЕТСЯ
+function getFallbackIcon(currency) {
+    const fallbackSymbols = {
+        'BTC': '₿',
+        'ETH': 'Ξ', 
+        'USDT': '₮',
+        'USDC': 'Ⓤ',
+        'BNB': '🔸',
+        'SOL': '◎',
+        'ADA': '₳',
+        'DOT': '●',
+        'MATIC': '◇',
+        'AVAX': '▲',
+        'XRP': '✕',
+        'LTC': 'Ł',
+        'BCH': '⚡',
+        'LINK': '🔗',
+        'USD': '$',
+        'EUR': '€',
+        'RUB': '₽',
+        'UAH': '₴',
+        'KZT': '₸',
+        'ARS': '$',
+        'BRL': 'R$'
+    };
+    return fallbackSymbols[currency] || '💱';
+}
+
 // Получение иконки валюты
 function getCurrencyIcon(currency) {
     // 🎨 ОРИГИНАЛЬНЫЕ ИКОНКИ ВАЛЮТ (48x48px)
@@ -630,7 +658,9 @@ function getCurrencyIcon(currency) {
     
     // Если есть оригинальная иконка - используем её
     if (availableIcons.includes(currency)) {
-        return `<img src="../assets/images/currencies/${currency.toLowerCase()}.png" alt="${currency}" class="currency-icon-img">`;
+        const imgPath = `/assets/images/currencies/${currency.toLowerCase()}.png`;
+        console.log(`🎨 Загружаем иконку для ${currency}: ${imgPath}`);
+        return `<img src="${imgPath}" alt="${currency}" class="currency-icon-img" onerror="console.error('❌ Не удалось загрузить иконку: ${imgPath}'); this.style.display='none'; this.parentNode.innerHTML='${getFallbackIcon(currency)}';">`;
     }
     
     // Фоллбэк - символы для остальных валют
