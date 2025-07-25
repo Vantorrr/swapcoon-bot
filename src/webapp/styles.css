@@ -3545,3 +3545,159 @@ input:checked + .slider:before {
 }
 
 /* ... existing code ... 
+
+/* 🎨 ТЕМЫ - СВЕТЛАЯ И ТЕМНАЯ */
+
+/* Светлая тема (по умолчанию уже задана в :root) */
+.theme-light {
+    --primary-color: #007AFF;
+    --primary-color-rgb: 0, 122, 255;
+    --primary-dark: #0056CC;
+    --secondary-color: #34C759;
+    --background-color: #F2F2F7;
+    --surface-color: #FFFFFF;
+    --text-primary: #000000;
+    --text-secondary: #8E8E93;
+    --text-tertiary: #C7C7CC;
+    --border-color: #E5E5EA;
+    --error-color: #FF3B30;
+    --warning-color: #FF9500;
+    --success-color: #34C759;
+}
+
+/* Темная тема */
+.theme-dark {
+    --primary-color: #0A84FF;
+    --primary-color-rgb: 10, 132, 255;
+    --primary-dark: #0056CC;
+    --secondary-color: #32D74B;
+    --background-color: #000000;
+    --surface-color: #1C1C1E;
+    --text-primary: #FFFFFF;
+    --text-secondary: #98989D;
+    --text-tertiary: #48484A;
+    --border-color: #38383A;
+    --error-color: #FF453A;
+    --warning-color: #FF9F0A;
+    --success-color: #32D74B;
+}
+
+/* Автоматическая тема - используем Telegram цвета */
+.theme-auto {
+    --primary-color: var(--tg-theme-button-color, #007AFF);
+    --background-color: var(--tg-theme-bg-color, #F2F2F7);
+    --surface-color: var(--tg-theme-bg-color, #FFFFFF);
+    --text-primary: var(--tg-theme-text-color, #000000);
+    --text-secondary: var(--tg-theme-hint-color, #8E8E93);
+    --border-color: var(--tg-theme-hint-color, #E5E5EA);
+}
+
+/* Дополнительные стили для темной темы */
+.theme-dark .loading-screen {
+    background: var(--background-color);
+    color: var(--text-primary);
+}
+
+.theme-dark .loading-content p {
+    color: var(--text-secondary);
+}
+
+.theme-dark .header {
+    background: var(--surface-color);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.theme-dark .main-content {
+    background: var(--background-color);
+}
+
+.theme-dark .calculator-card,
+.theme-dark .service-card,
+.theme-dark .metric-card,
+.theme-dark .profile-header,
+.theme-dark .referral-card,
+.theme-dark .settings-group {
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+}
+
+.theme-dark .currency-button {
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.theme-dark .currency-button:hover {
+    background: var(--border-color);
+}
+
+.theme-dark .bottom-nav {
+    background: var(--surface-color);
+    border-top: 1px solid var(--border-color);
+}
+
+.theme-dark .nav-item {
+    color: var(--text-secondary);
+}
+
+.theme-dark .nav-item.active {
+    color: var(--primary-color);
+}
+
+.theme-dark .modal-content {
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+}
+
+.theme-dark .currency-item,
+.theme-dark .bank-item,
+.theme-dark .network-item {
+    background: var(--surface-color);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.theme-dark .currency-item:hover,
+.theme-dark .bank-item:hover,
+.theme-dark .network-item:hover {
+    background: var(--border-color);
+}
+
+.theme-dark input,
+.theme-dark select,
+.theme-dark textarea {
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.theme-dark input:focus,
+.theme-dark select:focus,
+.theme-dark textarea:focus {
+    border-color: var(--primary-color);
+}
+
+.theme-dark .notification {
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+/* Плавные переходы между темами */
+* {
+    transition: background-color 0.3s ease, 
+                border-color 0.3s ease, 
+                color 0.3s ease;
+}
+
+/* Медиа-запрос для автоматического переключения темы */
+@media (prefers-color-scheme: dark) {
+    .theme-auto {
+        --primary-color: #0A84FF;
+        --background-color: #000000;
+        --surface-color: #1C1C1E;
+        --text-primary: #FFFFFF;
+        --text-secondary: #98989D;
+        --text-tertiary: #48484A;
+        --border-color: #38383A;
+    }
+}

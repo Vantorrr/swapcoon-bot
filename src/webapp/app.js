@@ -3125,3 +3125,263 @@ function applyTelegramTheme() {
         console.error('❌ Ошибка применения темы:', error);
     }
 }
+
+// 🎨 РУЧНАЯ СМЕНА ТЕМЫ
+function switchTheme(theme) {
+    console.log('🎨 Переключение темы на:', theme);
+    
+    const root = document.documentElement;
+    
+    // Удаляем все классы тем
+    root.classList.remove('theme-light', 'theme-dark', 'theme-auto');
+    
+    if (theme === 'light') {
+        root.classList.add('theme-light');
+        console.log('☀️ Включена светлая тема');
+    } else if (theme === 'dark') {
+        root.classList.add('theme-dark');
+        console.log('🌙 Включена темная тема');
+    } else {
+        // Авто - используем тему Telegram
+        root.classList.add('theme-auto');
+        applyTelegramTheme();
+        console.log('🤖 Автоматическая тема (Telegram)');
+    }
+    
+    // Сохраняем в localStorage
+    try {
+        localStorage.setItem('theme', theme);
+        console.log('✅ Тема сохранена:', theme);
+    } catch (error) {
+        console.error('❌ Ошибка сохранения темы:', error);
+    }
+}
+
+// 🔄 ЗАГРУЗКА ТЕМЫ ИЗ НАСТРОЕК
+function loadTheme() {
+    try {
+        const savedTheme = localStorage.getItem('theme') || 'auto';
+        console.log('📥 Загружаем сохраненную тему:', savedTheme);
+        
+        // Устанавливаем значение в селекте
+        const themeSelect = document.getElementById('theme-select');
+        if (themeSelect) {
+            themeSelect.value = savedTheme;
+            
+            // Добавляем обработчик изменения
+            themeSelect.addEventListener('change', function() {
+                switchTheme(this.value);
+            });
+        }
+        
+        // Применяем тему
+        switchTheme(savedTheme);
+    } catch (error) {
+        console.error('❌ Ошибка загрузки темы:', error);
+        switchTheme('auto'); // По умолчанию
+    }
+}
+
+// 🔗 ГЕНЕРАЦИЯ РЕФЕРАЛЬНОЙ ССЫЛКИ
+function generateReferralLink() {
+    try {
+        if (!currentUserId) {
+            console.log('⚠️ User ID не найден, используем тестовый');
+            currentUserId = 123456789;
+        }
+        
+        // Генерируем реферальную ссылку
+        const referralLink = `https://t.me/SwapCoonBot?start=ref_${currentUserId}`;
+        console.log('🔗 Сгенерирована реферальная ссылка:', referralLink);
+        
+        // Заполняем поле
+        const referralInput = document.getElementById('referral-link-input');
+        if (referralInput) {
+            referralInput.value = referralLink;
+            console.log('✅ Реферальная ссылка заполнена в поле');
+        }
+        
+        return referralLink;
+    } catch (error) {
+        console.error('❌ Ошибка генерации реферальной ссылки:', error);
+        return null;
+    }
+}
+
+// 📋 КОПИРОВАНИЕ РЕФЕРАЛЬНОЙ ССЫЛКИ
+function copyReferralLink() {
+    try {
+        const referralInput = document.getElementById('referral-link-input');
+        if (!referralInput || !referralInput.value) {
+            console.log('⚠️ Реферальная ссылка не найдена, генерируем...');
+            generateReferralLink();
+        }
+        
+        const link = referralInput.value;
+        
+        // Пытаемся скопировать через Telegram API
+        if (tg && tg.writeToClipboard) {
+            tg.writeToClipboard(link);
+            showNotification('🔗 Реферальная ссылка скопирована!', 'success');
+            console.log('✅ Ссылка скопирована через Telegram API');
+            return;
+        }
+        
+        // Фоллбэк - обычное копирование
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(link).then(() => {
+                showNotification('🔗 Реферальная ссылка скопирована!', 'success');
+                console.log('✅ Ссылка скопирована через Clipboard API');
+            }).catch(error => {
+                console.error('❌ Ошибка копирования:', error);
+                fallbackCopy(link);
+            });
+        } else {
+            fallbackCopy(link);
+        }
+    } catch (error) {
+        console.error('❌ Ошибка копирования реферальной ссылки:', error);
+        showNotification('❌ Ошибка копирования', 'error');
+    }
+}
+
+// 📋 ФОЛЛБЭК КОПИРОВАНИЕ
+function fallbackCopy(text) {
+    try {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        const successful = document.execCommand('copy');
+        document.body.removeChild(textArea);
+        
+        if (successful) {
+            showNotification('🔗 Реферальная ссылка скопирована!', 'success');
+            console.log('✅ Ссылка скопирована через execCommand');
+        } else {
+            showNotification('❌ Не удалось скопировать', 'error');
+            console.log('❌ Не удалось скопировать через execCommand');
+        }
+    } catch (error) {
+        console.error('❌ Ошибка фоллбэк копирования:', error);
+        showNotification('❌ Ошибка копирования', 'error');
+    }
+}
+
+// ⚙️ СОХРАНЕНИЕ НАСТРОЕК
+function saveSettings() {
+    try {
+        console.log('💾 Сохранение настроек...');
+        
+        // Сохраняем тему
+        const themeSelect = document.getElementById('theme-select');
+        if (themeSelect) {
+            localStorage.setItem('theme', themeSelect.value);
+            console.log('✅ Тема сохранена:', themeSelect.value);
+        }
+        
+        // Сохраняем уведомления
+        const notificationsEnabled = document.getElementById('notifications-enabled');
+        if (notificationsEnabled) {
+            localStorage.setItem('notifications', notificationsEnabled.checked);
+            console.log('✅ Настройки уведомлений сохранены:', notificationsEnabled.checked);
+        }
+        
+        // Сохраняем язык
+        const languageSelect = document.getElementById('language-select');
+        if (languageSelect) {
+            localStorage.setItem('language', languageSelect.value);
+            console.log('✅ Язык сохранен:', languageSelect.value);
+        }
+        
+        showNotification('✅ Настройки сохранены!', 'success');
+        console.log('✅ Все настройки сохранены');
+        
+    } catch (error) {
+        console.error('❌ Ошибка сохранения настроек:', error);
+        showNotification('❌ Ошибка сохранения настроек', 'error');
+    }
+}
+
+// 📥 ЗАГРУЗКА НАСТРОЕК
+function loadSettings() {
+    try {
+        console.log('📥 Загрузка настроек...');
+        
+        // Загружаем тему
+        loadTheme();
+        
+        // Загружаем уведомления
+        const savedNotifications = localStorage.getItem('notifications');
+        if (savedNotifications !== null) {
+            const notificationsEnabled = document.getElementById('notifications-enabled');
+            if (notificationsEnabled) {
+                notificationsEnabled.checked = savedNotifications === 'true';
+                console.log('✅ Настройки уведомлений загружены:', savedNotifications);
+            }
+        }
+        
+        // Загружаем язык
+        const savedLanguage = localStorage.getItem('language');
+        if (savedLanguage) {
+            const languageSelect = document.getElementById('language-select');
+            if (languageSelect) {
+                languageSelect.value = savedLanguage;
+                console.log('✅ Язык загружен:', savedLanguage);
+            }
+        }
+        
+        console.log('✅ Все настройки загружены');
+        
+    } catch (error) {
+        console.error('❌ Ошибка загрузки настроек:', error);
+    }
+}
+
+// 📤 ЭКСПОРТ ДАННЫХ
+function exportData() {
+    try {
+        console.log('📤 Экспорт данных пользователя...');
+        
+        const userData = {
+            userId: currentUserId,
+            profile: userProfile,
+            favorites: favoriteCurrencies,
+            settings: {
+                theme: localStorage.getItem('theme'),
+                notifications: localStorage.getItem('notifications'),
+                language: localStorage.getItem('language')
+            },
+            timestamp: new Date().toISOString()
+        };
+        
+        const dataStr = JSON.stringify(userData, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(dataBlob);
+        link.download = `swapcoon_data_${currentUserId}_${Date.now()}.json`;
+        link.click();
+        
+        showNotification('📤 Данные экспортированы!', 'success');
+        console.log('✅ Данные экспортированы');
+        
+    } catch (error) {
+        console.error('❌ Ошибка экспорта данных:', error);
+        showNotification('❌ Ошибка экспорта данных', 'error');
+    }
+}
+
+// 🚀 ИНИЦИАЛИЗАЦИЯ НАСТРОЕК И РЕФЕРАЛЬНОЙ ССЫЛКИ
+document.addEventListener('DOMContentLoaded', function() {
+    // Добавляем к существующей инициализации
+    setTimeout(() => {
+        loadSettings();
+        generateReferralLink();
+        console.log('🚀 Настройки и реферальная ссылка инициализированы');
+    }, 1000);
+});
