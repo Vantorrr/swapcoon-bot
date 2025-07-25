@@ -170,7 +170,7 @@ bot.command('start', async (ctx) => {
 
     const keyboard = await createMainKeyboard(userId);
 
-    await ctx.replyWithPhoto('https://i.ibb.co/hP0PbvF/IMAGE-2025-07-09-12-57-19.jpg', {
+    await ctx.replyWithPhoto('https://i.ibb.co/Y7bVwSgJ/image.png', {
         caption: `🚀 ExMachinaX приветствует тебя!\n\n` +
             `⚡ Быстрый и безопасный сервис обмена валют\n\n` +
             `🔥 Наша система поможет тебе:\n` +
@@ -589,7 +589,7 @@ bot.on('callback_query:data', async (ctx) => {
             message += `😊 Пока рефералов нет. Поделитесь своей ссылкой!`;
         }
         
-        await ctx.replyWithPhoto('https://i.ibb.co/hP0PbvF/IMAGE-2025-07-09-12-57-19.jpg', {
+        await ctx.replyWithPhoto('https://i.ibb.co/Y7bVwSgJ/image.png', {
             caption: message,
             parse_mode: 'HTML',
             reply_markup: await createMainKeyboard(userId)
@@ -1467,7 +1467,7 @@ bot.on('callback_query:data', async (ctx) => {
         
         const keyboard = await createMainKeyboard(userId);
 
-        await ctx.replyWithPhoto('https://i.ibb.co/hP0PbvF/IMAGE-2025-07-09-12-57-19.jpg', {
+        await ctx.replyWithPhoto('https://i.ibb.co/Y7bVwSgJ/image.png', {
             caption: `🚀 <b>ExMachinaX снова приветствует тебя!</b>\n\n` +
                 `⚡ Быстрый и безопасный сервис обмена валют\n\n` +
                 `<b>🔥 Наша система поможет тебе:</b>\n` +
@@ -1489,7 +1489,7 @@ bot.on('callback_query:data', async (ctx) => {
         
         const keyboard = await createMainKeyboard(userId);
 
-        await ctx.replyWithPhoto('https://i.ibb.co/hP0PbvF/IMAGE-2025-07-09-12-57-19.jpg', {
+        await ctx.replyWithPhoto('https://i.ibb.co/Y7bVwSgJ/image.png', {
                         caption: `🚀 <b>ExMachinaX приветствует тебя!</b>\n\n` +
             `⚡ Быстрый и безопасный сервис обмена валют\n\n` +
             `<b>🔥 Наша система поможет тебе:</b>\n` +
