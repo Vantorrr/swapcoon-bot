@@ -16,6 +16,19 @@ class Database {
         }
     }
 
+    // Промисификация db.run
+    runQuery(sql, params = []) {
+        return new Promise((resolve, reject) => {
+            this.db.run(sql, params, function(err) {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(this);
+                }
+            });
+        });
+    }
+
     init() {
         this.db = new sqlite3.Database(this.dbPath, (err) => {
             if (err) {
@@ -27,171 +40,167 @@ class Database {
         });
     }
 
-    createTables() {
-        // Таблица пользователей
-        this.db.run(`
-            CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                telegram_id INTEGER UNIQUE NOT NULL,
-                username TEXT,
-                first_name TEXT,
-                last_name TEXT,
-                referred_by INTEGER,
-                total_commission REAL DEFAULT 0,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )
-        `);
+    async createTables() {
+        try {
+            // Создаем таблицы последовательно
+            await this.runQuery(`
+                CREATE TABLE IF NOT EXISTS users (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    telegram_id INTEGER UNIQUE NOT NULL,
+                    username TEXT,
+                    first_name TEXT,
+                    last_name TEXT,
+                    referred_by INTEGER,
+                    total_commission REAL DEFAULT 0,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+            `);
 
-        // Таблица заявок
-        this.db.run(`
-            CREATE TABLE IF NOT EXISTS orders (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER,
-                from_currency TEXT NOT NULL,
-                to_currency TEXT NOT NULL,
-                from_amount REAL NOT NULL,
-                to_amount REAL NOT NULL,
-                from_address TEXT,
-                to_address TEXT,
-                exchange_rate REAL,
-                fee REAL,
-                aml_status TEXT,
-                status TEXT DEFAULT 'pending',
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                completed_at DATETIME,
-                FOREIGN KEY (user_id) REFERENCES users (telegram_id)
-            )
-        `);
+            await this.runQuery(`
+                CREATE TABLE IF NOT EXISTS orders (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER,
+                    from_currency TEXT NOT NULL,
+                    to_currency TEXT NOT NULL,
+                    from_amount REAL NOT NULL,
+                    to_amount REAL NOT NULL,
+                    from_address TEXT,
+                    to_address TEXT,
+                    exchange_rate REAL,
+                    fee REAL,
+                    aml_status TEXT,
+                    status TEXT DEFAULT 'pending',
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    completed_at DATETIME,
+                    FOREIGN KEY (user_id) REFERENCES users (telegram_id)
+                )
+            `);
 
-        // Таблица рефералов
-        this.db.run(`
-            CREATE TABLE IF NOT EXISTS referrals (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                referrer_id INTEGER,
-                referee_id INTEGER,
-                order_id INTEGER,
-                commission REAL,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (referrer_id) REFERENCES users (telegram_id),
-                FOREIGN KEY (referee_id) REFERENCES users (telegram_id),
-                FOREIGN KEY (order_id) REFERENCES orders (id)
-            )
-        `);
+            await this.runQuery(`
+                CREATE TABLE IF NOT EXISTS referrals (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    referrer_id INTEGER,
+                    referee_id INTEGER,
+                    order_id INTEGER,
+                    commission REAL,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (referrer_id) REFERENCES users (telegram_id),
+                    FOREIGN KEY (referee_id) REFERENCES users (telegram_id),
+                    FOREIGN KEY (order_id) REFERENCES orders (id)
+                )
+            `);
 
-        // Таблица достижений пользователей
-        this.db.run(`
-            CREATE TABLE IF NOT EXISTS user_achievements (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER,
-                achievement_id TEXT,
-                earned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (user_id) REFERENCES users (telegram_id),
-                UNIQUE(user_id, achievement_id)
-            )
-        `);
+            await this.runQuery(`
+                CREATE TABLE IF NOT EXISTS user_achievements (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER,
+                    achievement_id TEXT,
+                    earned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (user_id) REFERENCES users (telegram_id),
+                    UNIQUE(user_id, achievement_id)
+                )
+            `);
 
-        // Таблица настроек пользователей
-        this.db.run(`
-            CREATE TABLE IF NOT EXISTS user_settings (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER UNIQUE,
-                notifications_enabled BOOLEAN DEFAULT 1,
-                language TEXT DEFAULT 'ru',
-                theme TEXT DEFAULT 'auto',
-                currency_preference TEXT DEFAULT 'USD',
-                privacy_level TEXT DEFAULT 'normal',
-                two_fa_enabled BOOLEAN DEFAULT 0,
-                settings_json TEXT,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (user_id) REFERENCES users (telegram_id)
-            )
-        `);
+            await this.runQuery(`
+                CREATE TABLE IF NOT EXISTS user_settings (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER UNIQUE,
+                    notifications_enabled BOOLEAN DEFAULT 1,
+                    language TEXT DEFAULT 'ru',
+                    theme TEXT DEFAULT 'auto',
+                    currency_preference TEXT DEFAULT 'USD',
+                    privacy_level TEXT DEFAULT 'normal',
+                    two_fa_enabled BOOLEAN DEFAULT 0,
+                    settings_json TEXT,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (user_id) REFERENCES users (telegram_id)
+                )
+            `);
 
-        // Таблица статистики пользователей (дневная агрегация)
-        this.db.run(`
-            CREATE TABLE IF NOT EXISTS user_daily_stats (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER,
-                date TEXT,
-                orders_count INTEGER DEFAULT 0,
-                volume_usd REAL DEFAULT 0,
-                commission_earned REAL DEFAULT 0,
-                fees_paid REAL DEFAULT 0,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (user_id) REFERENCES users (telegram_id),
-                UNIQUE(user_id, date)
-            )
-        `);
+            await this.runQuery(`
+                CREATE TABLE IF NOT EXISTS user_daily_stats (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER,
+                    date TEXT,
+                    orders_count INTEGER DEFAULT 0,
+                    volume_usd REAL DEFAULT 0,
+                    commission_earned REAL DEFAULT 0,
+                    fees_paid REAL DEFAULT 0,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (user_id) REFERENCES users (telegram_id),
+                    UNIQUE(user_id, date)
+                )
+            `);
 
-        // Таблица админов и операторов
-        this.db.run(`
-            CREATE TABLE IF NOT EXISTS staff (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                telegram_id INTEGER UNIQUE NOT NULL,
-                username TEXT,
-                first_name TEXT,
-                last_name TEXT,
-                role TEXT CHECK(role IN ('admin', 'operator')) NOT NULL,
-                is_active BOOLEAN DEFAULT 1,
-                added_by INTEGER,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (added_by) REFERENCES staff (telegram_id)
-            )
-        `);
+            await this.runQuery(`
+                CREATE TABLE IF NOT EXISTS staff (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    telegram_id INTEGER UNIQUE NOT NULL,
+                    username TEXT,
+                    first_name TEXT,
+                    last_name TEXT,
+                    role TEXT CHECK(role IN ('admin', 'operator')) NOT NULL,
+                    is_active BOOLEAN DEFAULT 1,
+                    added_by INTEGER,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (added_by) REFERENCES staff (telegram_id)
+                )
+            `);
 
-        // Таблица для отслеживания принятых заказов операторами
-        this.db.run(`
-            CREATE TABLE IF NOT EXISTS order_assignments (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                order_id INTEGER UNIQUE,
-                operator_id INTEGER,
-                assigned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                status TEXT DEFAULT 'assigned' CHECK(status IN ('assigned', 'in_progress', 'completed', 'cancelled')),
-                notes TEXT,
-                FOREIGN KEY (order_id) REFERENCES orders (id),
-                FOREIGN KEY (operator_id) REFERENCES staff (telegram_id)
-            )
-        `);
+            await this.runQuery(`
+                CREATE TABLE IF NOT EXISTS order_assignments (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    order_id INTEGER UNIQUE,
+                    operator_id INTEGER,
+                    assigned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    status TEXT DEFAULT 'assigned' CHECK(status IN ('assigned', 'in_progress', 'completed', 'cancelled')),
+                    notes TEXT,
+                    FOREIGN KEY (order_id) REFERENCES orders (id),
+                    FOREIGN KEY (operator_id) REFERENCES staff (telegram_id)
+                )
+            `);
 
-        // Таблица уведомлений для операторов
-        this.db.run(`
-            CREATE TABLE IF NOT EXISTS notifications (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                recipient_id INTEGER,
-                type TEXT,
-                title TEXT,
-                message TEXT,
-                order_id INTEGER,
-                is_read BOOLEAN DEFAULT 0,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (recipient_id) REFERENCES staff (telegram_id),
-                FOREIGN KEY (order_id) REFERENCES orders (id)
-            )
-        `);
+            await this.runQuery(`
+                CREATE TABLE IF NOT EXISTS notifications (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    recipient_id INTEGER,
+                    type TEXT,
+                    title TEXT,
+                    message TEXT,
+                    order_id INTEGER,
+                    is_read BOOLEAN DEFAULT 0,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (recipient_id) REFERENCES staff (telegram_id),
+                    FOREIGN KEY (order_id) REFERENCES orders (id)
+                )
+            `);
 
-        // Таблица сообщений чата между оператором и клиентом
-        this.db.run(`
-            CREATE TABLE IF NOT EXISTS order_messages (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                order_id INTEGER NOT NULL,
-                sender_id INTEGER NOT NULL,
-                sender_type TEXT NOT NULL, -- 'client' или 'operator'
-                message TEXT NOT NULL,
-                message_type TEXT DEFAULT 'text', -- 'text', 'status_change', 'system'
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (order_id) REFERENCES orders (id)
-            )
-        `);
+            await this.runQuery(`
+                CREATE TABLE IF NOT EXISTS order_messages (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    order_id INTEGER NOT NULL,
+                    sender_id INTEGER NOT NULL,
+                    sender_type TEXT NOT NULL, -- 'client' или 'operator'
+                    message TEXT NOT NULL,
+                    message_type TEXT DEFAULT 'text', -- 'text', 'status_change', 'system'
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (order_id) REFERENCES orders (id)
+                )
+            `);
 
-        console.log('✅ Таблицы базы данных созданы');
-        
-        // Автоматическая миграция - добавляем колонку source если её нет
-        this.runMigrations();
-        
-        // Добавляем главного админа (ваш ID)
-        this.initializeMainAdmin();
+            console.log('✅ Таблицы базы данных созданы');
+            
+            // Автоматическая миграция - добавляем колонку source если её нет
+            await this.runMigrations();
+            
+            // Добавляем главного админа (ваш ID)
+            await this.initializeMainAdmin();
+            
+        } catch (error) {
+            console.error('❌ Ошибка создания таблиц:', error);
+        }
     }
 
     // Автоматические миграции базы данных
