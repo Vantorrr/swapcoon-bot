@@ -870,8 +870,12 @@ function proceedToOrder() {
     // Очищаем предыдущие данные
     document.getElementById('wallet-address').value = '';
     document.getElementById('aml-result').innerHTML = '';
-    document.getElementById('create-order-button').disabled = true; // Пока не введен адрес
     currentAMLResult = null;
+    
+    // Запускаем первичную валидацию
+    setTimeout(() => {
+        validateWalletAddress();
+    }, 100);
 }
 
 // Обновление интерфейса в зависимости от типа валютной пары
@@ -1212,6 +1216,8 @@ function validateCryptoAddresses() {
     const toButton = document.getElementById('aml-check-to-button');
     const createButton = document.getElementById('create-order-button');
     
+    console.log('🔄 ВАЛИДАЦИЯ CRYPTO:', { fromAddress: fromAddress.length, createButton: !!createButton });
+    
     // Валидация адреса отправки
     if (fromButton) {
         fromButton.disabled = fromAddress.length <= 20;
@@ -1224,7 +1230,9 @@ function validateCryptoAddresses() {
     
     // Разрешаем создание заявки если основной адрес заполнен
     if (createButton) {
-        createButton.disabled = !(fromAddress.length > 20);
+        const shouldEnable = fromAddress.length > 20;
+        createButton.disabled = !shouldEnable;
+        console.log(`🔄 КНОПКА ЗАЯВКИ: ${shouldEnable ? 'АКТИВНА' : 'НЕАКТИВНА'} (адрес: ${fromAddress.length} символов)`);
     }
     
     // Обновляем сводку заказа
