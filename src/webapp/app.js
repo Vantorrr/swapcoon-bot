@@ -887,6 +887,21 @@ function proceedToOrder() {
     }, 100);
 }
 
+// Управление состоянием кнопки создания заявки
+function setCreateButtonState(enabled) {
+    const createButton = document.getElementById('create-order-button');
+    if (createButton) {
+        if (enabled) {
+            createButton.removeAttribute('disabled');
+            createButton.classList.remove('disabled');
+        } else {
+            createButton.setAttribute('disabled', 'disabled');
+            createButton.classList.add('disabled');
+        }
+        console.log(`🔄 КНОПКА ЗАЯВКИ: ${enabled ? '✅ АКТИВНА' : '❌ НЕАКТИВНА'}`);
+    }
+}
+
 // Обновление интерфейса в зависимости от типа валютной пары
 function updateOrderInterfaceForPairType(pairType) {
     const addressLabel = document.querySelector('label[for="wallet-address"]');
@@ -1205,11 +1220,9 @@ function validateWalletAddress() {
     if (!currentCalculation) {
         console.log('❌ validateWalletAddress: currentCalculation отсутствует, но проверяем базовую валидацию');
         // Базовая валидация без currentCalculation
-        if (createButton) {
-            const shouldEnable = address.length > 20;
-            createButton.disabled = !shouldEnable;
-            console.log(`🔄 БАЗОВАЯ ВАЛИДАЦИЯ КНОПКИ: ${shouldEnable ? 'АКТИВНА' : 'НЕАКТИВНА'} (адрес: ${address.length} символов)`);
-        }
+        const shouldEnable = address.length > 20;
+        setCreateButtonState(shouldEnable);
+        console.log(`🔄 БАЗОВАЯ ВАЛИДАЦИЯ: адрес ${address.length} символов`);
         return;
     }
     
@@ -1254,11 +1267,9 @@ function validateCryptoAddresses() {
     }
     
     // Разрешаем создание заявки если основной адрес заполнен
-    if (createButton) {
-        const shouldEnable = fromAddress.length > 20;
-        createButton.disabled = !shouldEnable;
-        console.log(`🔄 КНОПКА ЗАЯВКИ: ${shouldEnable ? 'АКТИВНА' : 'НЕАКТИВНА'} (адрес: ${fromAddress.length} символов)`);
-    }
+    const shouldEnable = fromAddress.length > 20;
+    setCreateButtonState(shouldEnable);
+    console.log(`🔄 CRYPTO ВАЛИДАЦИЯ: fromAddress ${fromAddress.length} символов`);
     
     // Обновляем сводку заказа
     if (currentCalculation) {
@@ -1285,7 +1296,7 @@ function validateFiatAccount() {
     
     if (createButton) {
         // Для фиатных пар требуется только номер счета или реквизиты (минимум 3 символа)
-        createButton.disabled = account.length < 3;
+        setCreateButtonState(account.length >= 3);
     }
     
     // Обновляем сводку заказа
@@ -1311,7 +1322,7 @@ function validateCryptoToFiatAddresses() {
     
     // Разрешаем создание заявки если оба поля заполнены
     if (createButton) {
-        createButton.disabled = !(cryptoAddress.length > 20 && receivingDetails.length >= 3);
+        setCreateButtonState(cryptoAddress.length > 20 && receivingDetails.length >= 3);
     }
     
     // Обновляем сводку заказа
@@ -1336,7 +1347,7 @@ function validateFiatToCryptoAddresses() {
     
     // Разрешаем создание заявки если адрес заполнен
     if (createButton) {
-        createButton.disabled = !(walletAddress.length > 20);
+        setCreateButtonState(walletAddress.length > 20);
     }
     
     // Обновляем сводку заказа
@@ -1587,10 +1598,10 @@ function displayAMLResult(result, addressType = 'to') {
             // Разрешаем создание только если оба адреса заполнены
             const fromAddress = document.getElementById('from-wallet-address')?.value?.trim() || '';
             const toAddress = document.getElementById('wallet-address')?.value?.trim() || '';
-            createButton.disabled = !(fromAddress.length > 20 && toAddress.length > 20);
+            setCreateButtonState(fromAddress.length > 20 && toAddress.length > 20);
         } else {
             // Для фиатных пар как раньше
-            createButton.disabled = false;
+            setCreateButtonState(true);
         }
     }
 
@@ -1699,7 +1710,7 @@ async function createOrder() {
     console.log('🔄 Создание заявки с userId:', currentUserId);
     
     const createButton = document.getElementById('create-order-button');
-    createButton.disabled = true;
+    setCreateButtonState(false);
     createButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Создаем заявку...';
     
     try {
@@ -1717,7 +1728,7 @@ async function createOrder() {
                  const message = isSpecialCase ? 'Введите реквизиты для получения' : 'Введите номер счета';
                 
                 showNotification(message, 'warning');
-                createButton.disabled = false;
+                setCreateButtonState(true);
                 createButton.innerHTML = '<i class="fas fa-check"></i> Создать заявку';
                 return;
             }
@@ -1728,7 +1739,7 @@ async function createOrder() {
             const address = document.getElementById('wallet-address').value.trim();
             if (!address) {
                 showNotification('Введите адрес кошелька', 'warning');
-                createButton.disabled = false;
+                setCreateButtonState(true);
                 createButton.innerHTML = '<i class="fas fa-check"></i> Создать заявку';
                 return;
             }
@@ -1772,14 +1783,14 @@ async function createOrder() {
             
             if (!cryptoAddress) {
                 showNotification('Введите криптоадрес', 'warning');
-                createButton.disabled = false;
+                setCreateButtonState(true);
                 createButton.innerHTML = '<i class="fas fa-check"></i> Создать заявку';
                 return;
             }
             
             if (!receivingDetails) {
                 showNotification('Введите реквизиты для получения', 'warning');
-                createButton.disabled = false;
+                setCreateButtonState(true);
                 createButton.innerHTML = '<i class="fas fa-check"></i> Создать заявку';
                 return;
             }
@@ -1806,7 +1817,7 @@ async function createOrder() {
             
             if (!walletAddress) {
                 showNotification('Введите адрес кошелька', 'warning');
-                createButton.disabled = false;
+                setCreateButtonState(true);
                 createButton.innerHTML = '<i class="fas fa-check"></i> Создать заявку';
                 return;
             }
@@ -1931,7 +1942,7 @@ async function createOrder() {
         console.error('❌ Ошибка создания заявки:', error);
         showNotification('Ошибка создания заявки. Попробуйте позже.', 'error');
     } finally {
-        createButton.disabled = false;
+        setCreateButtonState(true);
         createButton.innerHTML = '<i class="fas fa-check"></i> Создать заявку';
     }
 }
