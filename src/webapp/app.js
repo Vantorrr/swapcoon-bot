@@ -277,12 +277,47 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('🎯 Тестовая кнопка добавлена в правый верхний угол');
     };
     
+    // 🔧 ГЛОБАЛЬНАЯ ФУНКЦИЯ ДЛЯ ТЕСТИРОВАНИЯ ИНТЕРФЕЙСА
+    window.testInterface = function() {
+        console.log('🔧 ТЕСТИРОВАНИЕ ИНТЕРФЕЙСА ЗАЯВКИ');
+        
+        if (!currentCalculation) {
+            console.log('🔧 Создаем тестовый currentCalculation для USDT → ARS');
+            currentCalculation = {
+                fromAmount: 500,
+                toAmount: 566666.67,
+                exchangeRate: 1133.33,
+                fee: 0,
+                fromCurrency: 'USDT',
+                toCurrency: 'ARS'
+            };
+        }
+        
+        console.log('🔧 currentCalculation:', currentCalculation);
+        const pairType = getPairType(currentCalculation.fromCurrency, currentCalculation.toCurrency);
+        console.log('🔧 Определенный тип пары:', pairType);
+        
+        console.log('🔧 Вызываем updateOrderInterfaceForPairType...');
+        updateOrderInterfaceForPairType(pairType);
+        
+        setTimeout(() => {
+            const receivingField = document.getElementById('receiving-details');
+            console.log('🔧 Поле для реквизитов создано?', !!receivingField);
+            if (receivingField) {
+                console.log('🔧 ✅ Поле найдено:', receivingField);
+            } else {
+                console.log('🔧 ❌ Поле НЕ НАЙДЕНО');
+            }
+        }, 200);
+    };
+    
     console.log('🧪 Доступна команда: testCreateOrder() - для тестирования создания заявки из консоли');
     console.log('🔧 Доступна команда: forceBindCreateButton() - для принудительной привязки обработчика');
     console.log('🤖 Доступна команда: simulateClick() - для программного клика по кнопке');
     console.log('🔍 Доступна команда: checkOverlappingElements() - для проверки перекрывающих элементов');
     console.log('💀 Доступна команда: nuclearBind() - для ядерной привязки обработчика (делает кнопку КРАСНОЙ)');
     console.log('🎯 Доступна команда: createTestButton() - создать тестовую кнопку в углу экрана');
+    console.log('🔧 Доступна команда: testInterface() - протестировать создание интерфейса для crypto-to-fiat');
 });
 
 // Инициализация Telegram Web App
@@ -1159,16 +1194,31 @@ function setCreateButtonState(enabled) {
 
 // Обновление интерфейса в зависимости от типа валютной пары
 function updateOrderInterfaceForPairType(pairType) {
+    console.log('🔧 ========== ОБНОВЛЕНИЕ ИНТЕРФЕЙСА ==========');
+    console.log('🔧 Тип пары:', pairType);
+    
     const addressLabel = document.querySelector('label[for="wallet-address"]');
     const addressInput = document.getElementById('wallet-address');
     const amlSection = document.getElementById('aml-section');
     const inputHelp = document.querySelector('.input-help');
     
+    console.log('🔧 Найденные элементы:');
+    console.log('🔧 addressLabel:', !!addressLabel);
+    console.log('🔧 addressInput:', !!addressInput);
+    console.log('🔧 amlSection:', !!amlSection);
+    console.log('🔧 inputHelp:', !!inputHelp);
+    
     // Удаляем дополнительные поля если они есть
     const toAddressDiv = document.getElementById('to-address-input');
     const receivingDetailsDiv = document.getElementById('receiving-details-input');
-    if (toAddressDiv) toAddressDiv.remove();
-    if (receivingDetailsDiv) receivingDetailsDiv.remove();
+    if (toAddressDiv) {
+        console.log('🔧 Удаляем старое поле to-address-input');
+        toAddressDiv.remove();
+    }
+    if (receivingDetailsDiv) {
+        console.log('🔧 Удаляем старое поле receiving-details-input');
+        receivingDetailsDiv.remove();
+    }
     
     if (pairType === 'crypto') {
         // Криптовалютная пара (BTC → ETH) - два адреса + AML для каждого
@@ -1229,9 +1279,18 @@ function updateOrderInterfaceForPairType(pairType) {
         
     } else if (pairType === 'crypto-to-fiat') {
         // Смешанная пара (USDT → RUB) - криптоадрес + AML, затем реквизиты
-        if (addressLabel) addressLabel.textContent = 'Адрес криптокошелька для отправки';
-        if (addressInput) addressInput.placeholder = 'Введите адрес USDT кошелька';
+        console.log('🔧 ========== CRYPTO-TO-FIAT ИНТЕРФЕЙС ==========');
+        
+        if (addressLabel) {
+            addressLabel.textContent = 'Адрес криптокошелька для отправки';
+            console.log('🔧 ✅ Установлен текст addressLabel');
+        }
+        if (addressInput) {
+            addressInput.placeholder = 'Введите адрес USDT кошелька';
+            console.log('🔧 ✅ Установлен placeholder addressInput');
+        }
         if (amlSection) {
+            console.log('🔧 ✅ amlSection найдена, создаем поле для реквизитов...');
             amlSection.style.display = 'block';
             
             // Добавляем поле для реквизитов получения
@@ -1250,7 +1309,11 @@ function updateOrderInterfaceForPairType(pairType) {
                 </div>
             `;
             receivingDetailsDiv.id = 'receiving-details-input';
+            
+            console.log('🔧 Создано поле receivingDetailsDiv:', receivingDetailsDiv);
+            console.log('🔧 Вставляем перед amlSection...');
             amlSection.parentNode.insertBefore(receivingDetailsDiv, amlSection);
+            console.log('🔧 ✅ Поле для реквизитов добавлено!');
             
             // AML секция только для криптоадреса
             amlSection.innerHTML = `
@@ -1273,9 +1336,15 @@ function updateOrderInterfaceForPairType(pairType) {
                 if (cryptoButton) cryptoButton.addEventListener('click', () => performAMLCheck('crypto'));
                 if (cryptoInput) cryptoInput.addEventListener('input', () => validateCryptoToFiatAddresses());
                 if (receivingInput) receivingInput.addEventListener('input', () => validateCryptoToFiatAddresses());
+                console.log('🔧 ✅ Обработчики событий привязаны');
             }, 100);
-                 }
-         if (inputHelp) inputHelp.textContent = 'Сначала укажите криптоадрес, затем реквизиты получения';
+        } else {
+            console.log('🔧 ❌ amlSection НЕ НАЙДЕНА! Не можем создать поле для реквизитов');
+        }
+        if (inputHelp) {
+            inputHelp.textContent = 'Сначала укажите криптоадрес, затем реквизиты получения';
+            console.log('🔧 ✅ Установлен текст inputHelp');
+        }
          
      } else if (pairType === 'fiat-to-crypto') {
          // Смешанная пара (RUB → USDT) - только кошелек получения + AML
