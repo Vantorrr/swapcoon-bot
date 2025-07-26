@@ -1221,12 +1221,22 @@ function updateOrderInterfaceForPairType(pairType) {
     }
     
     if (pairType === 'crypto') {
-        // Криптовалютная пара (BTC → ETH) - два адреса + AML для каждого
-        if (addressLabel) addressLabel.textContent = 'Адреса кошельков';
-        if (addressInput) addressInput.placeholder = 'Введите адрес отправки';
+        // Криптовалютная пара (BTC → ETH) - два адреса БЕЗ AML!
+        console.log('🔧 ========== CRYPTO БЕЗ AML ==========');
+        
+        if (addressLabel) {
+            addressLabel.textContent = 'Адрес кошелька для отправки';
+            console.log('🔧 ✅ Установлен текст addressLabel');
+        }
+        if (addressInput) {
+            addressInput.placeholder = 'Введите адрес отправки';
+            console.log('🔧 ✅ Установлен placeholder addressInput');
+        }
         if (amlSection) {
+            console.log('🔧 ✅ amlSection найдена, создаем поле для адреса получения...');
             amlSection.style.display = 'block';
-            // Добавляем второе поле для адреса получения
+            
+            // Добавляем второе поле для адреса получения БЕЗ AML
             const toAddressDiv = document.createElement('div');
             toAddressDiv.className = 'address-input';
             toAddressDiv.innerHTML = `
@@ -1244,42 +1254,30 @@ function updateOrderInterfaceForPairType(pairType) {
             toAddressDiv.id = 'to-address-input';
             amlSection.parentNode.insertBefore(toAddressDiv, amlSection);
             
-            // AML секция для двух адресов
-            amlSection.innerHTML = `
-                <div class="aml-checks">
-                    <h4>Проверка AML</h4>
-                    <button class="secondary-button" id="aml-check-from-button" disabled>
-                        <i class="fas fa-shield-alt"></i>
-                        Проверить адрес отправки
-                    </button>
-                    <div class="aml-result" id="aml-from-result"></div>
-                    
-                    <button class="secondary-button" id="aml-check-to-button" disabled>
-                        <i class="fas fa-shield-alt"></i>
-                        Проверить адрес получения
-                    </button>
-                    <div class="aml-result" id="aml-to-result"></div>
-                </div>
-            `;
+            // УБИРАЕМ AML СЕКЦИЮ ПОЛНОСТЬЮ!
+            amlSection.innerHTML = '';
+            amlSection.style.display = 'none';
             
-            // Добавляем обработчики
+            // Добавляем обработчики БЕЗ AML
             setTimeout(() => {
-                const fromButton = document.getElementById('aml-check-from-button');
-                const toButton = document.getElementById('aml-check-to-button');
                 const fromInput = document.getElementById('wallet-address');
                 const toInput = document.getElementById('to-wallet-address');
                 
-                if (fromButton) fromButton.addEventListener('click', () => performAMLCheck('from'));
-                if (toButton) toButton.addEventListener('click', () => performAMLCheck('to'));
                 if (fromInput) fromInput.addEventListener('input', () => validateCryptoAddresses());
                 if (toInput) toInput.addEventListener('input', () => validateCryptoAddresses());
+                console.log('🔧 ✅ Обработчики событий привязаны БЕЗ AML');
             }, 100);
+        } else {
+            console.log('🔧 ❌ amlSection НЕ НАЙДЕНА!');
         }
-        if (inputHelp) inputHelp.textContent = 'Проверьте правильность адресов перед отправкой';
+        if (inputHelp) {
+            inputHelp.textContent = 'Введите оба адреса для обмена';
+            console.log('🔧 ✅ Установлен текст inputHelp');
+        }
         
     } else if (pairType === 'crypto-to-fiat') {
-        // Смешанная пара (USDT → RUB) - криптоадрес + AML, затем реквизиты
-        console.log('🔧 ========== CRYPTO-TO-FIAT ИНТЕРФЕЙС ==========');
+        // Смешанная пара (USDT → RUB) - криптоадрес + реквизиты БЕЗ AML!
+        console.log('🔧 ========== CRYPTO-TO-FIAT БЕЗ AML ==========');
         
         if (addressLabel) {
             addressLabel.textContent = 'Адрес криптокошелька для отправки';
@@ -1315,66 +1313,58 @@ function updateOrderInterfaceForPairType(pairType) {
             amlSection.parentNode.insertBefore(receivingDetailsDiv, amlSection);
             console.log('🔧 ✅ Поле для реквизитов добавлено!');
             
-            // AML секция только для криптоадреса
-            amlSection.innerHTML = `
-                <div class="aml-checks">
-                    <h4>Проверка AML криптоадреса</h4>
-                    <button class="secondary-button" id="aml-check-crypto-button" disabled>
-                        <i class="fas fa-shield-alt"></i>
-                        Проверить криптоадрес на AML
-                    </button>
-                    <div class="aml-result" id="aml-crypto-result"></div>
-                </div>
-            `;
+            // УБИРАЕМ AML СЕКЦИЮ ПОЛНОСТЬЮ!
+            amlSection.innerHTML = '';
+            amlSection.style.display = 'none';
             
-            // Добавляем обработчики
+            // Добавляем обработчики БЕЗ AML
             setTimeout(() => {
-                const cryptoButton = document.getElementById('aml-check-crypto-button');
                 const cryptoInput = document.getElementById('wallet-address');
                 const receivingInput = document.getElementById('receiving-details');
                 
-                if (cryptoButton) cryptoButton.addEventListener('click', () => performAMLCheck('crypto'));
                 if (cryptoInput) cryptoInput.addEventListener('input', () => validateCryptoToFiatAddresses());
                 if (receivingInput) receivingInput.addEventListener('input', () => validateCryptoToFiatAddresses());
-                console.log('🔧 ✅ Обработчики событий привязаны');
+                console.log('🔧 ✅ Обработчики событий привязаны БЕЗ AML');
             }, 100);
         } else {
             console.log('🔧 ❌ amlSection НЕ НАЙДЕНА! Не можем создать поле для реквизитов');
         }
         if (inputHelp) {
-            inputHelp.textContent = 'Сначала укажите криптоадрес, затем реквизиты получения';
+            inputHelp.textContent = 'Укажите адрес отправки и реквизиты получения';
             console.log('🔧 ✅ Установлен текст inputHelp');
         }
          
      } else if (pairType === 'fiat-to-crypto') {
-         // Смешанная пара (RUB → USDT) - только кошелек получения + AML
-         if (addressLabel) addressLabel.textContent = 'Кошелек для получения криптовалюты';
-         if (addressInput) addressInput.placeholder = `Введите адрес ${currentCalculation?.toCurrency || 'USDT'} кошелька`;
+         // Смешанная пара (RUB → USDT) - только кошелек получения БЕЗ AML!
+         console.log('🔧 ========== FIAT-TO-CRYPTO БЕЗ AML ==========');
+         
+         if (addressLabel) {
+             addressLabel.textContent = 'Кошелек для получения криптовалюты';
+             console.log('🔧 ✅ Установлен текст addressLabel');
+         }
+         if (addressInput) {
+             addressInput.placeholder = `Введите адрес ${currentCalculation?.toCurrency || 'USDT'} кошелька`;
+             console.log('🔧 ✅ Установлен placeholder addressInput');
+         }
          if (amlSection) {
-             amlSection.style.display = 'block';
+             console.log('🔧 ✅ amlSection найдена, убираем AML...');
              
-             // AML секция только для кошелька получения
-             amlSection.innerHTML = `
-                 <div class="aml-checks">
-                     <h4>Проверка AML кошелька</h4>
-                     <button class="secondary-button" id="aml-check-wallet-button" disabled>
-                         <i class="fas fa-shield-alt"></i>
-                         Проверить кошелек на AML
-                     </button>
-                     <div class="aml-result" id="aml-wallet-result"></div>
-                 </div>
-             `;
+             // УБИРАЕМ AML СЕКЦИЮ ПОЛНОСТЬЮ!
+             amlSection.innerHTML = '';
+             amlSection.style.display = 'none';
              
-             // Добавляем обработчики
+             // Добавляем обработчики БЕЗ AML
              setTimeout(() => {
-                 const walletButton = document.getElementById('aml-check-wallet-button');
                  const walletInput = document.getElementById('wallet-address');
                  
-                 if (walletButton) walletButton.addEventListener('click', () => performAMLCheck('wallet'));
                  if (walletInput) walletInput.addEventListener('input', () => validateFiatToCryptoAddresses());
+                 console.log('🔧 ✅ Обработчики событий привязаны БЕЗ AML');
              }, 100);
          }
-         if (inputHelp) inputHelp.textContent = 'Укажите адрес кошелька для получения криптовалюты';
+         if (inputHelp) {
+             inputHelp.textContent = 'Укажите адрес кошелька для получения криптовалюты';
+             console.log('🔧 ✅ Установлен текст inputHelp');
+         }
          
           } else {
          // Фиатная пара - проверяем специальные случаи
@@ -1576,31 +1566,17 @@ function validateWalletAddress() {
     }
 }
 
-// Валидация криптовалютных адресов (два адреса)
+// Валидация криптовалютных адресов (два адреса) БЕЗ AML!
 function validateCryptoAddresses() {
     const fromAddress = document.getElementById('wallet-address')?.value?.trim() || ''; // адрес отправки
     const toAddress = document.getElementById('to-wallet-address')?.value?.trim() || ''; // адрес получения
     
-    const fromButton = document.getElementById('aml-check-from-button');
-    const toButton = document.getElementById('aml-check-to-button');
-    const createButton = document.getElementById('create-order-button');
+    console.log('🔄 ВАЛИДАЦИЯ CRYPTO БЕЗ AML:', { fromAddress: fromAddress.length, toAddress: toAddress.length });
     
-    console.log('🔄 ВАЛИДАЦИЯ CRYPTO:', { fromAddress: fromAddress.length, createButton: !!createButton });
-    
-    // Валидация адреса отправки
-    if (fromButton) {
-        fromButton.disabled = fromAddress.length <= 20;
-    }
-    
-    // Валидация адреса получения
-    if (toButton) {
-        toButton.disabled = toAddress.length <= 20;
-    }
-    
-    // Разрешаем создание заявки если основной адрес заполнен
-    const shouldEnable = fromAddress.length > 20;
+    // Разрешаем создание заявки если оба адреса заполнены (минимум 10 символов для адреса)
+    const shouldEnable = fromAddress.length >= 10 && toAddress.length >= 10;
     setCreateButtonState(shouldEnable);
-    console.log(`🔄 CRYPTO ВАЛИДАЦИЯ: fromAddress ${fromAddress.length} символов`);
+    console.log(`🔄 CRYPTO ВАЛИДАЦИЯ БЕЗ AML: ${shouldEnable ? '✅ АКТИВНА' : '❌ НЕАКТИВНА'}`);
     
     // Обновляем сводку заказа
     if (currentCalculation) {
@@ -1636,25 +1612,17 @@ function validateFiatAccount() {
     }
 }
 
-// Валидация смешанных пар (крипто → фиат)
+// Валидация смешанных пар (крипто → фиат) БЕЗ AML!
 function validateCryptoToFiatAddresses() {
     const cryptoAddress = document.getElementById('wallet-address')?.value?.trim() || ''; // USDT адрес
     const receivingDetails = document.getElementById('receiving-details')?.value?.trim() || ''; // реквизиты получения
     
-    const cryptoButton = document.getElementById('aml-check-crypto-button');
-    const createButton = document.getElementById('create-order-button');
+    console.log('🔄 ВАЛИДАЦИЯ CRYPTO-TO-FIAT БЕЗ AML:', { cryptoAddress: cryptoAddress.length, receivingDetails: receivingDetails.length });
     
-    console.log('🔄 ВАЛИДАЦИЯ CRYPTO-TO-FIAT:', { cryptoAddress: cryptoAddress.length, receivingDetails: receivingDetails.length });
-    
-    // Валидация криптоадреса для AML
-    if (cryptoButton) {
-        cryptoButton.disabled = cryptoAddress.length <= 20;
-    }
-    
-    // Разрешаем создание заявки если оба поля заполнены
-    if (createButton) {
-        setCreateButtonState(cryptoAddress.length > 20 && receivingDetails.length >= 3);
-    }
+    // Разрешаем создание заявки если оба поля заполнены (адрес минимум 10 символов, реквизиты минимум 3)
+    const shouldEnable = cryptoAddress.length >= 10 && receivingDetails.length >= 3;
+    setCreateButtonState(shouldEnable);
+    console.log(`🔄 CRYPTO-TO-FIAT ВАЛИДАЦИЯ БЕЗ AML: ${shouldEnable ? '✅ АКТИВНА' : '❌ НЕАКТИВНА'}`);
     
     // Обновляем сводку заказа
     if (currentCalculation) {
@@ -1662,24 +1630,16 @@ function validateCryptoToFiatAddresses() {
     }
 }
 
-// Валидация смешанных пар (фиат → крипто)
+// Валидация смешанных пар (фиат → крипто) БЕЗ AML!
 function validateFiatToCryptoAddresses() {
     const walletAddress = document.getElementById('wallet-address')?.value?.trim() || ''; // адрес кошелька для получения крипты
     
-    const walletButton = document.getElementById('aml-check-wallet-button');
-    const createButton = document.getElementById('create-order-button');
+    console.log('🔄 ВАЛИДАЦИЯ FIAT-TO-CRYPTO БЕЗ AML:', { walletAddress: walletAddress.length });
     
-    console.log('🔄 ВАЛИДАЦИЯ FIAT-TO-CRYPTO:', { walletAddress: walletAddress.length });
-    
-    // Валидация адреса кошелька для AML
-    if (walletButton) {
-        walletButton.disabled = walletAddress.length <= 20;
-    }
-    
-    // Разрешаем создание заявки если адрес заполнен
-    if (createButton) {
-        setCreateButtonState(walletAddress.length > 20);
-    }
+    // Разрешаем создание заявки если адрес заполнен (минимум 10 символов)
+    const shouldEnable = walletAddress.length >= 10;
+    setCreateButtonState(shouldEnable);
+    console.log(`🔄 FIAT-TO-CRYPTO ВАЛИДАЦИЯ БЕЗ AML: ${shouldEnable ? '✅ АКТИВНА' : '❌ НЕАКТИВНА'}`);
     
     // Обновляем сводку заказа
     if (currentCalculation) {
@@ -2246,26 +2206,34 @@ async function createOrder() {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         
-        const data = await response.json();
-        console.log('📋 Данные ответа:', data);
+            const data = await response.json();
+    console.log('📋 Данные ответа:', data);
+    console.log('📋 data.data:', data.data);
+    console.log('📋 data.data.id:', data.data.id);
+    console.log('📋 data.data.orderId:', data.data.orderId);
+    
+    if (data.success) {
+        console.log('🚀 ========== ЗАЯВКА УСПЕШНО СОЗДАНА ==========');
+        console.log('✅ Заявка успешно создана:', data.data);
         
-        if (data.success) {
-            console.log('🚀 ========== ЗАЯВКА УСПЕШНО СОЗДАНА ==========');
-            console.log('✅ Заявка успешно создана:', data.data);
-            showNotification(`Заявка #${data.data.id} успешно создана!`, 'success');
+        // Используем id или orderId как fallback
+        const orderIdToShow = data.data.id || data.data.orderId || 'неизвестно';
+        console.log('📋 ID для отображения:', orderIdToShow);
+        
+        showNotification(`Заявка #${orderIdToShow} успешно создана!`, 'success');
             
             // Показываем информацию о заявке
             try {
                 if (tg && typeof tg.showAlert === 'function') {
-                    tg.showAlert(`Заявка #${data.data.id} создана!\n\nОператор свяжется с вами в течение 15 минут.`);
+                    tg.showAlert(`Заявка #${orderIdToShow} создана!\n\nОператор свяжется с вами в течение 15 минут.`);
                 } else {
                     // Если нет Telegram, показываем обычное уведомление
-                    alert(`Заявка #${data.data.id} создана!\n\nОператор свяжется с вами в течение 15 минут.`);
+                    alert(`Заявка #${orderIdToShow} создана!\n\nОператор свяжется с вами в течение 15 минут.`);
                 }
             } catch (alertError) {
                 console.error('❌ Ошибка показа уведомления:', alertError);
                 // Fallback уведомление
-                alert(`Заявка #${data.data.id} создана!\n\nОператор свяжется с вами в течение 15 минут.`);
+                alert(`Заявка #${orderIdToShow} создана!\n\nОператор свяжется с вами в течение 15 минут.`);
             }
             
             // Возвращаемся на главный экран

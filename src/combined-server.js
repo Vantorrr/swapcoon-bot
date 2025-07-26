@@ -494,13 +494,15 @@ app.post('/api/create-order', async (req, res) => {
     try {
         console.log('📝 Создание заявки (комбинированный режим):', req.body);
         
-        // Имитация успешного создания заявки
-        const orderId = Date.now();
+        // Генерируем уникальный ID заявки
+        const orderId = `EM${Date.now()}${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
+        console.log('📝 Сгенерированный ID заявки:', orderId);
         
         res.json({ 
             success: true, 
             data: {
-                orderId: orderId,
+                id: orderId,        // ← ИСПРАВЛЕНО: теперь "id" вместо "orderId"
+                orderId: orderId,   // ← оставляем для совместимости
                 status: 'pending',
                 message: 'Заявка создана'
             }
