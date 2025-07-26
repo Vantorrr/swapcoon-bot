@@ -277,9 +277,9 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('🎯 Тестовая кнопка добавлена в правый верхний угол');
     };
     
-    // 🔧 ГЛОБАЛЬНАЯ ФУНКЦИЯ ДЛЯ ТЕСТИРОВАНИЯ ИНТЕРФЕЙСА
+    // 🔧 ГЛОБАЛЬНАЯ ФУНКЦИЯ ДЛЯ ТЕСТИРОВАНИЯ ИНТЕРФЕЙСА БЕЗ AML
     window.testInterface = function() {
-        console.log('🔧 ТЕСТИРОВАНИЕ ИНТЕРФЕЙСА ЗАЯВКИ');
+        console.log('🔧 ТЕСТИРОВАНИЕ ИНТЕРФЕЙСА ЗАЯВКИ БЕЗ AML');
         
         if (!currentCalculation) {
             console.log('🔧 Создаем тестовый currentCalculation для USDT → ARS');
@@ -297,16 +297,29 @@ document.addEventListener('DOMContentLoaded', function() {
         const pairType = getPairType(currentCalculation.fromCurrency, currentCalculation.toCurrency);
         console.log('🔧 Определенный тип пары:', pairType);
         
-        console.log('🔧 Вызываем updateOrderInterfaceForPairType...');
+        console.log('🔧 Вызываем updateOrderInterfaceForPairType БЕЗ AML...');
         updateOrderInterfaceForPairType(pairType);
         
         setTimeout(() => {
             const receivingField = document.getElementById('receiving-details');
+            const amlSection = document.getElementById('aml-section');
             console.log('🔧 Поле для реквизитов создано?', !!receivingField);
+            console.log('🔧 AML секция скрыта?', amlSection ? amlSection.style.display === 'none' : 'не найдена');
+            
             if (receivingField) {
                 console.log('🔧 ✅ Поле найдено:', receivingField);
+                receivingField.value = 'test-receiving-details';
+                receivingField.dispatchEvent(new Event('input'));
+                console.log('🔧 ✅ Заполнили тестовые реквизиты');
             } else {
                 console.log('🔧 ❌ Поле НЕ НАЙДЕНО');
+            }
+            
+            // Проверяем активацию кнопки
+            const createButton = document.getElementById('create-order-button');
+            if (createButton) {
+                console.log('🔧 Кнопка заявки disabled?', createButton.disabled);
+                console.log('🔧 Кнопка заявки className:', createButton.className);
             }
         }, 200);
     };
@@ -317,7 +330,8 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('🔍 Доступна команда: checkOverlappingElements() - для проверки перекрывающих элементов');
     console.log('💀 Доступна команда: nuclearBind() - для ядерной привязки обработчика (делает кнопку КРАСНОЙ)');
     console.log('🎯 Доступна команда: createTestButton() - создать тестовую кнопку в углу экрана');
-    console.log('🔧 Доступна команда: testInterface() - протестировать создание интерфейса для crypto-to-fiat');
+    console.log('🔧 Доступна команда: testInterface() - протестировать создание интерфейса БЕЗ AML');
+    console.log('💥 AML ПРОВЕРКИ ПОЛНОСТЬЮ УДАЛЕНЫ - теперь только простые поля ввода!');
 });
 
 // Инициализация Telegram Web App
