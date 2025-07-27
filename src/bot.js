@@ -176,13 +176,26 @@ bot.command('init_rates_table', async (ctx) => {
     }
     
     try {
-        if (!googleSheetsManager || !googleSheetsManager.isReady()) {
-            return await ctx.reply('❌ Google Sheets не настроен. Настройте сначала интеграцию.');
+        await ctx.reply('🔄 Создаю лист курсов в существующей таблице...');
+        
+        // Проверяем доступность Google Sheets
+        const sheetsManager = googleSheetsManager || global.googleSheetsManager;
+        if (!sheetsManager) {
+            return await ctx.reply('❌ Google Sheets Manager не найден. Перезапустите бота.');
         }
         
-        await ctx.reply('🔄 Инициализирую таблицу курсов...');
+        // Сначала создаем лист Manual_Rates если его нет
+        try {
+            await sheetsManager.createWorksheet('Manual_Rates', 
+                ['Пара валют', 'Курс продажи', 'Курс покупки', 'Спред (%)', 'Последнее обновление', 'Статус', 'Источник', 'Комментарий']);
+            console.log('✅ Лист Manual_Rates создан');
+        } catch (error) {
+            // Лист уже существует - это нормально
+            console.log('ℹ️ Лист Manual_Rates уже существует или ошибка:', error.message);
+        }
         
-        const success = await googleSheetsManager.initializeRatesTable();
+        // Теперь заполняем данными
+        const success = await sheetsManager.initializeRatesTable();
         
         if (success) {
             await ctx.reply(
@@ -197,7 +210,7 @@ bot.command('init_rates_table', async (ctx) => {
                 '3. Измените статус на "MANUAL"\n' +
                 '4. Укажите курсы продажи и покупки\n' +
                 '5. Бот подхватит изменения через 30 сек\n\n' +
-                `🔗 <a href="${googleSheetsManager.getSpreadsheetUrl()}">Открыть таблицу</a>`,
+                `🔗 <a href="${sheetsManager.getSpreadsheetUrl()}">Открыть таблицу</a>`,
                 { 
                     parse_mode: 'HTML',
                     disable_web_page_preview: true
@@ -2928,14 +2941,14 @@ bot.on('callback_query:data', async (ctx) => {
             
             if (googleSheetsManager && googleSheetsManager.isReady()) {
                 sheetsKeyboard
+                    .text('💱 Создать лист курсов', 'admin_create_rates_sheet')
                     .text('📊 Экспорт всех данных', 'admin_sheets_export_all')
+                    .row()
                     .text('📋 Экспорт заказов', 'admin_sheets_export_orders')
-                    .row()
                     .text('👥 Экспорт операторов', 'admin_sheets_export_staff')
-                    .text('📈 Экспорт статистики', 'admin_sheets_export_stats')
                     .row()
+                    .text('📈 Экспорт статистики', 'admin_sheets_export_stats')
                     .text('👤 Экспорт пользователей', 'admin_sheets_export_users')
-                    .text('🛡️ Экспорт AML', 'admin_sheets_export_aml')
                     .row();
                 
                 if (googleSheetsManager.getSpreadsheetUrl()) {
@@ -3032,6 +3045,65 @@ bot.on('callback_query:data', async (ctx) => {
                     parse_mode: 'HTML',
                     reply_markup: new InlineKeyboard()
                         .text('🔙 Назад', 'admin_google_sheets')
+                }
+            );
+        }
+    }
+
+    // 💱 СОЗДАНИЕ ЛИСТА КУРСОВ
+    if (data === 'admin_create_rates_sheet') {
+        if (!(await isAdmin(userId))) return ctx.answerCallbackQuery('❌ Нет прав');
+        
+        await ctx.answerCallbackQuery('💱 Создаю лист курсов...');
+        
+        try {
+            const sheetsManager = googleSheetsManager || global.googleSheetsManager;
+            if (!sheetsManager) {
+                return await ctx.reply('❌ Google Sheets Manager не найден');
+            }
+            
+            // Создаем лист Manual_Rates
+            try {
+                await sheetsManager.createWorksheet('Manual_Rates', 
+                    ['Пара валют', 'Курс продажи', 'Курс покупки', 'Спред (%)', 'Последнее обновление', 'Статус', 'Источник', 'Комментарий']);
+                console.log('✅ Лист Manual_Rates создан');
+            } catch (error) {
+                // Лист уже существует - это нормально
+                console.log('ℹ️ Лист Manual_Rates уже существует:', error.message);
+            }
+            
+            // Заполняем данными
+            const success = await sheetsManager.initializeRatesTable();
+            
+            if (success) {
+                await ctx.reply(
+                    `✅ <b>ЛИСТ КУРСОВ СОЗДАН!</b>\n\n` +
+                    `📊 Добавлен лист "Manual_Rates" с 21 валютной парой\n\n` +
+                    `💡 <b>Как использовать:</b>\n` +
+                    `1. Найдите лист "Manual_Rates" в таблице\n` +
+                    `2. Измените статус на "MANUAL"\n` +
+                    `3. Укажите курсы продажи и покупки\n` +
+                    `4. Бот подхватит изменения через 30 сек\n\n` +
+                    `🔗 <a href="${sheetsManager.getSpreadsheetUrl()}">Открыть таблицу</a>`,
+                    { 
+                        parse_mode: 'HTML',
+                        disable_web_page_preview: true,
+                        reply_markup: new InlineKeyboard().text('🔙 Назад к Google Sheets', 'admin_sheets')
+                    }
+                );
+            } else {
+                await ctx.reply('❌ Ошибка создания листа курсов', {
+                    reply_markup: new InlineKeyboard().text('🔙 Назад', 'admin_sheets')
+                });
+            }
+            
+        } catch (error) {
+            console.error('Ошибка создания листа курсов:', error);
+            await ctx.reply(
+                `❌ <b>ОШИБКА</b>\n\n${error.message}`,
+                { 
+                    parse_mode: 'HTML',
+                    reply_markup: new InlineKeyboard().text('🔙 Назад', 'admin_sheets')
                 }
             );
         }
