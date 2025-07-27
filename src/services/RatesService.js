@@ -75,6 +75,14 @@ class RatesService {
             const rates = await this.fetchFreshRates();
             
             // Применяем ручные настройки
+            console.log(`🔍 ПЕРЕД ПРИМЕНЕНИЕМ НАСТРОЕК: ${rates.length} курсов`);
+            console.log(`🔍 Google Sheets в памяти: ${this.googleSheetsRates.size} курсов`);
+            if (this.googleSheetsRates.size > 0) {
+                console.log('🔍 Курсы в Google Sheets:');
+                for (const [pair, rate] of this.googleSheetsRates.entries()) {
+                    console.log(`   ${pair}: продажа ${rate.sellRate}, покупка ${rate.buyRate}`);
+                }
+            }
             const adjustedRates = this.applyManualSettings(rates);
             
             // Сохраняем в кэш
@@ -511,11 +519,22 @@ class RatesService {
             // Читаем ручные курсы из таблицы
             const manualRates = await global.googleSheetsManager.readManualRatesFromTable();
             
+            console.log(`📊 РЕЗУЛЬТАТ ЧТЕНИЯ: получено ${manualRates ? manualRates.length : 0} курсов`);
+            if (manualRates && manualRates.length > 0) {
+                console.log('📊 ПОЛУЧЕННЫЕ КУРСЫ:');
+                manualRates.forEach(rate => {
+                    console.log(`   Пара: "${rate.pair}", продажа: ${rate.sellRate}, покупка: ${rate.buyRate}`);
+                });
+            }
+            
             if (manualRates && manualRates.length > 0) {
                 // Обновляем курсы из Google Sheets
+                console.log('🔄 ОЧИЩАЕМ старые курсы...');
                 this.googleSheetsRates.clear();
                 
+                console.log('💾 СОХРАНЯЕМ новые курсы:');
                 for (const rate of manualRates) {
+                    console.log(`   Сохраняем: "${rate.pair}" -> продажа: ${rate.sellRate}, покупка: ${rate.buyRate}`);
                     this.googleSheetsRates.set(rate.pair, {
                         sellRate: rate.sellRate,
                         buyRate: rate.buyRate,
@@ -523,6 +542,9 @@ class RatesService {
                         comment: rate.comment
                     });
                 }
+                
+                console.log(`✅ СОХРАНЕНО ${this.googleSheetsRates.size} курсов в памяти`);
+                console.log('📋 СПИСОК КЛЮЧЕЙ:', Array.from(this.googleSheetsRates.keys()));
                 
                 // Очищаем кэш чтобы применить новые курсы
                 this.cache.clear();
