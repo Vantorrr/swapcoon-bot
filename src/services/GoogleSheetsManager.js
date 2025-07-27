@@ -55,8 +55,8 @@ class GoogleSheetsManager {
                 headers: ['User ID', 'Username', 'Имя', 'Фамилия', 'Дата регистрации', 'Всего заказов', 'Общая сумма ($)', 'Последний заказ', 'Статус', 'Реферал от', 'Привел рефералов']
             },
             {
-                title: 'AML_Monitoring',
-                headers: ['Дата', 'User ID', 'Заказ ID', 'Сумма операции', 'Валюта', 'AML статус', 'Риск-скор', 'Блокчейн анализ', 'Действие', 'Примечания']
+                title: 'Manual_Rates',
+                headers: ['Пара валют', 'Курс продажи', 'Курс покупки', 'Спред (%)', 'Последнее обновление', 'Статус', 'Источник', 'Комментарий']
             }
         ];
 
@@ -388,6 +388,201 @@ class GoogleSheetsManager {
     // Проверка статуса подключения
     isReady() {
         return this.isConnected && this.spreadsheetId;
+    }
+
+    // 💱 МЕТОДЫ ДЛЯ РАБОТЫ С КУРСАМИ
+
+    // Инициализация таблицы курсов с всеми валютными парами
+    async initializeRatesTable() {
+        if (!this.isConnected) return false;
+        
+        try {
+            // Определяем все валютные пары
+            const currencyPairs = [
+                // Крипто к USD
+                { pair: 'BTC/USD', status: 'API' },
+                { pair: 'ETH/USD', status: 'API' },
+                { pair: 'USDT/USD', status: 'API' },
+                { pair: 'USDC/USD', status: 'API' },
+                { pair: 'BNB/USD', status: 'API' },
+                { pair: 'SOL/USD', status: 'API' },
+                { pair: 'ADA/USD', status: 'API' },
+                { pair: 'DOT/USD', status: 'API' },
+                { pair: 'MATIC/USD', status: 'API' },
+                { pair: 'AVAX/USD', status: 'API' },
+                
+                // Фиат валюты к USD
+                { pair: 'USD/RUB', status: 'API' },
+                { pair: 'USD/EUR', status: 'API' },
+                { pair: 'USD/ARS', status: 'API' },
+                { pair: 'USD/BRL', status: 'API' },
+                { pair: 'USD/UAH', status: 'API' },
+                { pair: 'USD/KZT', status: 'API' },
+                
+                // Крипто к фиат (популярные пары)
+                { pair: 'BTC/RUB', status: 'API' },
+                { pair: 'ETH/RUB', status: 'API' },
+                { pair: 'USDT/RUB', status: 'API' },
+                { pair: 'BTC/ARS', status: 'API' },
+                { pair: 'USDT/ARS', status: 'API' }
+            ];
+
+            const rows = currencyPairs.map(pair => [
+                pair.pair,
+                '', // Курс продажи - будет заполнен автоматически
+                '', // Курс покупки - будет заполнен автоматически
+                '', // Спред - будет рассчитан автоматически
+                new Date().toLocaleString('ru'),
+                pair.status,
+                'AUTO',
+                'Автоматические курсы с API'
+            ]);
+
+            await this.sheets.spreadsheets.values.update({
+                spreadsheetId: this.spreadsheetId,
+                range: 'Manual_Rates!A2:H' + (rows.length + 1),
+                valueInputOption: 'USER_ENTERED',
+                resource: { values: rows }
+            });
+
+            console.log('✅ Таблица курсов инициализирована с', rows.length, 'валютными парами');
+            return true;
+        } catch (error) {
+            console.error('❌ Ошибка инициализации таблицы курсов:', error.message);
+            return false;
+        }
+    }
+
+    // Чтение ручных курсов из таблицы
+    async readManualRatesFromTable() {
+        if (!this.isConnected) return [];
+        
+        try {
+            const response = await this.sheets.spreadsheets.values.get({
+                spreadsheetId: this.spreadsheetId,
+                range: 'Manual_Rates!A2:H1000' // Читаем все данные
+            });
+
+            const rows = response.data.values || [];
+            const manualRates = [];
+
+            for (const row of rows) {
+                if (row.length >= 6 && row[0]) { // Проверяем что есть пара валют
+                    const [pair, sellRate, buyRate, spread, lastUpdated, status, source, comment] = row;
+                    
+                    const sellPrice = parseFloat(sellRate);
+                    const buyPrice = parseFloat(buyRate);
+                    
+                    // Проверяем что это ручной курс с валидными числами
+                    if (status === 'MANUAL' && !isNaN(sellPrice) && !isNaN(buyPrice) && sellPrice > 0 && buyPrice > 0) {
+                        manualRates.push({
+                            pair: pair,
+                            sellRate: sellPrice,
+                            buyRate: buyPrice,
+                            spread: parseFloat(spread) || 0,
+                            lastUpdated: lastUpdated,
+                            status: status,
+                            source: source || 'MANUAL',
+                            comment: comment || ''
+                        });
+                    }
+                }
+            }
+
+            console.log(`📊 Прочитано ${manualRates.length} ручных курсов из таблицы`);
+            return manualRates;
+        } catch (error) {
+            console.error('❌ Ошибка чтения курсов из таблицы:', error.message);
+            return [];
+        }
+    }
+
+    // Обновление всех курсов в таблице (синхронизация с API)
+    async syncCurrentRatesToTable(currentRates) {
+        if (!this.isConnected || !currentRates) return false;
+        
+        try {
+            // Читаем текущие ручные курсы
+            const manualRates = await this.readManualRatesFromTable();
+            const manualPairs = new Set(manualRates.map(r => r.pair));
+
+            const updatePromises = [];
+
+            for (const rate of currentRates) {
+                // Создаем основную пару валют к USD
+                const mainPair = `${rate.currency}/USD`;
+                
+                // Если это не ручной курс, обновляем автоматически
+                if (!manualPairs.has(mainPair)) {
+                    updatePromises.push(
+                        this.updateRateInTable(mainPair, rate.sell, rate.buy, 'AUTO', 'Автоматическое обновление с API')
+                    );
+                }
+            }
+
+            await Promise.allSettled(updatePromises);
+            console.log('✅ Синхронизированы автоматические курсы в таблицу');
+            return true;
+        } catch (error) {
+            console.error('❌ Ошибка синхронизации курсов:', error.message);
+            return false;
+        }
+    }
+
+    // Обновление курса в таблице
+    async updateRateInTable(pair, sellRate, buyRate, status = 'MANUAL', comment = '') {
+        if (!this.isConnected) return false;
+        
+        try {
+            const response = await this.sheets.spreadsheets.values.get({
+                spreadsheetId: this.spreadsheetId,
+                range: 'Manual_Rates!A2:H1000'
+            });
+
+            const rows = response.data.values || [];
+            let rowIndex = -1;
+
+            for (let i = 0; i < rows.length; i++) {
+                if (rows[i][0] === pair) {
+                    rowIndex = i + 2; // +2 потому что начинаем с A2
+                    break;
+                }
+            }
+
+            if (rowIndex === -1) {
+                // Если пары нет, добавляем новую строку
+                rowIndex = rows.length + 2;
+            }
+
+            const spread = sellRate > 0 ? ((sellRate - buyRate) / sellRate * 100).toFixed(2) : '0';
+            const source = status === 'MANUAL' ? 'ADMIN' : 'AUTO';
+            
+            const updateData = [
+                pair,
+                sellRate,
+                buyRate,
+                spread,
+                new Date().toLocaleString('ru'),
+                status,
+                source,
+                comment
+            ];
+
+            await this.sheets.spreadsheets.values.update({
+                spreadsheetId: this.spreadsheetId,
+                range: `Manual_Rates!A${rowIndex}:H${rowIndex}`,
+                valueInputOption: 'USER_ENTERED',
+                resource: { values: [updateData] }
+            });
+
+            if (status === 'MANUAL') {
+                console.log(`✅ Ручной курс ${pair}: продажа ${sellRate}, покупка ${buyRate}`);
+            }
+            return true;
+        } catch (error) {
+            console.error('❌ Ошибка обновления курса в таблице:', error.message);
+            return false;
+        }
     }
 }
 

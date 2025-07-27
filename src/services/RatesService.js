@@ -53,7 +53,13 @@ class RatesService {
         this.autoUpdatePaused = false;   // Пауза автообновления
         this.pauseUntil = null;         // До какого времени пауза
         
+        // 📊 ИНТЕГРАЦИЯ С GOOGLE SHEETS
+        this.googleSheetsRates = new Map(); // Курсы из таблицы
+        this.lastSheetsSync = 0;            // Время последней синхронизации
+        this.sheetsSyncInterval = 30000;    // 30 секунд
+        
         this.initAutoUpdate();
+        this.initSheetsSync();
     }
 
     async getRates() {
@@ -284,9 +290,9 @@ class RatesService {
     async setAbsoluteRate(currency, absolutePrice, duration = 3600000) { // 1 час по умолчанию
         if (!this.manualRates) this.manualRates = new Map();
         
-        // Получаем текущий курс для расчета множителя
-        const currentRates = await this.getRates();
-        const currentRate = currentRates.find(r => r.currency === currency);
+        // Получаем ЧИСТЫЕ курсы без ручных настроек для правильного расчета множителя
+        const freshRates = await this.fetchFreshRates();
+        const currentRate = freshRates.find(r => r.currency === currency);
         
         if (!currentRate) {
             throw new Error(`Валюта ${currency} не найдена`);
@@ -412,6 +418,93 @@ class RatesService {
         
         console.log(`✏️ Установлен абсолютный курс ${currency}: $${absolutePrice} (множитель: ${multiplier.toFixed(4)}x) на ${duration/60000} минут`);
         this.cache.clear();
+    }
+
+    // 📊 ИНТЕГРАЦИЯ С GOOGLE SHEETS
+
+    // Инициализация синхронизации с Google Sheets
+    initSheetsSync() {
+        // Синхронизируем курсы каждые 30 секунд
+        setInterval(async () => {
+            await this.syncWithGoogleSheets();
+        }, this.sheetsSyncInterval);
+        
+        // Первая синхронизация через 5 секунд после запуска
+        setTimeout(async () => {
+            await this.syncWithGoogleSheets();
+        }, 5000);
+        
+        console.log('📊 Инициализирована синхронизация с Google Sheets (каждые 30 сек)');
+    }
+
+    // Синхронизация курсов с Google Sheets
+    async syncWithGoogleSheets() {
+        try {
+            // Проверяем есть ли Google Sheets Manager
+            if (!global.googleSheetsManager || !global.googleSheetsManager.isReady()) {
+                return; // Тихо пропускаем если Google Sheets не настроен
+            }
+
+            // Читаем ручные курсы из таблицы
+            const manualRates = await global.googleSheetsManager.readManualRatesFromTable();
+            
+            if (manualRates && manualRates.length > 0) {
+                // Обновляем курсы из Google Sheets
+                this.googleSheetsRates.clear();
+                
+                for (const rate of manualRates) {
+                    this.googleSheetsRates.set(rate.pair, {
+                        sellRate: rate.sellRate,
+                        buyRate: rate.buyRate,
+                        lastUpdated: rate.lastUpdated,
+                        comment: rate.comment
+                    });
+                }
+                
+                // Очищаем кэш чтобы применить новые курсы
+                this.cache.clear();
+                this.lastSheetsSync = Date.now();
+                
+                console.log(`📊 Синхронизировано ${manualRates.length} ручных курсов из Google Sheets`);
+            }
+
+            // Также синхронизируем текущие API курсы в таблицу (если нет ручных)
+            const currentRates = await this.fetchFreshRates();
+            await global.googleSheetsManager.syncCurrentRatesToTable(currentRates);
+            
+        } catch (error) {
+            console.error('❌ Ошибка синхронизации с Google Sheets:', error.message);
+        }
+    }
+
+    // Получение курса с учетом Google Sheets
+    getSheetRateForPair(fromCurrency, toCurrency) {
+        const pair1 = `${fromCurrency}/${toCurrency}`;
+        const pair2 = `${toCurrency}/${fromCurrency}`;
+        
+        // Проверяем прямую пару
+        if (this.googleSheetsRates.has(pair1)) {
+            const rate = this.googleSheetsRates.get(pair1);
+            return {
+                sellRate: rate.sellRate,
+                buyRate: rate.buyRate,
+                source: 'GOOGLE_SHEETS',
+                comment: rate.comment
+            };
+        }
+        
+        // Проверяем обратную пару
+        if (this.googleSheetsRates.has(pair2)) {
+            const rate = this.googleSheetsRates.get(pair2);
+            return {
+                sellRate: 1 / rate.buyRate,  // Обращаем курсы
+                buyRate: 1 / rate.sellRate,
+                source: 'GOOGLE_SHEETS',
+                comment: rate.comment
+            };
+        }
+        
+        return null;
     }
 }
 

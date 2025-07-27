@@ -29,6 +29,18 @@ async function initializeBotAndAdmins() {
         db = botModule.db;
         console.log('✅ Telegram бот инициализирован');
         
+        // Инициализируем Google Sheets Manager глобально
+        try {
+            if (botModule.googleSheetsManager) {
+                global.googleSheetsManager = botModule.googleSheetsManager;
+                console.log('📊 Google Sheets Manager доступен глобально');
+            } else {
+                console.log('⚠️ Google Sheets Manager не инициализирован');
+            }
+        } catch (error) {
+            console.log('❌ Ошибка инициализации Google Sheets Manager:', error.message);
+        }
+        
         // 👑 ГАРАНТИРОВАННОЕ ДОБАВЛЕНИЕ АДМИНОВ (ВСЕГДА РАБОТАЕТ)
         console.log('👑 Гарантированная инициализация админов...');
         
