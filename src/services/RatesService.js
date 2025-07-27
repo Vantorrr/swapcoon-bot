@@ -102,14 +102,6 @@ class RatesService {
                 console.log('❌ RUB курс НЕ НАЙДЕН в adjustedRates');
             }
             
-            // Диагностика: проверяем RUB курс после применения настроек
-            const rubRate = adjustedRates.find(r => r.currency === 'RUB');
-            if (rubRate) {
-                console.log(`🔍 RUB КУРС ПОСЛЕ НАСТРОЕК: sell=${rubRate.sell}, buy=${rubRate.buy}, price=${rubRate.price}, source=${rubRate.source || 'API'}`);
-            } else {
-                console.log('❌ RUB курс НЕ НАЙДЕН в adjustedRates');
-            }
-            
             // Сохраняем в кэш
             this.cache.set('rates', {
                 data: adjustedRates,
