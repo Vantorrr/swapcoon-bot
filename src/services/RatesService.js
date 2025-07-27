@@ -3,10 +3,24 @@ const axios = require('axios');
 class RatesService {
     constructor() {
         this.cache = new Map();
-        this.cacheExpiry = 5 * 60 * 1000; // 5 минут
+        this.cacheExpiry = 30 * 60 * 1000; // 30 минут
         this.lastUpdate = null;
-        this.updateInterval = null;
         
+        // ⚙️ НАСТРОЙКИ ПРИБЫЛЬНОСТИ (можно вынести в переменные окружения)
+        this.commission = parseFloat(process.env.EXCHANGE_COMMISSION) || 0.01; // 1% по умолчанию
+        this.cryptoSpreads = {
+            high: parseFloat(process.env.CRYPTO_SPREAD_HIGH) || 0.005,    // 0.5% для BTC
+            medium: parseFloat(process.env.CRYPTO_SPREAD_MEDIUM) || 0.008, // 0.8% для ETH  
+            stable: parseFloat(process.env.CRYPTO_SPREAD_STABLE) || 0.01,  // 1% для стейблкоинов
+            low: parseFloat(process.env.CRYPTO_SPREAD_LOW) || 0.02        // 2% для дешевых
+        };
+        this.fiatSpread = parseFloat(process.env.FIAT_SPREAD) || 0.02;      // 2% для фиата
+        
+        console.log('💰 Настройки прибыльности:');
+        console.log(`   Комиссия: ${(this.commission * 100).toFixed(1)}%`);
+        console.log(`   Спреды крипто: ${(this.cryptoSpreads.high * 100).toFixed(1)}%-${(this.cryptoSpreads.low * 100).toFixed(1)}%`);
+        console.log(`   Спред фиат: ${(this.fiatSpread * 100).toFixed(1)}%`);
+
         // Маппинг валют
         this.currencyMapping = {
             'BTC': 'bitcoin',
@@ -123,7 +137,7 @@ class RatesService {
                     rate = 1 / fiatData[currency]; // Конвертируем в USD
                 }
                 
-                const spread = currency === 'USD' ? 0 : 0.02; // 2% спред для фиата
+                const spread = currency === 'USD' ? 0 : this.fiatSpread; // Настраиваемый спред для фиата
                 
                 rates.push({
                     currency: currency,
@@ -145,11 +159,11 @@ class RatesService {
     }
     
     calculateSpread(price) {
-        // Динамический спред в зависимости от цены
-        if (price >= 50000) return price * 0.005; // 0.5% для дорогих монет (BTC)
-        if (price >= 1000) return price * 0.008;  // 0.8% для средних (ETH)
-        if (price >= 1) return price * 0.01;     // 1% для стейблкоинов
-        return price * 0.02; // 2% для дешевых монет
+        // Динамический спред в зависимости от цены (НАСТРАИВАЕМЫЙ)
+        if (price >= 50000) return price * this.cryptoSpreads.high;    // BTC и дорогие
+        if (price >= 1000) return price * this.cryptoSpreads.medium;   // ETH и средние
+        if (price >= 1) return price * this.cryptoSpreads.stable;      // Стейблкоины
+        return price * this.cryptoSpreads.low; // Дешевые монеты
     }
     
     getBasicRates() {
@@ -210,7 +224,7 @@ class RatesService {
         
         const exchangeRate = fromUSD / toUSD;
         const resultAmount = amount * exchangeRate;
-        const fee = resultAmount * 0.01; // 1% комиссия
+        const fee = resultAmount * this.commission; // Настраиваемая комиссия
         
         return {
             fromCurrency,
