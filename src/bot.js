@@ -166,6 +166,67 @@ async function createMainKeyboard(userId) {
     return keyboard;
 }
 
+// Команда для быстрого изменения курса: /setrate BTC 95000
+bot.command('setrate', async (ctx) => {
+    const userId = ctx.from.id;
+    
+    // Проверяем права админа
+    if (!(await isAdmin(userId))) {
+        return await ctx.reply('❌ Только администраторы могут изменять курсы');
+    }
+    
+    const args = ctx.message.text.split(' ').slice(1); // Убираем /setrate
+    
+    if (args.length !== 2) {
+        return await ctx.reply(
+            '❌ Неверный формат команды!\n\n' +
+            '📝 <b>Правильный формат:</b>\n' +
+            '<code>/setrate BTC 95000</code>\n' +
+            '<code>/setrate USDT 1.02</code>\n' +
+            '<code>/setrate RUB 0.0105</code>\n\n' +
+            '💡 Первый параметр - валюта, второй - новый курс в долларах',
+            { parse_mode: 'HTML' }
+        );
+    }
+    
+    const currency = args[0].toUpperCase();
+    const newPrice = parseFloat(args[1]);
+    
+    if (isNaN(newPrice) || newPrice <= 0) {
+        return await ctx.reply('❌ Неверный курс! Введите положительное число.');
+    }
+    
+    try {
+        // Устанавливаем абсолютный курс
+        const RatesService = require('./services/RatesService');
+        const ratesService = new RatesService();
+        await ratesService.setAbsoluteRate(currency, newPrice, 3600000); // На 1 час
+        
+        // Уведомляем операторов
+        await notifyOperators(`✏️ <b>КУРС ${currency} ИЗМЕНЕН КОМАНДОЙ</b>\n\nНовый курс: $${newPrice.toFixed(currency === 'BTC' ? 0 : 4)}\nИзменил: админ ${ctx.from.first_name}\nКоманда: /setrate`);
+        
+        await ctx.reply(
+            `✅ <b>КУРС ${currency} УСТАНОВЛЕН</b>\n\n` +
+            `💱 Валюта: ${currency}\n` +
+            `💰 Новый курс: $${newPrice.toFixed(currency === 'BTC' ? 0 : 4)}\n` +
+            `⏰ Действует: 1 час\n` +
+            `🔔 Операторы уведомлены\n\n` +
+            `💡 Изменения применены немедленно`,
+            { parse_mode: 'HTML' }
+        );
+        
+    } catch (error) {
+        console.error('Ошибка установки курса через команду:', error);
+        await ctx.reply(
+            `❌ <b>ОШИБКА УСТАНОВКИ КУРСА</b>\n\n` +
+            `Не удалось установить курс ${currency}\n` +
+            `Причина: ${error.message}\n\n` +
+            `💡 Проверьте корректность названия валюты`,
+            { parse_mode: 'HTML' }
+        );
+    }
+});
+
 // Команда /start
 bot.command('start', async (ctx) => {
     const userId = ctx.from.id;
@@ -486,6 +547,7 @@ bot.command('help', async (ctx) => {
         helpText += `<b>🛡️ Команды администратора:</b>\n` +
             `/admin - Админ панель с полной статистикой\n` +
             `/operator - Панель оператора\n` +
+            `/setrate BTC 95000 - Установить курс валюты\n` +
             `/weblogs - Мониторинг активности сайта\n` +
             `/setup_webapp - Настроить Menu Button для WebApp\n` +
             `/add_operator ID - Добавить оператора\n` +
@@ -1804,6 +1866,8 @@ bot.on('callback_query:data', async (ctx) => {
          }
          
          const editKeyboard = new InlineKeyboard()
+             .text('✏️ НАПИСАТЬ КУРС ВРУЧНУЮ', `rates_manual_${currency}`)
+             .row()
              .text('📈 +10%', `rates_change_${currency}_1.1`)
              .text('📈 +5%', `rates_change_${currency}_1.05`)
              .row()
@@ -1933,6 +1997,49 @@ bot.on('callback_query:data', async (ctx) => {
                  reply_markup: new InlineKeyboard().text('🔙 Назад к управлению', 'admin_rates_control')
              }
          );
+     }
+
+     // ✏️ РУЧНОЙ ВВОД КУРСА
+     if (data.startsWith('rates_manual_')) {
+         if (!(await isAdmin(userId))) return ctx.answerCallbackQuery('❌ Нет прав');
+         
+         const currency = data.replace('rates_manual_', '');
+         
+         await ctx.answerCallbackQuery(`✏️ Ввод курса ${currency}...`);
+         
+         // Получаем текущий курс для справки
+         const ratesService = require('./services/RatesService');
+         const rates = new ratesService();
+         const currentRates = await rates.getRates();
+         const currentRate = currentRates.find(r => r.currency === currency);
+         
+         // Сохраняем состояние ожидания ввода курса
+         if (!global.manualRateInput) global.manualRateInput = new Map();
+         global.manualRateInput.set(userId, {
+             currency: currency,
+             timestamp: Date.now()
+         });
+         
+         await ctx.reply(
+             `✏️ <b>РУЧНОЙ ВВОД КУРСА ${currency}</b>\n\n` +
+             `📊 <b>Текущий курс:</b> $${currentRate ? currentRate.price.toFixed(currency === 'BTC' ? 0 : 4) : 'неизвестно'}\n\n` +
+             `💬 <b>Напишите новый курс числом:</b>\n` +
+             `Например: <code>95000</code> (для BTC)\n` +
+             `Или: <code>1.02</code> (для USDT)\n\n` +
+             `⏰ У вас есть 60 секунд для ввода\n` +
+             `❌ Для отмены напишите: <code>отмена</code>`,
+             { 
+                 parse_mode: 'HTML',
+                 reply_markup: new InlineKeyboard().text('❌ Отмена', 'admin_rates_control')
+             }
+         );
+         
+         // Устанавливаем таймер на очистку состояния
+         setTimeout(() => {
+             if (global.manualRateInput && global.manualRateInput.has(userId)) {
+                 global.manualRateInput.delete(userId);
+             }
+         }, 60000); // 60 секунд
      }
 
      // Открытие панели оператора
@@ -4332,6 +4439,97 @@ bot.on('message', async (ctx) => {
     const userId = ctx.from.id;
     const messageText = ctx.message.text;
     const userRole = await db.getUserRole(userId);
+    
+    // === РУЧНОЙ ВВОД КУРСОВ ===
+    if (messageText && global.manualRateInput && global.manualRateInput.has(userId)) {
+        const inputState = global.manualRateInput.get(userId);
+        const currency = inputState.currency;
+        
+        // Проверяем не истекло ли время (60 секунд)
+        if (Date.now() - inputState.timestamp > 60000) {
+            global.manualRateInput.delete(userId);
+            return await ctx.reply('⏰ Время ввода истекло. Попробуйте еще раз.');
+        }
+        
+        // Проверяем права админа
+        if (!(await isAdmin(userId))) {
+            global.manualRateInput.delete(userId);
+            return await ctx.reply('❌ Нет прав администратора');
+        }
+        
+        // Проверяем отмену
+        if (messageText.toLowerCase() === 'отмена' || messageText.toLowerCase() === 'cancel') {
+            global.manualRateInput.delete(userId);
+            return await ctx.reply(
+                '❌ Ввод курса отменен',
+                { reply_markup: new InlineKeyboard().text('🔙 Назад к управлению', 'admin_rates_control') }
+            );
+        }
+        
+        // Парсим число
+        const newPrice = parseFloat(messageText.replace(/[^0-9.,]/g, '').replace(',', '.'));
+        
+        if (isNaN(newPrice) || newPrice <= 0) {
+            return await ctx.reply(
+                '❌ Неверный формат числа!\n\n' +
+                'Введите корректное число, например:\n' +
+                '• 95000 (для BTC)\n' +
+                '• 1.02 (для USDT)\n' +
+                '• 0.0012 (для RUB в долларах)'
+            );
+        }
+        
+        try {
+            // Получаем текущий курс для расчета множителя
+            const RatesService = require('./services/RatesService');
+            const ratesService = new RatesService();
+            const currentRates = await ratesService.getRates();
+            const currentRate = currentRates.find(r => r.currency === currency);
+            
+            if (!currentRate) {
+                global.manualRateInput.delete(userId);
+                return await ctx.reply('❌ Валюта не найдена');
+            }
+            
+            // Устанавливаем абсолютный курс
+            await ratesService.setAbsoluteRate(currency, newPrice, 3600000); // На 1 час
+            
+            // Очищаем состояние ввода
+            global.manualRateInput.delete(userId);
+            
+            // Уведомляем операторов
+            await notifyOperators(`✏️ <b>КУРС ${currency} ИЗМЕНЕН ВРУЧНУЮ</b>\n\nНовый курс: $${newPrice.toFixed(currency === 'BTC' ? 0 : 4)}\nИзменил: админ ${ctx.from.first_name}`);
+            
+            await ctx.reply(
+                `✅ <b>КУРС ${currency} УСТАНОВЛЕН ВРУЧНУЮ</b>\n\n` +
+                `💱 Валюта: ${currency}\n` +
+                `💰 Новый курс: $${newPrice.toFixed(currency === 'BTC' ? 0 : 4)}\n` +
+                `⏰ Действует: 1 час\n` +
+                `🔔 Операторы уведомлены\n\n` +
+                `💡 Изменения применены немедленно`,
+                { 
+                    parse_mode: 'HTML',
+                    reply_markup: new InlineKeyboard().text('🔙 Назад к управлению', 'admin_rates_control')
+                }
+            );
+            
+            return; // Прерываем обработку
+            
+        } catch (error) {
+            global.manualRateInput.delete(userId);
+            console.error('Ошибка установки курса:', error);
+            await ctx.reply(
+                `❌ <b>ОШИБКА УСТАНОВКИ КУРСА</b>\n\n` +
+                `Не удалось установить курс ${currency}\n` +
+                `Причина: ${error.message}`,
+                { 
+                    parse_mode: 'HTML',
+                    reply_markup: new InlineKeyboard().text('🔙 Назад к управлению', 'admin_rates_control')
+                }
+            );
+            return;
+        }
+    }
     
     // === СИСТЕМА РЕКВИЗИТОВ - ОБРАБОТКА ПЕРЕСЛАННЫХ СООБЩЕНИЙ ===
     if (ctx.message.forward_from && (userRole === 'operator' || userRole === 'admin')) {

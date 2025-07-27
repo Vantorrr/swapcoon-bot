@@ -68,15 +68,18 @@ class RatesService {
             // Получаем свежие курсы
             const rates = await this.fetchFreshRates();
             
+            // Применяем ручные настройки
+            const adjustedRates = this.applyManualSettings(rates);
+            
             // Сохраняем в кэш
             this.cache.set('rates', {
-                data: rates,
+                data: adjustedRates,
                 timestamp: Date.now()
             });
             
             this.lastUpdate = new Date();
-            console.log('✅ Курсы валют обновлены:', rates.length, 'валют');
-            return rates;
+            console.log('✅ Курсы валют обновлены:', adjustedRates.length, 'валют');
+            return adjustedRates;
             
         } catch (error) {
             console.error('❌ Ошибка получения курсов:', error.message);
@@ -262,17 +265,45 @@ class RatesService {
         this.cache.clear();
     }
     
-    // Ручная установка курса конкретной валюты
+    // Ручная установка курса конкретной валюты (множитель)
     setManualRate(currency, multiplier, duration = 3600000) { // 1 час по умолчанию
         if (!this.manualRates) this.manualRates = new Map();
         
         this.manualRates.set(currency, {
             multiplier: multiplier,
             setAt: Date.now(),
-            duration: duration
+            duration: duration,
+            type: 'multiplier'
         });
         
         console.log(`💱 Установлен ручной курс ${currency}: ${multiplier}x на ${duration/60000} минут`);
+        this.cache.clear();
+    }
+    
+    // Ручная установка абсолютного курса валюты
+    async setAbsoluteRate(currency, absolutePrice, duration = 3600000) { // 1 час по умолчанию
+        if (!this.manualRates) this.manualRates = new Map();
+        
+        // Получаем текущий курс для расчета множителя
+        const currentRates = await this.getRates();
+        const currentRate = currentRates.find(r => r.currency === currency);
+        
+        if (!currentRate) {
+            throw new Error(`Валюта ${currency} не найдена`);
+        }
+        
+        // Рассчитываем множитель для достижения нужной цены
+        const multiplier = absolutePrice / currentRate.price;
+        
+        this.manualRates.set(currency, {
+            absolutePrice: absolutePrice,
+            multiplier: multiplier,
+            setAt: Date.now(),
+            duration: duration,
+            type: 'absolute'
+        });
+        
+        console.log(`✏️ Установлен абсолютный курс ${currency}: $${absolutePrice} (множитель: ${multiplier.toFixed(4)}x) на ${duration/60000} минут`);
         this.cache.clear();
     }
     
@@ -354,6 +385,33 @@ class RatesService {
             
             return adjustedRate;
         });
+    }
+    
+    // Ручная установка абсолютного курса валюты
+    async setAbsoluteRate(currency, absolutePrice, duration = 3600000) { // 1 час по умолчанию
+        if (!this.manualRates) this.manualRates = new Map();
+        
+        // Получаем текущие курсы БЕЗ ручных настроек для расчета чистого множителя
+        const freshRates = await this.fetchFreshRates();
+        const currentRate = freshRates.find(r => r.currency === currency);
+        
+        if (!currentRate) {
+            throw new Error(`Валюта ${currency} не найдена`);
+        }
+        
+        // Рассчитываем множитель для достижения нужной цены
+        const multiplier = absolutePrice / currentRate.price;
+        
+        this.manualRates.set(currency, {
+            absolutePrice: absolutePrice,
+            multiplier: multiplier,
+            setAt: Date.now(),
+            duration: duration,
+            type: 'absolute'
+        });
+        
+        console.log(`✏️ Установлен абсолютный курс ${currency}: $${absolutePrice} (множитель: ${multiplier.toFixed(4)}x) на ${duration/60000} минут`);
+        this.cache.clear();
     }
 }
 
