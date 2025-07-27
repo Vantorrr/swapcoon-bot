@@ -5875,7 +5875,7 @@ if (require.main === module) {
         console.log('🚀 ExMachinaX Bot запускается...');
         
         // Инициализируем Google Sheets
-        initGoogleSheets();
+        await initGoogleSheets();
         
         // ВРЕМЕННО: Всегда используем polling режим пока не исправим webhook
         console.log('🔄 АВАРИЙНЫЙ РЕЖИМ: Запуск в polling режиме');
