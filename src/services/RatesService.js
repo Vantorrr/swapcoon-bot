@@ -94,6 +94,22 @@ class RatesService {
             }
             const adjustedRates = this.applyManualSettings(rates);
             
+            // Диагностика: проверяем RUB курс после применения настроек
+            const rubRate = adjustedRates.find(r => r.currency === 'RUB');
+            if (rubRate) {
+                console.log(`🔍 RUB КУРС ПОСЛЕ НАСТРОЕК: sell=${rubRate.sell}, buy=${rubRate.buy}, price=${rubRate.price}, source=${rubRate.source || 'API'}`);
+            } else {
+                console.log('❌ RUB курс НЕ НАЙДЕН в adjustedRates');
+            }
+            
+            // Диагностика: проверяем RUB курс после применения настроек
+            const rubRate = adjustedRates.find(r => r.currency === 'RUB');
+            if (rubRate) {
+                console.log(`🔍 RUB КУРС ПОСЛЕ НАСТРОЕК: sell=${rubRate.sell}, buy=${rubRate.buy}, price=${rubRate.price}, source=${rubRate.source || 'API'}`);
+            } else {
+                console.log('❌ RUB курс НЕ НАЙДЕН в adjustedRates');
+            }
+            
             // Сохраняем в кэш
             this.cache.set('rates', {
                 data: adjustedRates,
@@ -419,11 +435,16 @@ class RatesService {
             // 📊 ПРИОРИТЕТ 1: Курсы из Google Sheets (самый высокий)
             const sheetRate = this.getSheetRateForPair(rate.currency, 'USD');
             if (sheetRate) {
+                console.log(`🔍 ДО ПРИМЕНЕНИЯ ${rate.currency}: sell=${adjustedRate.sell}, buy=${adjustedRate.buy}, price=${adjustedRate.price}`);
+                
                 adjustedRate.sell = sheetRate.sellRate;
                 adjustedRate.buy = sheetRate.buyRate;
                 adjustedRate.price = (sheetRate.sellRate + sheetRate.buyRate) / 2;
                 adjustedRate.source = 'GOOGLE_SHEETS';
+                
                 console.log(`📊 Применен курс из Google Sheets для ${rate.currency}: продажа ${sheetRate.sellRate}, покупка ${sheetRate.buyRate}`);
+                console.log(`🔍 ПОСЛЕ ПРИМЕНЕНИЯ ${rate.currency}: sell=${adjustedRate.sell}, buy=${adjustedRate.buy}, price=${adjustedRate.price}, source=${adjustedRate.source}`);
+                
                 return adjustedRate; // Возвращаем сразу, Google Sheets имеет максимальный приоритет
             }
             
