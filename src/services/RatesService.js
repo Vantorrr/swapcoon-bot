@@ -391,8 +391,13 @@ class RatesService {
     applyManualSettings(rates) {
         if (!rates || !Array.isArray(rates)) return rates;
         
+        console.log(`🔍 ПРИМЕНЯЕМ НАСТРОЙКИ К ${rates.length} КУРСАМ`);
+        console.log(`🔍 Google Sheets курсов в памяти: ${this.googleSheetsRates.size}`);
+        
         return rates.map(rate => {
             let adjustedRate = { ...rate };
+            
+            console.log(`🔍 Обрабатываем валюту: ${rate.currency}`);
             
             // 📊 ПРИОРИТЕТ 1: Курсы из Google Sheets (самый высокий)
             const sheetRate = this.getSheetRateForPair(rate.currency, 'USD');
