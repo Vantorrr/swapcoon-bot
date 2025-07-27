@@ -727,15 +727,15 @@ function reverseCalculateExchange() {
     const grossAmount = toAmount; // Без комиссии
     const fromAmount = grossAmount / exchangeRate;
     
-    document.getElementById('from-amount').value = fromAmount.toFixed(8);
+    document.getElementById('from-amount').value = formatCurrencyAmount(fromAmount);
     calculateExchange();
 }
 
 // Обновление отображения расчета
 function updateCalculationDisplay(fromAmount, toAmount, exchangeRate, fee) {
-    document.getElementById('to-amount').value = toAmount.toFixed(8);
-    document.getElementById('exchange-rate').textContent = `1 ${fromCurrency} = ${exchangeRate.toFixed(2)} ${toCurrency}`;
-    document.getElementById('final-amount').textContent = `${toAmount.toFixed(8)} ${toCurrency}`;
+    document.getElementById('to-amount').value = formatCurrencyAmount(toAmount);
+    document.getElementById('exchange-rate').textContent = `1 ${fromCurrency} = ${formatCurrencyAmount(exchangeRate)} ${toCurrency}`;
+    document.getElementById('final-amount').textContent = `${formatCurrencyAmount(toAmount)} ${toCurrency}`;
 }
 
 // Переключение валют
@@ -1527,11 +1527,11 @@ function updateOrderSummary() {
         </div>
         <div class="info-row">
             <span>Получаете</span>
-            <span><strong>${currentCalculation.toAmount.toFixed(8)} ${currentCalculation.toCurrency}</strong></span>
+            <span><strong>${formatCurrencyAmount(currentCalculation.toAmount)} ${currentCalculation.toCurrency}</strong></span>
         </div>
         <div class="info-row">
             <span>Курс обмена</span>
-            <span>1 ${currentCalculation.fromCurrency} = ${currentCalculation.exchangeRate.toFixed(2)} ${currentCalculation.toCurrency}</span>
+            <span>1 ${currentCalculation.fromCurrency} = ${formatCurrencyAmount(currentCalculation.exchangeRate)} ${currentCalculation.toCurrency}</span>
         </div>
         ${addressSection}
     `;
@@ -3190,6 +3190,31 @@ function formatNumber(num) {
         return (num / 1000).toFixed(1) + 'K';
     }
     return num.toFixed(2);
+}
+
+// Умное форматирование валютных сумм
+function formatCurrencyAmount(amount) {
+    if (amount === 0) return '0';
+    
+    const absAmount = Math.abs(amount);
+    
+    // Для больших чисел (>1000) - максимум 2 знака после запятой
+    if (absAmount >= 1000) {
+        return amount.toFixed(2).replace(/\.?0+$/, '');
+    }
+    // Для средних чисел (1-1000) - максимум 4 знака
+    else if (absAmount >= 1) {
+        return amount.toFixed(4).replace(/\.?0+$/, '');
+    }
+    // Для маленьких чисел (<1) - максимум 6 знаков
+    else if (absAmount >= 0.001) {
+        return amount.toFixed(6).replace(/\.?0+$/, '');
+    }
+    // Для очень маленьких чисел - научная нотация или 8 знаков
+    else {
+        const formatted = amount.toFixed(8).replace(/\.?0+$/, '');
+        return formatted === '0' ? amount.toExponential(2) : formatted;
+    }
 }
 
 function formatDate(dateString) {
