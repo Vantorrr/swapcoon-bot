@@ -261,7 +261,15 @@ bot.command('init_rates_table', async (ctx) => {
         
         console.log('🔥 Создаем Google Sheets Manager прямо в команде...');
         const sheetsManager = new GoogleSheetsManager();
-        const parsedCredentials = JSON.parse(envCredentials);
+        
+        // 🔧 ИСПРАВЛЯЕМ ПРОБЛЕМУ С ЛИШНИМ СИМВОЛОМ = В НАЧАЛЕ JSON
+        let cleanCredentials = envCredentials.trim();
+        if (cleanCredentials.startsWith('=')) {
+            console.log('🔧 Убираем лишний символ = в начале JSON credentials');
+            cleanCredentials = cleanCredentials.substring(1);
+        }
+        
+        const parsedCredentials = JSON.parse(cleanCredentials);
         const success = await sheetsManager.init(parsedCredentials, envSpreadsheetId);
         
         if (!success) {
