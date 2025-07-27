@@ -406,6 +406,61 @@ bot.command('setrate', async (ctx) => {
     }
 });
 
+// Команда для тестирования синхронизации: /test_sync
+bot.command('test_sync', async (ctx) => {
+    const userId = ctx.from.id;
+    
+    // Проверяем права админа
+    if (!(await isAdmin(userId))) {
+        return await ctx.reply('❌ Только администраторы могут тестировать синхронизацию');
+    }
+    
+    try {
+        await ctx.reply('🔍 Тестирую синхронизацию с Google Sheets...');
+        
+        // Проверяем глобальный менеджер
+        if (!global.googleSheetsManager) {
+            return await ctx.reply('❌ global.googleSheetsManager не найден! Запустите /init_rates_table');
+        }
+        
+        if (!global.googleSheetsManager.isReady()) {
+            return await ctx.reply('❌ Google Sheets Manager не готов! Проверьте настройки.');
+        }
+        
+        // Читаем данные из таблицы напрямую
+        console.log('🔍 Читаем данные из Google Sheets...');
+        const manualRates = await global.googleSheetsManager.readManualRatesFromTable();
+        
+        let resultText = '📊 <b>РЕЗУЛЬТАТ ЧТЕНИЯ ТАБЛИЦЫ:</b>\n\n';
+        
+        if (!manualRates || manualRates.length === 0) {
+            resultText += '❌ Ручные курсы не найдены в таблице\n';
+            resultText += '💡 Проверьте, что статус = "MANUAL"';
+        } else {
+            resultText += `✅ Найдено ${manualRates.length} ручных курсов:\n\n`;
+            
+            for (const rate of manualRates) {
+                resultText += `• ${rate.pair}: продажа ${rate.sellRate}, покупка ${rate.buyRate}\n`;
+            }
+            
+            // Принудительно обновляем RatesService
+            resultText += '\n🔄 Принудительно обновляю курсы...\n';
+            
+            const RatesService = require('./services/RatesService');
+            const ratesService = new RatesService();
+            await ratesService.syncWithGoogleSheets();
+            
+            resultText += '✅ Синхронизация завершена!';
+        }
+        
+        await ctx.reply(resultText, { parse_mode: 'HTML' });
+        
+    } catch (error) {
+        console.error('🔥 Ошибка тестирования синхронизации:', error);
+        await ctx.reply(`❌ Ошибка: ${error.message}`);
+    }
+});
+
 // Команда /start
 bot.command('start', async (ctx) => {
     const userId = ctx.from.id;
