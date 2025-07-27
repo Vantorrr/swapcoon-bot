@@ -443,12 +443,18 @@ bot.command('test_sync', async (ctx) => {
                 resultText += `• ${rate.pair}: продажа ${rate.sellRate}, покупка ${rate.buyRate}\n`;
             }
             
-            // Принудительно обновляем RatesService
+            // Принудительно обновляем ГЛОБАЛЬНЫЙ RatesService
             resultText += '\n🔄 Принудительно обновляю курсы...\n';
             
-            const RatesService = require('./services/RatesService');
-            const ratesService = new RatesService();
-            await ratesService.syncWithGoogleSheets();
+            if (global.ratesService) {
+                console.log('🔄 Используем глобальный ratesService для синхронизации');
+                await global.ratesService.syncWithGoogleSheets();
+            } else {
+                console.log('⚠️ Глобальный ratesService не найден, создаем локальный');
+                const RatesService = require('./services/RatesService');
+                const ratesService = new RatesService();
+                await ratesService.syncWithGoogleSheets();
+            }
             
             resultText += '✅ Синхронизация завершена!';
         }
