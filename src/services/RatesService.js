@@ -56,7 +56,7 @@ class RatesService {
         // 📊 ИНТЕГРАЦИЯ С GOOGLE SHEETS
         this.googleSheetsRates = new Map(); // Курсы из таблицы
         this.lastSheetsSync = 0;            // Время последней синхронизации
-        this.sheetsSyncInterval = 30000;    // 30 секунд
+        this.sheetsSyncInterval = 180000;   // 3 минуты (уменьшаем нагрузку на Google API)
         
         this.initAutoUpdate();
         this.initSheetsSync();
