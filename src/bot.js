@@ -223,28 +223,43 @@ bot.command('init_rates_table', async (ctx) => {
     try {
         await ctx.reply('🔄 Создаю лист курсов в существующей таблице...');
         
-        // Проверяем доступность Google Sheets
-        console.log('🔍 ДИАГНОСТИКА SHEETS MANAGER:');
-        console.log('   googleSheetsManager:', !!googleSheetsManager);
-        console.log('   global.googleSheetsManager:', !!global.googleSheetsManager);
+        // 🔥 РАДИКАЛЬНОЕ РЕШЕНИЕ: СОЗДАЕМ GOOGLE SHEETS MANAGER ПРЯМО ЗДЕСЬ
+        console.log('🔥 РАДИКАЛЬНАЯ ИНИЦИАЛИЗАЦИЯ Google Sheets Manager в команде!');
         
-        const sheetsManager = googleSheetsManager || global.googleSheetsManager;
-        if (!sheetsManager) {
-            console.log('❌ КРИТИЧНО: Google Sheets Manager не найден!');
+        const GoogleSheetsManager = require('./services/GoogleSheetsManager');
+        
+        // Проверяем переменные окружения
+        const envSpreadsheetId = process.env.GOOGLE_SHEETS_ID;
+        const envCredentials = process.env.GOOGLE_SHEETS_CREDENTIALS;
+        const envEnabled = process.env.GOOGLE_SHEETS_ENABLED !== 'false';
+        
+        console.log('🔥 ДИАГНОСТИКА В КОМАНДЕ:');
+        console.log('   GOOGLE_SHEETS_ID:', envSpreadsheetId ? 'ЕСТЬ' : 'НЕТ');
+        console.log('   GOOGLE_SHEETS_CREDENTIALS:', envCredentials ? 'ЕСТЬ' : 'НЕТ');
+        console.log('   GOOGLE_SHEETS_ENABLED:', envEnabled);
+        
+        if (!envSpreadsheetId || !envCredentials || !envEnabled) {
             return await ctx.reply(
-                '❌ <b>Google Sheets Manager не найден!</b>\n\n' +
-                '🔧 <b>Возможные причины:</b>\n' +
-                '• Переменные окружения не настроены\n' +
-                '• Ошибка в JSON credentials\n' +
-                '• Бот не перезапустился\n\n' +
-                '💡 <b>Решение:</b>\n' +
-                '1. Проверьте переменные в Railway\n' +
-                '2. Перезапустите приложение\n' +
-                '3. Проверьте логи\n\n' +
-                '/admin → 🔧 Google Sheets для диагностики',
+                '❌ <b>Google Sheets не настроен!</b>\n\n' +
+                '🔧 <b>Настройте переменные в Railway:</b>\n' +
+                '• GOOGLE_SHEETS_ID\n' +
+                '• GOOGLE_SHEETS_CREDENTIALS\n' +
+                '• GOOGLE_SHEETS_ENABLED=true\n\n' +
+                '💡 Проверьте Railway Dashboard → Variables',
                 { parse_mode: 'HTML' }
             );
         }
+        
+        console.log('🔥 Создаем Google Sheets Manager прямо в команде...');
+        const sheetsManager = new GoogleSheetsManager();
+        const parsedCredentials = JSON.parse(envCredentials);
+        const success = await sheetsManager.init(parsedCredentials, envSpreadsheetId);
+        
+        if (!success) {
+            return await ctx.reply('❌ Ошибка подключения к Google Sheets API. Проверьте credentials.');
+        }
+        
+        console.log('🔥 Google Sheets Manager создан успешно!');
         
         // Сначала создаем лист Manual_Rates если его нет
         try {
@@ -277,17 +292,24 @@ bot.command('init_rates_table', async (ctx) => {
                     parse_mode: 'HTML',
                     disable_web_page_preview: true
                 }
-            );
+                            );
+            
+            // Устанавливаем глобально для других функций
+            global.googleSheetsManager = sheetsManager;
+            console.log('🔥 Google Sheets Manager установлен глобально из команды!');
+            
         } else {
             await ctx.reply('❌ Ошибка создания таблицы курсов. Проверьте логи.');
         }
         
     } catch (error) {
-        console.error('Ошибка инициализации таблицы курсов:', error);
+        console.error('🔥 КРИТИЧЕСКАЯ ОШИБКА в команде init_rates_table:', error);
+        console.error('🔥 Stack trace:', error.stack);
         await ctx.reply(
-            `❌ <b>ОШИБКА ИНИЦИАЛИЗАЦИИ</b>\n\n` +
+            `❌ <b>КРИТИЧЕСКАЯ ОШИБКА</b>\n\n` +
             `Не удалось создать таблицу курсов\n` +
-            `Причина: ${error.message}`,
+            `Причина: ${error.message}\n\n` +
+            `🔧 Проверьте переменные окружения в Railway`,
             { parse_mode: 'HTML' }
         );
     }
