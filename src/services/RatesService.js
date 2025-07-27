@@ -66,10 +66,19 @@ class RatesService {
         try {
             // Проверяем кэш
             const cached = this.cache.get('rates');
+            const cacheAge = cached ? Date.now() - cached.timestamp : 'нет кэша';
+            console.log(`🔍 ПРОВЕРКА КЭША: возраст ${cacheAge}ms, лимит ${this.cacheExpiry}ms`);
+            
             if (cached && Date.now() - cached.timestamp < this.cacheExpiry) {
-                console.log('🔄 Используем курсы из кэша');
-                return cached.data;
+                console.log('🔄 Используем курсы из кэша + ПРИМЕНЯЕМ Google Sheets настройки');
+                console.log(`🔍 Google Sheets в памяти: ${this.googleSheetsRates.size} курсов`);
+                
+                // ПРИМЕНЯЕМ Google Sheets настройки даже к кэшированным курсам!
+                const adjustedCachedRates = this.applyManualSettings(cached.data);
+                return adjustedCachedRates;
             }
+            
+            console.log('📊 Кэш истек или отсутствует - получаем свежие курсы');
 
             // Получаем свежие курсы
             const rates = await this.fetchFreshRates();
