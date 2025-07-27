@@ -62,31 +62,69 @@ const crmService = new CRMService();
 // Инициализация Google Sheets
 async function initGoogleSheets() {
     try {
-        const configPath = path.join(__dirname, '..', 'config', 'google-sheets.json');
-        if (fs.existsSync(configPath)) {
-            const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-            if (config.enabled && config.credentials && config.spreadsheet_id) {
-                googleSheetsManager = new GoogleSheetsManager();
-                const success = await googleSheetsManager.init(config.credentials, config.spreadsheet_id);
-                if (success) {
-                    await googleSheetsManager.createWorksheets();
-                    console.log('✅ Google Sheets интеграция активна');
-                    
-                    // Запускаем автоматический экспорт
-                    if (config.auto_export_interval) {
-                        setInterval(async () => {
-                            console.log('🔄 Автоматический экспорт в Google Sheets...');
-                            await googleSheetsManager.exportAll(db);
-                        }, config.auto_export_interval);
-                    }
-                } else {
-                    console.log('⚠️ Google Sheets недоступен');
+        console.log('🔍 Инициализация Google Sheets...');
+        
+        // Приоритет: переменные окружения (для Railway)
+        const envSpreadsheetId = process.env.GOOGLE_SHEETS_ID;
+        const envCredentials = process.env.GOOGLE_SHEETS_CREDENTIALS;
+        const envEnabled = process.env.GOOGLE_SHEETS_ENABLED !== 'false';
+        
+        let config = null;
+        
+        if (envSpreadsheetId && envCredentials && envEnabled) {
+            console.log('🌍 Используем переменные окружения для Google Sheets');
+            try {
+                config = {
+                    enabled: true,
+                    spreadsheet_id: envSpreadsheetId,
+                    credentials: JSON.parse(envCredentials),
+                    auto_export_interval: 3600000
+                };
+                console.log('✅ Конфигурация из переменных окружения загружена');
+            } catch (parseError) {
+                console.error('❌ Ошибка парсинга GOOGLE_SHEETS_CREDENTIALS:', parseError.message);
+            }
+        }
+        
+        // Fallback: файл конфигурации (для локальной разработки)
+        if (!config) {
+            console.log('📂 Ищем файл конфигурации config/google-sheets.json...');
+            const configPath = path.join(__dirname, '..', 'config', 'google-sheets.json');
+            if (fs.existsSync(configPath)) {
+                config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+                console.log('📄 Конфигурация из файла загружена');
+            } else {
+                console.log('❌ Файл конфигурации не найден');
+            }
+        }
+        
+        if (config && config.enabled && config.credentials && config.spreadsheet_id) {
+            console.log('🚀 Инициализируем Google Sheets Manager...');
+            console.log('📊 Spreadsheet ID:', config.spreadsheet_id);
+            googleSheetsManager = new GoogleSheetsManager();
+            const success = await googleSheetsManager.init(config.credentials, config.spreadsheet_id);
+            if (success) {
+                await googleSheetsManager.createWorksheets();
+                console.log('✅ Google Sheets интеграция активна!');
+                console.log('🔗 Ссылка на таблицу: https://docs.google.com/spreadsheets/d/' + config.spreadsheet_id + '/edit');
+                
+                // Запускаем автоматический экспорт
+                if (config.auto_export_interval) {
+                    setInterval(async () => {
+                        console.log('🔄 Автоматический экспорт в Google Sheets...');
+                        await googleSheetsManager.exportAll(db);
+                    }, config.auto_export_interval);
                 }
             } else {
-                console.log('ℹ️ Google Sheets отключен в конфигурации');
+                console.log('❌ Ошибка подключения к Google Sheets API');
             }
         } else {
-            console.log('ℹ️ Конфигурация Google Sheets не найдена');
+            console.log('❌ Google Sheets не настроен');
+            console.log('💡 Для настройки на Railway добавьте переменные окружения:');
+            console.log('   GOOGLE_SHEETS_ID=your_spreadsheet_id');
+            console.log('   GOOGLE_SHEETS_CREDENTIALS={"type":"service_account",...}');
+            console.log('   GOOGLE_SHEETS_ENABLED=true');
+            console.log('💡 Для локальной разработки создайте файл config/google-sheets.json');
         }
     } catch (error) {
         console.error('❌ Ошибка инициализации Google Sheets:', error.message);
