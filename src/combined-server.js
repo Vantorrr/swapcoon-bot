@@ -29,6 +29,44 @@ async function initializeBotAndAdmins() {
         db = botModule.db;
         console.log('✅ Telegram бот инициализирован');
         
+        // 🔍 ПРИНУДИТЕЛЬНАЯ ИНИЦИАЛИЗАЦИЯ GOOGLE SHEETS
+        console.log('🔍 НАЧИНАЕМ ИНИЦИАЛИЗАЦИЮ GOOGLE SHEETS В COMBINED-SERVER...');
+        try {
+            // Импортируем функцию initGoogleSheets напрямую
+            const fs = require('fs');
+            const path = require('path');
+            const GoogleSheetsManager = require('./services/GoogleSheetsManager');
+            
+            // Проверяем переменные окружения
+            const envSpreadsheetId = process.env.GOOGLE_SHEETS_ID;
+            const envCredentials = process.env.GOOGLE_SHEETS_CREDENTIALS;
+            const envEnabled = process.env.GOOGLE_SHEETS_ENABLED !== 'false';
+            
+            console.log('🔍 ДИАГНОСТИКА ПЕРЕМЕННЫХ В COMBINED-SERVER:');
+            console.log('   GOOGLE_SHEETS_ID:', envSpreadsheetId ? 'ЕСТЬ' : 'НЕТ');
+            console.log('   GOOGLE_SHEETS_CREDENTIALS:', envCredentials ? 'ЕСТЬ' : 'НЕТ');
+            console.log('   GOOGLE_SHEETS_ENABLED:', envEnabled);
+            
+            if (envSpreadsheetId && envCredentials && envEnabled) {
+                console.log('🚀 Инициализируем Google Sheets Manager в combined-server...');
+                const parsedCredentials = JSON.parse(envCredentials);
+                const googleSheetsManager = new GoogleSheetsManager();
+                const success = await googleSheetsManager.init(parsedCredentials, envSpreadsheetId);
+                
+                if (success) {
+                    await googleSheetsManager.createWorksheets();
+                    global.googleSheetsManager = googleSheetsManager;
+                    console.log('✅ Google Sheets Manager инициализирован в combined-server!');
+                } else {
+                    console.log('❌ Ошибка подключения к Google Sheets API в combined-server');
+                }
+            } else {
+                console.log('❌ Google Sheets переменные окружения не настроены в combined-server');
+            }
+        } catch (sheetsInitError) {
+            console.error('❌ ОШИБКА инициализации Google Sheets в combined-server:', sheetsInitError.message);
+        }
+        
         // Инициализируем Google Sheets Manager глобально
         try {
             if (botModule.googleSheetsManager) {
@@ -300,10 +338,10 @@ async function fixEmptyStats() {
             
             // Создаем тестовые заказы с разными статусами и источниками
             const testOrders = [
-                ['FIX_001', 888999777, 'USDT', 'RUB', 100, 10000, 100, 'completed', 'web'],
-                ['FIX_002', 888999777, 'BTC', 'USDT', 0.001, 95, 95000, 'pending', 'bot'],
-                ['FIX_003', 888999777, 'ETH', 'ARS', 1, 3500000, 3500000, 'processing', 'web'],
-                ['FIX_004', 888999777, 'USDT', 'USD', 50, 50, 1, 'completed', 'bot']
+                ['FIX_001', 888999777, 'USDT', 'RUB', 100.0, 10000.0, 100.0, 'completed', 'web'],
+                ['FIX_002', 888999777, 'BTC', 'USDT', 0.001, 95.0, 95000.0, 'pending', 'bot'],
+                ['FIX_003', 888999777, 'ETH', 'ARS', 1.0, 3500000.0, 3500000.0, 'processing', 'web'],
+                ['FIX_004', 888999777, 'USDT', 'USD', 50.0, 50.0, 1.0, 'completed', 'bot']
             ];
             
             for (let i = 0; i < testOrders.length; i++) {
