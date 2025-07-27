@@ -30,12 +30,12 @@ class Database {
     }
 
     init() {
-        this.db = new sqlite3.Database(this.dbPath, (err) => {
+        this.db = new sqlite3.Database(this.dbPath, async (err) => {
             if (err) {
                 console.error('Ошибка подключения к базе данных:', err);
             } else {
                 console.log('✅ База данных подключена');
-                this.createTables();
+                await this.createTables();
             }
         });
     }
