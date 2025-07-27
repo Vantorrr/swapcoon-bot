@@ -225,8 +225,19 @@ class RatesService {
 
     // Получить курс конкретной валютной пары
     async getExchangeRate(fromCurrency, toCurrency, amount = 1) {
+        console.log(`🔍 ЗАПРОС КУРСА: ${fromCurrency} → ${toCurrency}, сумма: ${amount}`);
+        console.log(`🔍 Google Sheets курсов в памяти: ${this.googleSheetsRates.size}`);
+        
+        if (this.googleSheetsRates.size > 0) {
+            console.log('🔍 Список курсов в Google Sheets:');
+            for (const [pair, rate] of this.googleSheetsRates.entries()) {
+                console.log(`   ${pair}: продажа ${rate.sellRate}, покупка ${rate.buyRate}`);
+            }
+        }
+        
         // 📊 ПРИОРИТЕТ 1: Проверяем ручные курсы из Google Sheets
         const sheetRate = this.getSheetRateForPair(fromCurrency, toCurrency);
+        console.log(`🔍 Результат поиска в Google Sheets для ${fromCurrency}/${toCurrency}:`, sheetRate ? 'НАЙДЕН' : 'НЕ НАЙДЕН');
         if (sheetRate) {
             console.log(`📊 Используем ручной курс из Google Sheets для ${fromCurrency}/${toCurrency}: продажа ${sheetRate.sellRate}, покупка ${sheetRate.buyRate}`);
             
@@ -275,7 +286,8 @@ class RatesService {
             fee,
             fromRate: fromRate.sell,
             toRate: toRate.buy,
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            source: 'API'
         };
     }
 
@@ -531,6 +543,11 @@ class RatesService {
     getSheetRateForPair(fromCurrency, toCurrency) {
         const pair1 = `${fromCurrency}/${toCurrency}`;
         const pair2 = `${toCurrency}/${fromCurrency}`;
+        
+        console.log(`🔍 ПОИСК КУРСА В GOOGLE SHEETS:`);
+        console.log(`   Ищем пару 1: "${pair1}"`);
+        console.log(`   Ищем пару 2: "${pair2}"`);
+        console.log(`   Доступные пары:`, Array.from(this.googleSheetsRates.keys()));
         
         // Проверяем прямую пару
         if (this.googleSheetsRates.has(pair1)) {
