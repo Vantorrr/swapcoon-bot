@@ -61,13 +61,16 @@ const crmService = new CRMService();
 
 // Инициализация Google Sheets
 async function initGoogleSheets() {
+    console.log('🔍 ВХОД В initGoogleSheets()');
     try {
         console.log('🔍 Инициализация Google Sheets...');
         
         // Приоритет: переменные окружения (для Railway)
+        console.log('🔍 Читаем переменные окружения...');
         const envSpreadsheetId = process.env.GOOGLE_SHEETS_ID;
         const envCredentials = process.env.GOOGLE_SHEETS_CREDENTIALS;
         const envEnabled = process.env.GOOGLE_SHEETS_ENABLED !== 'false';
+        console.log('✅ Переменные прочитаны');
         
         // 🔍 ДЕТАЛЬНАЯ ДИАГНОСТИКА
         console.log('🔍 ДИАГНОСТИКА ПЕРЕМЕННЫХ ОКРУЖЕНИЯ:');
@@ -85,16 +88,27 @@ async function initGoogleSheets() {
         if (envSpreadsheetId && envCredentials && envEnabled) {
             console.log('🌍 Используем переменные окружения для Google Sheets');
             try {
+                console.log('🔍 Парсим JSON credentials...');
+                const parsedCredentials = JSON.parse(envCredentials);
+                console.log('✅ JSON credentials спаршен успешно');
+                
                 config = {
                     enabled: true,
                     spreadsheet_id: envSpreadsheetId,
-                    credentials: JSON.parse(envCredentials),
+                    credentials: parsedCredentials,
                     auto_export_interval: 3600000
                 };
                 console.log('✅ Конфигурация из переменных окружения загружена');
             } catch (parseError) {
                 console.error('❌ Ошибка парсинга GOOGLE_SHEETS_CREDENTIALS:', parseError.message);
+                console.error('📋 JSON parseError stack:', parseError.stack);
+                console.log('🚨 КРИТИЧНО: JSON credentials невалидны!');
             }
+        } else {
+            console.log('⚠️ НЕ ВСЕ переменные окружения найдены');
+            console.log('   envSpreadsheetId:', !!envSpreadsheetId);
+            console.log('   envCredentials:', !!envCredentials);  
+            console.log('   envEnabled:', envEnabled);
         }
         
         // Fallback: файл конфигурации (для локальной разработки)
@@ -156,7 +170,10 @@ async function initGoogleSheets() {
         }
     } catch (error) {
         console.error('❌ Ошибка инициализации Google Sheets:', error.message);
+        console.error('📋 Полный stack trace:', error.stack);
+        console.log('🚨 КРИТИЧНО: initGoogleSheets() упал с ошибкой!');
     }
+    console.log('🔍 ВЫХОД ИЗ initGoogleSheets()');
 }
 
 // Функция для создания клавиатуры
@@ -5920,7 +5937,14 @@ if (require.main === module) {
         console.log('🚀 ExMachinaX Bot запускается...');
         
         // Инициализируем Google Sheets
-        await initGoogleSheets();
+        console.log('🔍 НАЧИНАЕМ ИНИЦИАЛИЗАЦИЮ GOOGLE SHEETS...');
+        try {
+            await initGoogleSheets();
+            console.log('✅ Инициализация Google Sheets завершена');
+        } catch (initError) {
+            console.error('❌ ОШИБКА инициализации Google Sheets:', initError.message);
+            console.error('📋 Stack trace:', initError.stack);
+        }
         
         // ВРЕМЕННО: Всегда используем polling режим пока не исправим webhook
         console.log('🔄 АВАРИЙНЫЙ РЕЖИМ: Запуск в polling режиме');
