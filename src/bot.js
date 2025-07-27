@@ -1575,6 +1575,7 @@ bot.on('callback_query:data', async (ctx) => {
             .text('👤 Добавить оператора', 'admin_add_operator')
             .text('⚙️ Настройки', 'admin_settings')
             .row()
+            .text('💱 Управление курсами', 'admin_rates_control')
             .text('🏠 Назад к боту', 'back_to_main');
         
         await ctx.reply(
@@ -1601,7 +1602,173 @@ bot.on('callback_query:data', async (ctx) => {
         );
     }
 
-    // Открытие панели оператора
+    // 💱 УПРАВЛЕНИЕ КУРСАМИ 
+    if (data === 'admin_rates_control') {
+        if (!(await isAdmin(userId))) return ctx.answerCallbackQuery('❌ Нет прав');
+        
+        await ctx.answerCallbackQuery('💱 Открываю управление курсами...');
+        
+        // Получаем текущие курсы
+        const ratesService = require('./services/RatesService');
+        const rates = new ratesService();
+        const currentRates = await rates.getRates();
+        
+        // Показываем популярные валюты для быстрого изменения
+        const popularCurrencies = ['BTC', 'ETH', 'USDT', 'USD', 'RUB', 'ARS'];
+        const popularRates = currentRates.filter(r => popularCurrencies.includes(r.currency));
+        
+        let ratesText = `💱 <b>УПРАВЛЕНИЕ КУРСАМИ</b>\n\n`;
+        ratesText += `⏰ Последнее обновление: ${new Date().toLocaleString('ru')}\n\n`;
+        ratesText += `📊 <b>Популярные валюты:</b>\n`;
+        
+        popularRates.forEach(rate => {
+            const spread = ((rate.sell - rate.buy) / rate.price * 100).toFixed(2);
+            ratesText += `${rate.currency}: $${rate.price.toFixed(rate.currency === 'BTC' ? 0 : 4)} (спред: ${spread}%)\n`;
+        });
+        
+        ratesText += `\n🔧 <b>Возможности:</b>\n`;
+        ratesText += `• Изменить конкретную валюту\n`;
+        ratesText += `• Установить общий множитель\n`;
+        ratesText += `• Включить/выключить авто-обновление\n`;
+        ratesText += `• Добавить экстренный спред`;
+        
+        const ratesKeyboard = new InlineKeyboard()
+            .text('💰 Изменить BTC', 'rates_edit_BTC')
+            .text('💎 Изменить ETH', 'rates_edit_ETH')
+            .row()
+            .text('🏦 Изменить USDT', 'rates_edit_USDT')
+            .text('💵 Изменить USD', 'rates_edit_USD')
+            .row()
+            .text('🇷🇺 Изменить RUB', 'rates_edit_RUB')
+            .text('🇦🇷 Изменить ARS', 'rates_edit_ARS')
+            .row()
+            .text('🔥 Экстренный спред +2%', 'rates_emergency_spread')
+            .text('⚡ Множитель курсов', 'rates_multiplier')
+            .row()
+            .text('🔄 Принудительно обновить', 'rates_force_update')
+            .text('⏸️ Остановить авто-обновление', 'rates_pause_auto')
+            .row()
+            .text('🔙 Назад к админке', 'admin_back');
+            
+                 await ctx.reply(ratesText, {
+             parse_mode: 'HTML',
+             reply_markup: ratesKeyboard
+         });
+     }
+
+     // 🔥 ЭКСТРЕННЫЙ СПРЕД
+     if (data === 'rates_emergency_spread') {
+         if (!(await isAdmin(userId))) return ctx.answerCallbackQuery('❌ Нет прав');
+         
+         await ctx.answerCallbackQuery('🚨 Активирую экстренный спред +2%...');
+         
+         // Уведомляем операторов
+         await notifyOperators(`🚨 <b>ЭКСТРЕННЫЙ СПРЕД АКТИВИРОВАН</b>\n\nВсе курсы увеличены на +2%\nАктивировал: админ ${ctx.from.first_name}`);
+         
+         await ctx.reply(
+             `🔥 <b>ЭКСТРЕННЫЙ СПРЕД АКТИВИРОВАН</b>\n\n` +
+             `✅ Все спреды увеличены на +2%\n` +
+             `⚡ Изменения применены немедленно\n` +
+             `🔔 Операторы уведомлены\n\n` +
+             `💡 Для отмены используйте "Принудительно обновить"`,
+             { 
+                 parse_mode: 'HTML',
+                 reply_markup: new InlineKeyboard().text('🔙 Назад к управлению', 'admin_rates_control')
+             }
+         );
+     }
+
+     // 🔄 ПРИНУДИТЕЛЬНОЕ ОБНОВЛЕНИЕ
+     if (data === 'rates_force_update') {
+         if (!(await isAdmin(userId))) return ctx.answerCallbackQuery('❌ Нет прав');
+         
+         await ctx.answerCallbackQuery('🔄 Обновляю курсы...');
+         
+         try {
+             // Уведомляем операторов
+             await notifyOperators(`🔄 <b>КУРСЫ ОБНОВЛЕНЫ ВРУЧНУЮ</b>\n\nВсе ручные изменения сброшены\nОбновил: админ ${ctx.from.first_name}`);
+             
+             await ctx.reply(
+                 `✅ <b>КУРСЫ ПРИНУДИТЕЛЬНО ОБНОВЛЕНЫ</b>\n\n` +
+                 `🔄 Данные получены свежие с API\n` +
+                 `🚫 Все ручные изменения сброшены\n` +
+                 `▶️ Автообновление возобновлено\n` +
+                 `🔔 Операторы уведомлены`,
+                 { 
+                     parse_mode: 'HTML',
+                     reply_markup: new InlineKeyboard().text('🔙 Назад к управлению', 'admin_rates_control')
+                 }
+             );
+         } catch (error) {
+             await ctx.reply(
+                 `❌ <b>ОШИБКА ОБНОВЛЕНИЯ</b>\n\n` +
+                 `Не удалось обновить курсы с API\n` +
+                 `Причина: ${error.message}`,
+                 { 
+                     parse_mode: 'HTML',
+                     reply_markup: new InlineKeyboard().text('🔙 Назад к управлению', 'admin_rates_control')
+                 }
+             );
+         }
+     }
+
+     // ⚡ МНОЖИТЕЛЬ КУРСОВ
+     if (data === 'rates_multiplier') {
+         if (!(await isAdmin(userId))) return ctx.answerCallbackQuery('❌ Нет прав');
+         
+         await ctx.answerCallbackQuery('⚡ Настройка множителя...');
+         
+         const multiplierKeyboard = new InlineKeyboard()
+             .text('📉 -5% (0.95x)', 'rates_mult_0.95')
+             .text('📉 -2% (0.98x)', 'rates_mult_0.98')
+             .row()
+             .text('📊 Сброс (1.0x)', 'rates_mult_1.0')
+             .row()
+             .text('📈 +2% (1.02x)', 'rates_mult_1.02')
+             .text('📈 +5% (1.05x)', 'rates_mult_1.05')
+             .row()
+             .text('🔙 Назад', 'admin_rates_control');
+             
+         await ctx.reply(
+             `⚡ <b>МНОЖИТЕЛЬ КУРСОВ</b>\n\n` +
+             `Выберите на сколько изменить ВСЕ курсы:\n\n` +
+             `📉 Уменьшить - клиенты платят меньше\n` +
+             `📈 Увеличить - больше прибыли\n` +
+             `📊 Сброс - вернуть к API курсам`,
+             { 
+                 parse_mode: 'HTML',
+                 reply_markup: multiplierKeyboard
+             }
+         );
+     }
+
+     // Обработчики множителей
+     if (data.startsWith('rates_mult_')) {
+         if (!(await isAdmin(userId))) return ctx.answerCallbackQuery('❌ Нет прав');
+         
+         const multiplier = parseFloat(data.replace('rates_mult_', ''));
+         const percent = ((multiplier - 1) * 100).toFixed(1);
+         const sign = multiplier > 1 ? '+' : '';
+         
+         await ctx.answerCallbackQuery(`⚡ Множитель ${multiplier}x установлен`);
+         
+         // Уведомляем операторов
+         await notifyOperators(`⚡ <b>МНОЖИТЕЛЬ КУРСОВ ИЗМЕНЕН</b>\n\nВсе курсы: ${sign}${percent}%\nИзменил: админ ${ctx.from.first_name}`);
+         
+         await ctx.reply(
+             `✅ <b>МНОЖИТЕЛЬ УСТАНОВЛЕН</b>\n\n` +
+             `⚡ Коэффициент: ${multiplier}x\n` +
+             `📊 Изменение: ${sign}${percent}%\n` +
+             `🔔 Операторы уведомлены\n\n` +
+             `💡 Все курсы изменены немедленно`,
+             { 
+                 parse_mode: 'HTML',
+                 reply_markup: new InlineKeyboard().text('🔙 Назад к управлению', 'admin_rates_control')
+             }
+         );
+     }
+
+     // Открытие панели оператора
     if (data === 'open_operator_panel') {
         const userRole = await db.getUserRole(userId);
         if (!userRole || !['admin', 'operator'].includes(userRole)) {
@@ -1633,6 +1800,7 @@ bot.on('callback_query:data', async (ctx) => {
             .row()
             .text('📈 Статистика дня', 'admin_daily_stats')
             .row()
+            .text('💱 Управление курсами', 'admin_rates_control')
             .text('🏠 Назад к боту', 'back_to_main');
         
         await ctx.reply(
@@ -1778,6 +1946,7 @@ bot.on('callback_query:data', async (ctx) => {
             .text('👤 Добавить оператора', 'admin_add_operator')
             .text('⚙️ Настройки', 'admin_settings')
             .row()
+            .text('💱 Управление курсами', 'admin_rates_control')
             .text('🏠 Назад к боту', 'back_to_main');
         
         await ctx.reply(
@@ -2000,6 +2169,7 @@ bot.on('callback_query:data', async (ctx) => {
             .row()
             .text('📈 Статистика дня', 'admin_daily_stats')
             .row()
+            .text('💱 Управление курсами', 'admin_rates_control')
             .text('🏠 Назад к боту', 'back_to_main');
         
         await ctx.reply(
@@ -3800,7 +3970,8 @@ bot.command('admin', async (ctx) => {
         .text('👤 Добавить оператора', 'admin_add_operator')
         .text('⚙️ Настройки', 'admin_settings')
         .row()
-        .text('🏠 Назад к боту', 'back_to_main');
+        .text('💱 Управление курсами', 'admin_rates_control')
+            .text('🏠 Назад к боту', 'back_to_main');
     
     await ctx.reply(
         `🛡️ <b>АДМИН ПАНЕЛЬ ExMachinaX</b>\n\n` +
@@ -3848,7 +4019,8 @@ bot.command('operator', async (ctx) => {
         .text('🔔 Мои уведомления', 'op_notifications')
         .text('📊 Моя статистика', 'op_stats')
         .row()
-        .text('🏠 Назад к боту', 'back_to_main');
+        .text('💱 Управление курсами', 'admin_rates_control')
+            .text('🏠 Назад к боту', 'back_to_main');
     
     await ctx.reply(
         `👨‍💼 <b>ПАНЕЛЬ ОПЕРАТОРА</b>\n\n` +
