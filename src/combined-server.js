@@ -312,8 +312,8 @@ async function fixEmptyStats() {
                     db.db.run(`
                         INSERT OR IGNORE INTO orders 
                         (id, user_id, from_currency, to_currency, from_amount, to_amount, 
-                         exchange_rate, status, source, created_at, updated_at)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+                         exchange_rate, status, source, created_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
                     `, order, function(err) {
                         if (err) reject(err);
                         else {
