@@ -3,13 +3,14 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 
-console.log('🚀 Запуск комбинированного сервера (БОТ + ВЕБ)...');
-console.log('📂 __dirname:', __dirname);
-console.log('🌍 NODE_ENV:', process.env.NODE_ENV || 'не установлен');
-console.log('🔌 PORT:', process.env.PORT || 3000);
-console.log('🔑 BOT_TOKEN установлен?', process.env.BOT_TOKEN ? 'ДА' : 'НЕТ');
-console.log('🔑 BOT_TOKEN длина:', process.env.BOT_TOKEN ? process.env.BOT_TOKEN.length : 0);
-console.log('🔑 BOT_TOKEN начинается с:', process.env.BOT_TOKEN ? process.env.BOT_TOKEN.substring(0, 10) + '...' : 'НЕТ');
+// 🔍 САМАЯ РАННЯЯ ДИАГНОСТИКА COMBINED-SERVER
+console.log('🚀 COMBINED-SERVER.JS ЗАПУЩЕН!');
+console.log('📅 Время запуска:', new Date().toISOString());
+console.log('🌍 NODE_ENV:', process.env.NODE_ENV);
+console.log('🔍 ПРОВЕРКА ПЕРЕМЕННЫХ GOOGLE SHEETS:');
+console.log('   GOOGLE_SHEETS_ID:', process.env.GOOGLE_SHEETS_ID ? 'ЕСТЬ' : 'НЕТ');
+console.log('   GOOGLE_SHEETS_CREDENTIALS:', process.env.GOOGLE_SHEETS_CREDENTIALS ? 'ЕСТЬ' : 'НЕТ');
+console.log('   GOOGLE_SHEETS_ENABLED:', process.env.GOOGLE_SHEETS_ENABLED);
 
 // 🤖 ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ БОТА
 let bot = null;
@@ -19,6 +20,7 @@ let db = null;
 
 // 🤖 АСИНХРОННЫЙ ЗАПУСК TELEGRAM БОТА С ИНИЦИАЛИЗАЦИЕЙ АДМИНОВ
 async function initializeBotAndAdmins() {
+    console.log('🔍 НАЧАЛО ФУНКЦИИ initializeBotAndAdmins()');
     console.log('🤖 Инициализация Telegram бота...');
     try {
         // Импортируем бота
@@ -338,10 +340,10 @@ async function fixEmptyStats() {
             
             // Создаем тестовые заказы с разными статусами и источниками
             const testOrders = [
-                ['FIX_001', 888999777, 'USDT', 'RUB', 100.0, 10000.0, 100.0, 'completed', 'web'],
-                ['FIX_002', 888999777, 'BTC', 'USDT', 0.001, 95.0, 95000.0, 'pending', 'bot'],
-                ['FIX_003', 888999777, 'ETH', 'ARS', 1.0, 3500000.0, 3500000.0, 'processing', 'web'],
-                ['FIX_004', 888999777, 'USDT', 'USD', 50.0, 50.0, 1.0, 'completed', 'bot']
+                [null, 888999777, 'USDT', 'RUB', 100.0, 10000.0, null, null, 100.0, 0, null, 'completed', 'web'],
+                [null, 888999777, 'BTC', 'USDT', 0.001, 95.0, null, null, 95000.0, 0, null, 'pending', 'bot'],
+                [null, 888999777, 'ETH', 'ARS', 1.0, 3500000.0, null, null, 3500000.0, 0, null, 'processing', 'web'],
+                [null, 888999777, 'USDT', 'USD', 50.0, 50.0, null, null, 1.0, 0, null, 'completed', 'bot']
             ];
             
             for (let i = 0; i < testOrders.length; i++) {
@@ -350,8 +352,8 @@ async function fixEmptyStats() {
                     db.db.run(`
                         INSERT OR IGNORE INTO orders 
                         (id, user_id, from_currency, to_currency, from_amount, to_amount, 
-                         exchange_rate, status, source, created_at)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+                         from_address, to_address, exchange_rate, fee, aml_status, status, source, created_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
                     `, order, function(err) {
                         if (err) reject(err);
                         else {
