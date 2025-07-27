@@ -69,6 +69,17 @@ async function initGoogleSheets() {
         const envCredentials = process.env.GOOGLE_SHEETS_CREDENTIALS;
         const envEnabled = process.env.GOOGLE_SHEETS_ENABLED !== 'false';
         
+        // 🔍 ДЕТАЛЬНАЯ ДИАГНОСТИКА
+        console.log('🔍 ДИАГНОСТИКА ПЕРЕМЕННЫХ ОКРУЖЕНИЯ:');
+        console.log('   GOOGLE_SHEETS_ID:', envSpreadsheetId ? 'ЕСТЬ' : 'НЕТ');
+        console.log('   GOOGLE_SHEETS_CREDENTIALS:', envCredentials ? 'ЕСТЬ' : 'НЕТ');
+        console.log('   GOOGLE_SHEETS_ENABLED:', envEnabled);
+        
+        if (envCredentials) {
+            console.log('   Длина CREDENTIALS:', envCredentials.length);
+            console.log('   Первые 100 символов:', envCredentials.substring(0, 100));
+        }
+        
         let config = null;
         
         if (envSpreadsheetId && envCredentials && envEnabled) {
@@ -101,12 +112,22 @@ async function initGoogleSheets() {
         if (config && config.enabled && config.credentials && config.spreadsheet_id) {
             console.log('🚀 Инициализируем Google Sheets Manager...');
             console.log('📊 Spreadsheet ID:', config.spreadsheet_id);
+            console.log('🔑 Credentials найдены:', !!config.credentials);
+            
             googleSheetsManager = new GoogleSheetsManager();
+            console.log('📦 GoogleSheetsManager создан:', !!googleSheetsManager);
+            
             const success = await googleSheetsManager.init(config.credentials, config.spreadsheet_id);
+            console.log('🔌 Результат инициализации API:', success);
+            
             if (success) {
                 await googleSheetsManager.createWorksheets();
                 console.log('✅ Google Sheets интеграция активна!');
                 console.log('🔗 Ссылка на таблицу: https://docs.google.com/spreadsheets/d/' + config.spreadsheet_id + '/edit');
+                
+                // 🌍 УСТАНАВЛИВАЕМ ГЛОБАЛЬНО
+                global.googleSheetsManager = googleSheetsManager;
+                console.log('🌍 Google Sheets Manager установлен глобально!');
                 
                 // Запускаем автоматический экспорт
                 if (config.auto_export_interval) {
@@ -120,6 +141,13 @@ async function initGoogleSheets() {
             }
         } else {
             console.log('❌ Google Sheets не настроен');
+            console.log('🔍 Причины:');
+            console.log('   config существует:', !!config);
+            if (config) {
+                console.log('   config.enabled:', config.enabled);
+                console.log('   config.credentials:', !!config.credentials);
+                console.log('   config.spreadsheet_id:', !!config.spreadsheet_id);
+            }
             console.log('💡 Для настройки на Railway добавьте переменные окружения:');
             console.log('   GOOGLE_SHEETS_ID=your_spreadsheet_id');
             console.log('   GOOGLE_SHEETS_CREDENTIALS={"type":"service_account",...}');
@@ -179,9 +207,26 @@ bot.command('init_rates_table', async (ctx) => {
         await ctx.reply('🔄 Создаю лист курсов в существующей таблице...');
         
         // Проверяем доступность Google Sheets
+        console.log('🔍 ДИАГНОСТИКА SHEETS MANAGER:');
+        console.log('   googleSheetsManager:', !!googleSheetsManager);
+        console.log('   global.googleSheetsManager:', !!global.googleSheetsManager);
+        
         const sheetsManager = googleSheetsManager || global.googleSheetsManager;
         if (!sheetsManager) {
-            return await ctx.reply('❌ Google Sheets Manager не найден. Перезапустите бота.');
+            console.log('❌ КРИТИЧНО: Google Sheets Manager не найден!');
+            return await ctx.reply(
+                '❌ <b>Google Sheets Manager не найден!</b>\n\n' +
+                '🔧 <b>Возможные причины:</b>\n' +
+                '• Переменные окружения не настроены\n' +
+                '• Ошибка в JSON credentials\n' +
+                '• Бот не перезапустился\n\n' +
+                '💡 <b>Решение:</b>\n' +
+                '1. Проверьте переменные в Railway\n' +
+                '2. Перезапустите приложение\n' +
+                '3. Проверьте логи\n\n' +
+                '/admin → 🔧 Google Sheets для диагностики',
+                { parse_mode: 'HTML' }
+            );
         }
         
         // Сначала создаем лист Manual_Rates если его нет
