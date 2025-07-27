@@ -225,6 +225,30 @@ class RatesService {
 
     // Получить курс конкретной валютной пары
     async getExchangeRate(fromCurrency, toCurrency, amount = 1) {
+        // 📊 ПРИОРИТЕТ 1: Проверяем ручные курсы из Google Sheets
+        const sheetRate = this.getSheetRateForPair(fromCurrency, toCurrency);
+        if (sheetRate) {
+            console.log(`📊 Используем ручной курс из Google Sheets для ${fromCurrency}/${toCurrency}: продажа ${sheetRate.sellRate}, покупка ${sheetRate.buyRate}`);
+            
+            const exchangeRate = sheetRate.sellRate;
+            const resultAmount = amount * exchangeRate;
+            const fee = resultAmount * this.commission;
+            
+            return {
+                fromCurrency,
+                toCurrency,
+                amount,
+                exchangeRate,
+                resultAmount: resultAmount - fee,
+                fee,
+                fromRate: sheetRate.sellRate,
+                toRate: sheetRate.buyRate,
+                timestamp: Date.now(),
+                source: 'GOOGLE_SHEETS'
+            };
+        }
+        
+        // 📡 ПРИОРИТЕТ 2: Используем API курсы
         const rates = await this.getRates();
         
         const fromRate = rates.find(r => r.currency === fromCurrency);
@@ -495,7 +519,11 @@ class RatesService {
             await global.googleSheetsManager.syncCurrentRatesToTable(currentRates);
             
         } catch (error) {
-            console.error('❌ Ошибка синхронизации с Google Sheets:', error.message);
+            if (error.message.includes('429')) {
+                console.log('⏳ Google API rate limit достигнут. Пропускаем синхронизацию до следующего интервала...');
+            } else {
+                console.error('❌ Ошибка синхронизации с Google Sheets:', error.message);
+            }
         }
     }
 
