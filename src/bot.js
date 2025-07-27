@@ -1662,6 +1662,11 @@ bot.on('callback_query:data', async (ctx) => {
          
          await ctx.answerCallbackQuery('🚨 Активирую экстренный спред +2%...');
          
+         // Применяем экстренный спред через RatesService
+         const RatesService = require('./services/RatesService');
+         const ratesService = new RatesService();
+         ratesService.setEmergencySpread(2); // +2%
+         
          // Уведомляем операторов
          await notifyOperators(`🚨 <b>ЭКСТРЕННЫЙ СПРЕД АКТИВИРОВАН</b>\n\nВсе курсы увеличены на +2%\nАктивировал: админ ${ctx.from.first_name}`);
          
@@ -1685,6 +1690,11 @@ bot.on('callback_query:data', async (ctx) => {
          await ctx.answerCallbackQuery('🔄 Обновляю курсы...');
          
          try {
+             // Принудительно обновляем через RatesService
+             const RatesService = require('./services/RatesService');
+             const ratesService = new RatesService();
+             await ratesService.forceUpdate();
+             
              // Уведомляем операторов
              await notifyOperators(`🔄 <b>КУРСЫ ОБНОВЛЕНЫ ВРУЧНУЮ</b>\n\nВсе ручные изменения сброшены\nОбновил: админ ${ctx.from.first_name}`);
              
@@ -1752,6 +1762,11 @@ bot.on('callback_query:data', async (ctx) => {
          
          await ctx.answerCallbackQuery(`⚡ Множитель ${multiplier}x установлен`);
          
+         // Применяем множитель через RatesService
+         const RatesService = require('./services/RatesService');
+         const ratesService = new RatesService();
+         ratesService.setRatesMultiplier(multiplier);
+         
          // Уведомляем операторов
          await notifyOperators(`⚡ <b>МНОЖИТЕЛЬ КУРСОВ ИЗМЕНЕН</b>\n\nВсе курсы: ${sign}${percent}%\nИзменил: админ ${ctx.from.first_name}`);
          
@@ -1761,6 +1776,158 @@ bot.on('callback_query:data', async (ctx) => {
              `📊 Изменение: ${sign}${percent}%\n` +
              `🔔 Операторы уведомлены\n\n` +
              `💡 Все курсы изменены немедленно`,
+             { 
+                 parse_mode: 'HTML',
+                 reply_markup: new InlineKeyboard().text('🔙 Назад к управлению', 'admin_rates_control')
+             }
+         );
+     }
+
+     // 🔧 ИЗМЕНЕНИЕ КОНКРЕТНЫХ ВАЛЮТ
+     if (data.startsWith('rates_edit_')) {
+         if (!(await isAdmin(userId))) return ctx.answerCallbackQuery('❌ Нет прав');
+         
+         const currency = data.replace('rates_edit_', '');
+         
+         await ctx.answerCallbackQuery(`💱 Настройка ${currency}...`);
+         
+         // Получаем текущий курс
+         const ratesService = require('./services/RatesService');
+         const rates = new ratesService();
+         const currentRates = await rates.getRates();
+         const currentRate = currentRates.find(r => r.currency === currency);
+         
+         if (!currentRate) {
+             return await ctx.reply('❌ Валюта не найдена', {
+                 reply_markup: new InlineKeyboard().text('🔙 Назад', 'admin_rates_control')
+             });
+         }
+         
+         const editKeyboard = new InlineKeyboard()
+             .text('📈 +10%', `rates_change_${currency}_1.1`)
+             .text('📈 +5%', `rates_change_${currency}_1.05`)
+             .row()
+             .text('📈 +2%', `rates_change_${currency}_1.02`)
+             .text('📊 Сброс', `rates_change_${currency}_1.0`)
+             .row()
+             .text('📉 -2%', `rates_change_${currency}_0.98`)
+             .text('📉 -5%', `rates_change_${currency}_0.95`)
+             .row()
+             .text('📉 -10%', `rates_change_${currency}_0.9`)
+             .row()
+             .text('🔙 Назад', 'admin_rates_control');
+             
+         await ctx.reply(
+             `💱 <b>ИЗМЕНЕНИЕ ${currency}</b>\n\n` +
+             `📊 <b>Текущий курс:</b> $${currentRate.price.toFixed(currency === 'BTC' ? 0 : 4)}\n` +
+             `📈 <b>Продажа:</b> $${currentRate.sell.toFixed(currency === 'BTC' ? 0 : 4)}\n` +
+             `📉 <b>Покупка:</b> $${currentRate.buy.toFixed(currency === 'BTC' ? 0 : 4)}\n` +
+             `📊 <b>Спред:</b> ${((currentRate.sell - currentRate.buy) / currentRate.price * 100).toFixed(2)}%\n\n` +
+             `Выберите на сколько изменить курс ${currency}:`,
+             { 
+                 parse_mode: 'HTML',
+                 reply_markup: editKeyboard
+             }
+         );
+     }
+
+     // Обработчики изменения курсов конкретных валют
+     if (data.startsWith('rates_change_')) {
+         if (!(await isAdmin(userId))) return ctx.answerCallbackQuery('❌ Нет прав');
+         
+         const parts = data.replace('rates_change_', '').split('_');
+         const currency = parts[0];
+         const multiplier = parseFloat(parts[1]);
+         const percent = ((multiplier - 1) * 100).toFixed(1);
+         const sign = multiplier > 1 ? '+' : '';
+         
+         await ctx.answerCallbackQuery(`💱 ${currency}: ${sign}${percent}% установлено`);
+         
+         // Применяем изменение через RatesService
+         const RatesService = require('./services/RatesService');
+         const ratesService = new RatesService();
+         ratesService.setManualRate(currency, multiplier, 3600000); // На 1 час
+         
+         // Уведомляем операторов
+         await notifyOperators(`💱 <b>КУРС ${currency} ИЗМЕНЕН</b>\n\nИзменение: ${sign}${percent}%\nИзменил: админ ${ctx.from.first_name}`);
+         
+         await ctx.reply(
+             `✅ <b>КУРС ${currency} ИЗМЕНЕН</b>\n\n` +
+             `💱 Валюта: ${currency}\n` +
+             `📊 Изменение: ${sign}${percent}%\n` +
+             `⚡ Коэффициент: ${multiplier}x\n` +
+             `⏰ Действует: 1 час\n` +
+             `🔔 Операторы уведомлены\n\n` +
+             `💡 Изменения применены немедленно`,
+             { 
+                 parse_mode: 'HTML',
+                 reply_markup: new InlineKeyboard().text('🔙 Назад к управлению', 'admin_rates_control')
+             }
+         );
+     }
+
+     // ⏸️ ОСТАНОВКА АВТООБНОВЛЕНИЯ
+     if (data === 'rates_pause_auto') {
+         if (!(await isAdmin(userId))) return ctx.answerCallbackQuery('❌ Нет прав');
+         
+         await ctx.answerCallbackQuery('⏸️ Приостанавливаю автообновление...');
+         
+         const pauseKeyboard = new InlineKeyboard()
+             .text('⏸️ 15 минут', 'rates_pause_15')
+             .text('⏸️ 30 минут', 'rates_pause_30')
+             .row()
+             .text('⏸️ 1 час', 'rates_pause_60')
+             .text('⏸️ 3 часа', 'rates_pause_180')
+             .row()
+             .text('⏸️ До ручного включения', 'rates_pause_manual')
+             .row()
+             .text('🔙 Назад', 'admin_rates_control');
+             
+         await ctx.reply(
+             `⏸️ <b>ОСТАНОВКА АВТООБНОВЛЕНИЯ</b>\n\n` +
+             `На какое время остановить автоматическое обновление курсов?\n\n` +
+             `💡 Курсы останутся текущими\n` +
+             `⚡ Ручные изменения будут работать\n` +
+             `🔄 Возобновить можно в любой момент`,
+             { 
+                 parse_mode: 'HTML',
+                 reply_markup: pauseKeyboard
+             }
+         );
+     }
+
+     // Обработчики остановки автообновления
+     if (data.startsWith('rates_pause_')) {
+         if (!(await isAdmin(userId))) return ctx.answerCallbackQuery('❌ Нет прав');
+         
+         const duration = data.replace('rates_pause_', '');
+         let durationText = '';
+         let durationMs = 0;
+         
+         switch(duration) {
+             case '15': durationText = '15 минут'; durationMs = 15 * 60 * 1000; break;
+             case '30': durationText = '30 минут'; durationMs = 30 * 60 * 1000; break;
+             case '60': durationText = '1 час'; durationMs = 60 * 60 * 1000; break;
+             case '180': durationText = '3 часа'; durationMs = 180 * 60 * 1000; break;
+             case 'manual': durationText = 'до ручного включения'; durationMs = 24 * 60 * 60 * 1000; break; // 24 часа
+         }
+         
+         await ctx.answerCallbackQuery(`⏸️ Автообновление остановлено на ${durationText}`);
+         
+         // Останавливаем автообновление через RatesService
+         const RatesService = require('./services/RatesService');
+         const ratesService = new RatesService();
+         ratesService.pauseAutoUpdate(durationMs);
+         
+         // Уведомляем операторов
+         await notifyOperators(`⏸️ <b>АВТООБНОВЛЕНИЕ КУРСОВ ОСТАНОВЛЕНО</b>\n\nНа: ${durationText}\nОстановил: админ ${ctx.from.first_name}`);
+         
+         await ctx.reply(
+             `⏸️ <b>АВТООБНОВЛЕНИЕ ОСТАНОВЛЕНО</b>\n\n` +
+             `⏰ Продолжительность: ${durationText}\n` +
+             `🔒 Курсы зафиксированы\n` +
+             `🔔 Операторы уведомлены\n\n` +
+             `💡 Возобновить можно в любой момент через "Принудительно обновить"`,
              { 
                  parse_mode: 'HTML',
                  reply_markup: new InlineKeyboard().text('🔙 Назад к управлению', 'admin_rates_control')
@@ -4017,9 +4184,10 @@ bot.command('operator', async (ctx) => {
         .text(`📝 Мои заказы (${myOrders.length})`, 'op_my_orders')
         .row()
         .text('🔔 Мои уведомления', 'op_notifications')
-        .text('📊 Моя статистика', 'op_stats')
-        .row()
-        .text('💱 Управление курсами', 'admin_rates_control')
+                    .text('📊 Моя статистика', 'op_stats')
+            .row()
+            .text('📈 Статистика дня', 'admin_daily_stats')
+            .row()
             .text('🏠 Назад к боту', 'back_to_main');
     
     await ctx.reply(

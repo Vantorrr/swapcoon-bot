@@ -46,6 +46,13 @@ class RatesService {
             'BRL': 5.1     // Бразильский реал
         };
         
+        // 🔧 РУЧНОЕ УПРАВЛЕНИЕ КУРСАМИ
+        this.emergencySpread = 0;        // Экстренный спред в процентах
+        this.ratesMultiplier = 1.0;      // Общий множитель курсов
+        this.manualRates = new Map();    // Ручные курсы конкретных валют
+        this.autoUpdatePaused = false;   // Пауза автообновления
+        this.pauseUntil = null;         // До какого времени пауза
+        
         this.initAutoUpdate();
     }
 
@@ -237,6 +244,116 @@ class RatesService {
             toRate: toRate.buy,
             timestamp: Date.now()
         };
+    }
+
+    // 🔧 МЕТОДЫ РУЧНОГО УПРАВЛЕНИЯ КУРСАМИ
+
+    // Установка экстренного спреда
+    setEmergencySpread(emergencyPercent) {
+        this.emergencySpread = emergencyPercent || 0;
+        console.log(`🚨 Установлен экстренный спред: +${emergencyPercent}%`);
+        this.cache.clear(); // Очищаем кэш для применения
+    }
+    
+    // Установка множителя курсов
+    setRatesMultiplier(multiplier) {
+        this.ratesMultiplier = multiplier || 1.0;
+        console.log(`⚡ Установлен множитель курсов: ${multiplier}x`);
+        this.cache.clear();
+    }
+    
+    // Ручная установка курса конкретной валюты
+    setManualRate(currency, multiplier, duration = 3600000) { // 1 час по умолчанию
+        if (!this.manualRates) this.manualRates = new Map();
+        
+        this.manualRates.set(currency, {
+            multiplier: multiplier,
+            setAt: Date.now(),
+            duration: duration
+        });
+        
+        console.log(`💱 Установлен ручной курс ${currency}: ${multiplier}x на ${duration/60000} минут`);
+        this.cache.clear();
+    }
+    
+    // Пауза автообновления
+    pauseAutoUpdate(duration = 3600000) { // 1 час
+        this.autoUpdatePaused = true;
+        this.pauseUntil = Date.now() + duration;
+        console.log(`⏸️ Автообновление приостановлено на ${duration/60000} минут`);
+    }
+    
+    // Возобновление автообновления
+    resumeAutoUpdate() {
+        this.autoUpdatePaused = false;
+        this.pauseUntil = null;
+        console.log(`▶️ Автообновление возобновлено`);
+    }
+    
+    // Принудительное обновление
+    async forceUpdate() {
+        console.log('🔄 Принудительное обновление курсов...');
+        this.cache.clear();
+        this.autoUpdatePaused = false;
+        this.pauseUntil = null;
+        this.emergencySpread = 0;
+        this.ratesMultiplier = 1.0;
+        this.manualRates.clear();
+        
+        try {
+            const rates = await this.fetchFreshRates();
+            this.cache.set('rates', {
+                data: rates,
+                timestamp: Date.now()
+            });
+            console.log('✅ Принудительное обновление завершено');
+            return rates;
+        } catch (error) {
+            console.error('❌ Ошибка принудительного обновления:', error);
+            throw error;
+        }
+    }
+
+    // Применение ручных настроек к курсам
+    applyManualSettings(rates) {
+        if (!rates || !Array.isArray(rates)) return rates;
+        
+        return rates.map(rate => {
+            let adjustedRate = { ...rate };
+            
+            // Применяем общий множитель
+            if (this.ratesMultiplier !== 1.0) {
+                adjustedRate.price *= this.ratesMultiplier;
+                adjustedRate.buy *= this.ratesMultiplier;
+                adjustedRate.sell *= this.ratesMultiplier;
+            }
+            
+            // Применяем индивидуальный множитель валюты
+            if (this.manualRates && this.manualRates.has(rate.currency)) {
+                const manual = this.manualRates.get(rate.currency);
+                // Проверяем не истек ли срок
+                if (Date.now() - manual.setAt < manual.duration) {
+                    adjustedRate.price *= manual.multiplier;
+                    adjustedRate.buy *= manual.multiplier;
+                    adjustedRate.sell *= manual.multiplier;
+                } else {
+                    this.manualRates.delete(rate.currency); // Удаляем истекшую настройку
+                }
+            }
+            
+            // Применяем экстренный спред
+            if (this.emergencySpread > 0) {
+                const emergencyMultiplier = 1 + (this.emergencySpread / 100);
+                const currentSpread = adjustedRate.sell - adjustedRate.buy;
+                const newSpread = currentSpread * emergencyMultiplier;
+                const center = (adjustedRate.sell + adjustedRate.buy) / 2;
+                
+                adjustedRate.buy = center - newSpread / 2;
+                adjustedRate.sell = center + newSpread / 2;
+            }
+            
+            return adjustedRate;
+        });
     }
 }
 
