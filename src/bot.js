@@ -467,6 +467,51 @@ bot.command('test_sync', async (ctx) => {
     }
 });
 
+// Команда для отладки курсов: /debug_rates
+bot.command('debug_rates', async (ctx) => {
+    const userId = ctx.from.id;
+    
+    // Проверяем права админа
+    if (!(await isAdmin(userId))) {
+        return await ctx.reply('❌ Только администраторы могут отлаживать курсы');
+    }
+    
+    try {
+        await ctx.reply('🔍 Диагностика курсов...');
+        
+        // Получаем курсы через глобальный ratesService
+        if (global.ratesService) {
+            const rates = await global.ratesService.getRates();
+            
+            // Ищем RUB курс
+            const rubRate = rates.find(r => r.currency === 'RUB');
+            
+            let resultText = '📊 <b>ДИАГНОСТИКА КУРСОВ:</b>\n\n';
+            
+            if (rubRate) {
+                resultText += `✅ RUB курс найден:\n`;
+                resultText += `• Продажа: ${rubRate.sell}\n`;
+                resultText += `• Покупка: ${rubRate.buy}\n`;  
+                resultText += `• Цена: ${rubRate.price}\n`;
+                resultText += `• Источник: ${rubRate.source || 'API'}\n`;
+                resultText += `• Тип: ${rubRate.type || 'unknown'}\n`;
+            } else {
+                resultText += '❌ RUB курс НЕ найден в массиве курсов';
+            }
+            
+            resultText += `\n📈 Всего курсов: ${rates.length}`;
+            
+            await ctx.reply(resultText, { parse_mode: 'HTML' });
+        } else {
+            await ctx.reply('❌ global.ratesService не найден');
+        }
+        
+    } catch (error) {
+        console.error('🔥 Ошибка диагностики курсов:', error);
+        await ctx.reply(`❌ Ошибка: ${error.message}`);
+    }
+});
+
 // Команда /start
 bot.command('start', async (ctx) => {
     const userId = ctx.from.id;
