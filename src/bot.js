@@ -238,6 +238,15 @@ bot.command('init_rates_table', async (ctx) => {
         console.log('   GOOGLE_SHEETS_CREDENTIALS:', envCredentials ? 'ЕСТЬ' : 'НЕТ');
         console.log('   GOOGLE_SHEETS_ENABLED:', envEnabled);
         
+        if (envCredentials) {
+            console.log('🔍 ДЕТАЛЬНАЯ ДИАГНОСТИКА JSON:');
+            console.log('   Длина:', envCredentials.length);
+            console.log('   Первые 50 символов:', envCredentials.substring(0, 50));
+            console.log('   Последние 50 символов:', envCredentials.substring(envCredentials.length - 50));
+            console.log('   Начинается с {:', envCredentials.trim().startsWith('{'));
+            console.log('   Заканчивается на }:', envCredentials.trim().endsWith('}'));
+        }
+        
         if (!envSpreadsheetId || !envCredentials || !envEnabled) {
             return await ctx.reply(
                 '❌ <b>Google Sheets не настроен!</b>\n\n' +
