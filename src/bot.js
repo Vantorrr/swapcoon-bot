@@ -272,9 +272,9 @@ bot.command('init_rates_table', async (ctx) => {
         }
         
         // Теперь заполняем данными
-        const success = await sheetsManager.initializeRatesTable();
+        const initSuccess = await sheetsManager.initializeRatesTable();
         
-        if (success) {
+        if (initSuccess) {
             await ctx.reply(
                 '✅ <b>ТАБЛИЦА КУРСОВ СОЗДАНА!</b>\n\n' +
                 '📊 Добавлены все валютные пары:\n' +
