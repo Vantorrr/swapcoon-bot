@@ -358,6 +358,18 @@ class RatesService {
         return rates.map(rate => {
             let adjustedRate = { ...rate };
             
+            // 📊 ПРИОРИТЕТ 1: Курсы из Google Sheets (самый высокий)
+            const sheetRate = this.getSheetRateForPair(rate.currency, 'USD');
+            if (sheetRate) {
+                adjustedRate.sell = sheetRate.sellRate;
+                adjustedRate.buy = sheetRate.buyRate;
+                adjustedRate.price = (sheetRate.sellRate + sheetRate.buyRate) / 2;
+                adjustedRate.source = 'GOOGLE_SHEETS';
+                console.log(`📊 Применен курс из Google Sheets для ${rate.currency}: продажа ${sheetRate.sellRate}, покупка ${sheetRate.buyRate}`);
+                return adjustedRate; // Возвращаем сразу, Google Sheets имеет максимальный приоритет
+            }
+            
+            // 🔧 ПРИОРИТЕТ 2: Ручные настройки через бот
             // Применяем общий множитель
             if (this.ratesMultiplier !== 1.0) {
                 adjustedRate.price *= this.ratesMultiplier;
@@ -440,10 +452,20 @@ class RatesService {
     // Синхронизация курсов с Google Sheets
     async syncWithGoogleSheets() {
         try {
+            console.log('📊 ПОПЫТКА СИНХРОНИЗАЦИИ с Google Sheets...');
+            console.log('   global.googleSheetsManager:', !!global.googleSheetsManager);
+            
+            if (global.googleSheetsManager) {
+                console.log('   googleSheetsManager.isReady():', global.googleSheetsManager.isReady());
+            }
+            
             // Проверяем есть ли Google Sheets Manager
             if (!global.googleSheetsManager || !global.googleSheetsManager.isReady()) {
+                console.log('❌ Google Sheets не готов для синхронизации. Пропускаем...');
                 return; // Тихо пропускаем если Google Sheets не настроен
             }
+            
+            console.log('✅ Google Sheets готов! Начинаем синхронизацию...');
 
             // Читаем ручные курсы из таблицы
             const manualRates = await global.googleSheetsManager.readManualRatesFromTable();

@@ -315,6 +315,19 @@ bot.command('init_rates_table', async (ctx) => {
             global.googleSheetsManager = sheetsManager;
             console.log('🔥 Google Sheets Manager установлен глобально из команды!');
             
+            // 🔄 ПРИНУДИТЕЛЬНО ЗАПУСКАЕМ СИНХРОНИЗАЦИЮ
+            setTimeout(async () => {
+                try {
+                    console.log('🔄 Запускаем принудительную синхронизацию курсов...');
+                    const RatesService = require('./services/RatesService');
+                    const ratesService = new RatesService();
+                    await ratesService.syncWithGoogleSheets();
+                    console.log('✅ Принудительная синхронизация завершена');
+                } catch (syncError) {
+                    console.error('❌ Ошибка принудительной синхронизации:', syncError);
+                }
+            }, 3000);
+            
         } else {
             await ctx.reply('❌ Ошибка создания таблицы курсов. Проверьте логи.');
         }
