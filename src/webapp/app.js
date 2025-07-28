@@ -19,11 +19,24 @@ let pendingCurrencySelection = null;
 function loadFavorites() {
     try {
         const saved = localStorage.getItem('favoriteCurrencies');
-        favoriteCurrencies = saved ? JSON.parse(saved) : [];
-        console.log('✅ Избранные валюты загружены:', favoriteCurrencies);
+        if (saved) {
+            favoriteCurrencies = JSON.parse(saved);
+            console.log('✅ Избранные валюты загружены из localStorage:', favoriteCurrencies);
+        } else {
+            // Если нет сохраненных данных, устанавливаем дефолтные
+            favoriteCurrencies = ['BTC', 'USDT', 'RUB'];
+            console.log('✅ Установлены дефолтные избранные валюты:', favoriteCurrencies);
+            saveFavorites(); // И сразу сохраняем их
+        }
     } catch (error) {
         console.error('❌ Ошибка загрузки избранных валют:', error);
-        favoriteCurrencies = ['BTC', 'USDT', 'RUB']; // По умолчанию
+        favoriteCurrencies = ['BTC', 'USDT', 'RUB']; // По умолчанию при ошибке
+        saveFavorites();
+    }
+    
+    // Обновляем интерфейс после загрузки избранных валют
+    if (currentRates && currentRates.length > 0) {
+        updateCurrencyList();
     }
 }
 
