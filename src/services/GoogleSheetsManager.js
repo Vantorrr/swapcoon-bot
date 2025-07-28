@@ -404,12 +404,6 @@ class GoogleSheetsManager {
                 { pair: 'ETH/USD', status: 'API' },
                 { pair: 'USDT/USD', status: 'API' },
                 { pair: 'USDC/USD', status: 'API' },
-                { pair: 'BNB/USD', status: 'API' },
-                { pair: 'SOL/USD', status: 'API' },
-                { pair: 'ADA/USD', status: 'API' },
-                { pair: 'DOT/USD', status: 'API' },
-                { pair: 'MATIC/USD', status: 'API' },
-                { pair: 'AVAX/USD', status: 'API' },
                 
                 // Фиат валюты к USD
                 { pair: 'USD/RUB', status: 'API' },
