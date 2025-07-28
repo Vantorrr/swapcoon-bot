@@ -3020,22 +3020,6 @@ input:checked + .slider:before {
     border: 2px solid var(--border-color) !important;
 }
 
-/* 🚀 BYBIT UID ЛОГОТИП */
-.bank-logo[data-bank="Bybit UID"] {
-    background: linear-gradient(135deg, #f6b600 0%, #ff8c00 100%) !important;
-    color: white !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    font-weight: bold !important;
-    font-size: 16px !important;
-    border: 2px solid #f6b600 !important;
-}
-
-.bank-logo[data-bank="Bybit UID"]::before {
-    content: "₿" !important;
-    color: white !important;
-    font-size: 20px !important;
 }
 
 /* НАСТОЯЩИЕ ЛОГОТИПЫ КРИПТОСЕТЕЙ ИЗ ПАПКИ ASSETS! */
@@ -3057,6 +3041,23 @@ input:checked + .slider:before {
 .network-logo[data-network="Polygon"] {
     background: white url('/assets/images/networks/polygon.png') center/contain no-repeat !important;
     border: 2px solid var(--border-color) !important;
+}
+
+.network-logo[data-network="ByBit"] {
+    background: linear-gradient(135deg, #f7931a 0%, #1976d2 100%) !important;
+    border: 2px solid var(--border-color) !important;
+    color: white;
+    font-weight: bold;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.network-logo[data-network="ByBit"]::after {
+    content: "₿";
+    color: white;
+    font-weight: bold;
 }
 
 /* Убрано - мешает иконкам */
