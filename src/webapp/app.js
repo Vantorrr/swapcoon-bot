@@ -1,3 +1,4 @@
+console.log("🚀 APP.JS ЗАГРУЖАЕТСЯ!");
 // Глобальные переменные
 let tg = window.Telegram?.WebApp;
 let currentUserId = null;
