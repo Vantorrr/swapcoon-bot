@@ -37,6 +37,7 @@ function loadFavorites() {
 }
 
 function saveFavorites() {
+    console.log("💾 Сохраняем избранные валюты, currentUserId:", currentUserId, "favorites:", favoriteCurrencies);
     if (!currentUserId) return;
     
     fetch('/api/favorites', {

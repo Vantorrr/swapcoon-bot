@@ -623,17 +623,30 @@ app.post('/api/favorites', async (req, res) => {
         
         await new Promise((resolve, reject) => {
             db.db.run(`
-                INSERT OR REPLACE INTO users (telegram_id, favorites, updated_at) 
-                VALUES (?, ?, datetime('now'))
-            `, [userId, favoritesJson], (err) => {
-                if (err) reject(err);
-                else resolve();
+                UPDATE users SET favorites = ?, updated_at = datetime('now') 
+                WHERE telegram_id = ?
+            `, [favoritesJson, userId], function(err) {
+                if (err) {
+                    reject(err);
+                } else if (this.changes === 0) {
+                    db.db.run(`
+                        INSERT INTO users (telegram_id, favorites, created_at, updated_at) 
+                        VALUES (?, ?, datetime('now'), datetime('now'))
+                    `, [userId, favoritesJson], (insertErr) => {
+                        if (insertErr) reject(insertErr);
+                        else resolve();
+                    });
+                } else {
+                    resolve();
+                }
             });
         });
         
+        console.log("✅ Избранные валюты сохранены для пользователя:", userId);
         res.json({ success: true });
     } catch (error) {
-        console.error('Ошибка сохранения избранных:', error);
+        console.log("💾 СОХРАНЯЕМ избранные для пользователя:", userId, "данные:", favorites);
+        console.error("Ошибка сохранения избранных:", error);
         res.json({ success: false, error: error.message });
     }
 });
