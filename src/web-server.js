@@ -589,3 +589,51 @@ app.listen(PORT, async () => {
 });
 
 module.exports = app; 
+// API для избранных валют пользователя
+app.get('/api/favorites/:userId', async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        const result = await new Promise((resolve, reject) => {
+            db.db.get('SELECT favorites FROM users WHERE telegram_id = ?', [userId], (err, row) => {
+                if (err) reject(err);
+                else resolve(row);
+            });
+        });
+        
+        let favorites = ['BTC', 'USDT', 'RUB'];
+        if (result && result.favorites) {
+            try {
+                favorites = JSON.parse(result.favorites);
+            } catch (e) {
+                console.error('Ошибка парсинга favorites:', e);
+            }
+        }
+        
+        res.json({ success: true, data: favorites });
+    } catch (error) {
+        console.error('Ошибка получения избранных:', error);
+        res.json({ success: true, data: ['BTC', 'USDT', 'RUB'] });
+    }
+});
+
+app.post('/api/favorites', async (req, res) => {
+    try {
+        const { userId, favorites } = req.body;
+        const favoritesJson = JSON.stringify(favorites);
+        
+        await new Promise((resolve, reject) => {
+            db.db.run(`
+                INSERT OR REPLACE INTO users (telegram_id, favorites, updated_at) 
+                VALUES (?, ?, datetime('now'))
+            `, [userId, favoritesJson], (err) => {
+                if (err) reject(err);
+                else resolve();
+            });
+        });
+        
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Ошибка сохранения избранных:', error);
+        res.json({ success: false, error: error.message });
+    }
+});

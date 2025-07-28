@@ -18,108 +18,33 @@ let pendingCurrencySelection = null;
 
 // Функции для работы с избранными валютами
 function loadFavorites() {
-    console.log('🔄 Загружаем избранные валюты...');
-    console.log('🔄 localStorage доступен?', typeof Storage !== "undefined");
+    if (!currentUserId) {
+        favoriteCurrencies = ['BTC', 'USDT', 'RUB'];
+        return;
+    }
     
-    try {
-        const saved = localStorage.getItem('favoriteCurrencies');
-        console.log('🔄 Данные из localStorage:', saved);
-        
-        if (saved) {
-            favoriteCurrencies = JSON.parse(saved);
-            console.log('✅ Избранные валюты загружены из localStorage:', favoriteCurrencies);
-        } else {
-            console.log('🔄 localStorage пустой, пробуем Telegram CloudStorage...');
-            
-            // Пробуем загрузить из Telegram CloudStorage
-            if (window.Telegram?.WebApp?.CloudStorage) {
-                window.Telegram.WebApp.CloudStorage.getItem('favoriteCurrencies', function(error, data) {
-                    if (!error && data) {
-                        try {
-                            favoriteCurrencies = JSON.parse(data);
-                            console.log('✅ Избранные валюты загружены из Telegram CloudStorage:', favoriteCurrencies);
-                            updateCurrencyList();
-                        } catch (parseError) {
-                            console.error('❌ Ошибка парсинга данных из CloudStorage:', parseError);
-                            setDefaultFavorites();
-                        }
-                    } else {
-                        console.log('🔄 CloudStorage тоже пустой, устанавливаем дефолтные');
-                        setDefaultFavorites();
-                    }
-                });
-            } else {
-                console.log('🔄 Telegram CloudStorage недоступен, устанавливаем дефолтные');
-                setDefaultFavorites();
+    fetch(`/api/favorites/${currentUserId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                favoriteCurrencies = data.data;
+                updateCurrencyList();
             }
-        }
-    } catch (error) {
-        console.error('❌ Ошибка загрузки избранных валют:', error);
-        setDefaultFavorites();
-    }
-    
-    // Обновляем интерфейс после загрузки избранных валют
-    if (currentRates && currentRates.length > 0) {
-        updateCurrencyList();
-    }
-}
-
-function setDefaultFavorites() {
-    favoriteCurrencies = ['BTC', 'USDT', 'RUB'];
-    console.log('✅ Установлены дефолтные избранные валюты:', favoriteCurrencies);
-    saveFavorites(); // И сразу сохраняем их
+        })
+        .catch(() => {
+            favoriteCurrencies = ['BTC', 'USDT', 'RUB'];
+        });
 }
 
 function saveFavorites() {
-    try {
-        console.log('💾 Попытка сохранения избранных валют:', favoriteCurrencies);
-        console.log('💾 localStorage доступен?', typeof Storage !== "undefined");
-        console.log('💾 Тестируем localStorage...');
-        
-        // Тестируем localStorage
-        localStorage.setItem('test', 'test');
-        const testRead = localStorage.getItem('test');
-        console.log('💾 localStorage тест:', testRead === 'test' ? 'РАБОТАЕТ' : 'НЕ РАБОТАЕТ');
-        localStorage.removeItem('test');
-        
-        // Сохраняем избранные валюты
-        const dataToSave = JSON.stringify(favoriteCurrencies);
-        console.log('💾 Данные для сохранения:', dataToSave);
-        
-        localStorage.setItem('favoriteCurrencies', dataToSave);
-        
-        // Проверяем что сохранилось
-        const savedData = localStorage.getItem('favoriteCurrencies');
-        console.log('💾 Данные после сохранения:', savedData);
-        console.log('✅ Избранные валюты сохранены:', favoriteCurrencies);
-        
-        // Дополнительная проверка
-        if (savedData === dataToSave) {
-            console.log('✅ Проверка: данные сохранились корректно');
-        } else {
-            console.error('❌ Проверка: данные сохранились НЕКОРРЕКТНО!');
-        }
-    } catch (error) {
-        console.error('❌ Ошибка сохранения избранных валют:', error);
-        
-        // Пробуем альтернативное хранение через Telegram
-        if (window.Telegram?.WebApp?.CloudStorage) {
-            console.log('💾 Пробуем Telegram CloudStorage...');
-            try {
-                window.Telegram.WebApp.CloudStorage.setItem('favoriteCurrencies', JSON.stringify(favoriteCurrencies), function(error) {
-                    if (error) {
-                        console.error('❌ Telegram CloudStorage ошибка:', error);
-                    } else {
-                        console.log('✅ Сохранено в Telegram CloudStorage');
-                    }
-                });
-            } catch (telegramError) {
-                console.error('❌ Telegram CloudStorage недоступен:', telegramError);
-            }
-        }
-    }
+    if (!currentUserId) return;
+    
+    fetch('/api/favorites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUserId, favorites: favoriteCurrencies })
+    }).catch(console.error);
 }
-
 function toggleFavorite(currency) {
     const index = favoriteCurrencies.indexOf(currency);
     if (index === -1) {
@@ -475,6 +400,7 @@ function initTelegramWebApp() {
     }
     
     console.log('🔑 Финальный User ID:', currentUserId);
+    loadFavorites();
 }
 
 // Инициализация обработчиков событий
