@@ -3821,3 +3821,7 @@ input:checked + .slider:before {
     background: var(--primary-dark) !important;
     transform: translateY(-1px) !important;
 }
+
+.currency-button:hover .currency-desc {
+    color: rgba(255, 255, 255, 0.9);
+}
