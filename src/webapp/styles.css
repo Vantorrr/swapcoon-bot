@@ -377,9 +377,7 @@ body {
     transform: scale(1.1);
 }
 
-.currency-button:hover .currency-desc {
-    color: rgba(255, 255, 255, 0.9);
-}
+/* currency-desc удален */
 
 .currency-button:active {
     transform: translateY(0);
@@ -411,12 +409,7 @@ body {
     transition: color 0.3s ease;
 }
 
-.currency-desc {
-    font-size: var(--font-sm);
-    color: var(--text-secondary);
-    margin: 0;
-    transition: color 0.3s ease;
-}
+/* currency-desc удален */
 
 .currency-button .fas.fa-chevron-right {
     margin-left: auto;

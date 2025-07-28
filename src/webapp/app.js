@@ -2,8 +2,8 @@
 let tg = window.Telegram?.WebApp;
 let currentUserId = null;
 let currentRates = [];
-let fromCurrency = 'BTC';
-let toCurrency = 'USDT';
+let fromCurrency = null; // Убираем дефолтные BTC
+let toCurrency = null; // Убираем дефолтные USDT
 let currentAMLResult = null;
 let currentFromAMLResult = null;
 let currentToAMLResult = null;
@@ -19,7 +19,7 @@ let pendingCurrencySelection = null;
 function loadFavorites() {
     try {
         const saved = localStorage.getItem('favoriteCurrencies');
-        favoriteCurrencies = saved ? JSON.parse(saved) : ['BTC', 'USDT', 'RUB'];
+        favoriteCurrencies = saved ? JSON.parse(saved) : [];
         console.log('✅ Избранные валюты загружены:', favoriteCurrencies);
     } catch (error) {
         console.error('❌ Ошибка загрузки избранных валют:', error);
@@ -395,6 +395,26 @@ function initTelegramWebApp() {
 
 // Инициализация обработчиков событий
 function initEventListeners() {
+    console.log('🔧 Инициализируем обработчики событий...');
+    
+    // 📱 ДОБАВЛЯЕМ ОБРАБОТЧИК ДЛЯ СКРЫТИЯ КЛАВИАТУРЫ ПРИ КЛИКЕ НА ОБЛАСТЬ
+    document.addEventListener('click', function(event) {
+        // Проверяем, что клик НЕ по полю ввода
+        if (!event.target.matches('input[type="number"]') && 
+            !event.target.closest('.currency-input')) {
+            // Убираем фокус с всех полей ввода
+            const inputs = document.querySelectorAll('input[type="number"]');
+            inputs.forEach(input => {
+                input.blur();
+            });
+            
+            // Если доступен Telegram WebApp API, скрываем клавиатуру
+            if (tg && tg.HapticFeedback) {
+                tg.HapticFeedback.impactOccurred('light');
+            }
+        }
+    });
+
     // Навигация
     const navItems = document.querySelectorAll('.nav-item');
     navItems.forEach(item => {
@@ -502,26 +522,31 @@ function initEventListeners() {
     // Кастомные дропдауны
     initCustomDropdowns();
     
+    // 📱 СКРЫТИЕ КЛАВИАТУРЫ ПРИ ТАПЕ В ЛЮБОЕ МЕСТО
+    document.addEventListener('click', function(event) {
+        // Проверяем что клик не по полю ввода
+        if (!event.target.matches('input[type="number"], input[type="text"], textarea')) {
+            // Убираем фокус с активного элемента (скрывает клавиатуру)
+            if (document.activeElement && document.activeElement.blur) {
+                document.activeElement.blur();
+            }
+        }
+    });
+    
+    // 📱 СКРЫТИЕ КЛАВИАТУРЫ ПРИ НАЖАТИИ ENTER
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter' && event.target.matches('input[type="number"], input[type="text"]')) {
+            event.target.blur();
+        }
+    });
+    
     console.log('✅ Обработчики событий инициализированы');
 }
 
-// 🎨 ОБНОВЛЕНИЕ ИКОНОК ВАЛЮТ ПО УМОЛЧАНИЮ
+    // 🎨 ОБНОВЛЕНИЕ КНОПОК ВАЛЮТ
 function updateDefaultCurrencyIcons() {
-    console.log('🎨 Обновляем иконки валют по умолчанию...');
-    
-    // Обновляем иконку BTC (fromCurrency)
-    const fromButton = document.querySelector('#from-currency');
-    if (fromButton) {
-        fromButton.querySelector('.currency-icon').innerHTML = getCurrencyIcon(fromCurrency);
-        console.log(`✅ Иконка ${fromCurrency} обновлена`);
-    }
-    
-    // Обновляем иконку USDT (toCurrency)  
-    const toButton = document.querySelector('#to-currency');
-    if (toButton) {
-        toButton.querySelector('.currency-icon').innerHTML = getCurrencyIcon(toCurrency);
-        console.log(`✅ Иконка ${toCurrency} обновлена`);
-    }
+    console.log('🎨 Обновляем кнопки валют...');
+    updateCurrencyButtons();
 }
 
 // Загрузка начальных данных
@@ -637,12 +662,7 @@ function getTestRates() {
         { currency: 'ETH', price: 3500, buy: 3500, sell: 3520, change24h: 1.8, lastUpdate: new Date().toISOString(), type: 'crypto' },
         { currency: 'USDT', price: 1.0, buy: 1.0, sell: 1.02, change24h: 0.1, lastUpdate: new Date().toISOString(), type: 'crypto' },
         { currency: 'USDC', price: 1.0, buy: 1.0, sell: 1.02, change24h: 0.0, lastUpdate: new Date().toISOString(), type: 'crypto' },
-        { currency: 'BNB', price: 650, buy: 650, sell: 655, change24h: -0.8, lastUpdate: new Date().toISOString(), type: 'crypto' },
-        { currency: 'SOL', price: 180, buy: 180, sell: 182, change24h: 3.2, lastUpdate: new Date().toISOString(), type: 'crypto' },
-        { currency: 'ADA', price: 0.55, buy: 0.55, sell: 0.56, change24h: 1.1, lastUpdate: new Date().toISOString(), type: 'crypto' },
-        { currency: 'DOT', price: 12.5, buy: 12.5, sell: 12.7, change24h: -1.5, lastUpdate: new Date().toISOString(), type: 'crypto' },
-        { currency: 'MATIC', price: 0.95, buy: 0.95, sell: 0.97, change24h: 2.8, lastUpdate: new Date().toISOString(), type: 'crypto' },
-        { currency: 'AVAX', price: 45, buy: 45, sell: 46, change24h: 0.9, lastUpdate: new Date().toISOString(), type: 'crypto' },
+
         { currency: 'XRP', price: 0.48, buy: 0.48, sell: 0.49, change24h: -0.3, lastUpdate: new Date().toISOString(), type: 'crypto' },
         { currency: 'LTC', price: 110, buy: 110, sell: 112, change24h: 1.7, lastUpdate: new Date().toISOString(), type: 'crypto' },
         { currency: 'BCH', price: 280, buy: 280, sell: 285, change24h: -2.1, lastUpdate: new Date().toISOString(), type: 'crypto' },
@@ -749,11 +769,11 @@ function swapCurrencies() {
     const toButton = document.querySelector('#to-currency');
     
     fromButton.querySelector('.currency-name').textContent = fromCurrency;
-    fromButton.querySelector('.currency-desc').textContent = getCurrencyName(fromCurrency);
+            // currency-desc удален
     fromButton.querySelector('.currency-icon').innerHTML = getCurrencyIcon(fromCurrency);
     
     toButton.querySelector('.currency-name').textContent = toCurrency;
-    toButton.querySelector('.currency-desc').textContent = getCurrencyName(toCurrency);
+            // currency-desc удален
     toButton.querySelector('.currency-icon').innerHTML = getCurrencyIcon(toCurrency);
     
     // Анимация кнопки
@@ -894,12 +914,7 @@ function getCurrencyName(currency) {
         'ETH': 'Ethereum',
         'USDT': 'Tether',
         'USDC': 'USD Coin',
-        'BNB': 'Binance Coin',
-        'SOL': 'Solana',
-        'ADA': 'Cardano',
-        'DOT': 'Polkadot',
-        'MATIC': 'Polygon',
-        'AVAX': 'Avalanche',
+        
         'XRP': 'Ripple',
         'LTC': 'Litecoin',
         'BCH': 'Bitcoin Cash',
@@ -922,12 +937,7 @@ function getFallbackIcon(currency) {
         'ETH': 'Ξ', 
         'USDT': '₮',
         'USDC': 'Ⓤ',
-        'BNB': '🔸',
-        'SOL': '◎',
-        'ADA': '₳',
-        'DOT': '●',
-        'MATIC': '◇',
-        'AVAX': '▲',
+        
         'XRP': '✕',
         'LTC': 'Ł',
         'BCH': '⚡',
@@ -947,7 +957,7 @@ function getFallbackIcon(currency) {
 function getCurrencyIcon(currency) {
     // 🎨 ОРИГИНАЛЬНЫЕ ИКОНКИ ВАЛЮТ (48x48px)
     const availableIcons = [
-        'BTC', 'ETH', 'USDT', 'USDC', 'BNB', 'SOL', 'ADA', 'DOT', 'MATIC', 'AVAX',
+        'BTC', 'ETH', 'USDT', 'USDC',
         'XRP', 'LTC', 'BCH', 'LINK',
         'USD', 'EUR', 'RUB', 'UAH', 'KZT', 'ARS', 'BRL'
     ];
@@ -1013,7 +1023,7 @@ function finalizeCurrencySelection(currency, additionalInfo = null) {
         
         const button = document.querySelector('#from-currency');
         button.querySelector('.currency-name').textContent = displayText;
-        button.querySelector('.currency-desc').textContent = desc;
+        // currency-desc удален
         button.querySelector('.currency-icon').innerHTML = getCurrencyIcon(currency);
     } else {
         toCurrency = currency;
@@ -1026,7 +1036,7 @@ function finalizeCurrencySelection(currency, additionalInfo = null) {
         
         const button = document.querySelector('#to-currency');
         button.querySelector('.currency-name').textContent = displayText;
-        button.querySelector('.currency-desc').textContent = desc;
+        // currency-desc удален  
         button.querySelector('.currency-icon').innerHTML = getCurrencyIcon(currency);
     }
     
@@ -1076,20 +1086,20 @@ function selectNetwork(network) {
 
 // Проверка является ли пара криптовалютной
 function isCryptoPair(fromCurrency, toCurrency) {
-    const cryptoCurrencies = ['BTC', 'ETH', 'USDT', 'USDC', 'BNB', 'ADA', 'DOT', 'XRP', 'LTC', 'BCH', 'LINK', 'SOL', 'MATIC', 'AVAX'];
+    const cryptoCurrencies = ['BTC', 'ETH', 'USDT', 'USDC', 'XRP', 'LTC', 'BCH', 'LINK'];
     return cryptoCurrencies.includes(fromCurrency) && cryptoCurrencies.includes(toCurrency);
 }
 
 // Проверка является ли пара смешанной (крипто → фиат)
 function isCryptoToFiatPair(fromCurrency, toCurrency) {
-    const cryptoCurrencies = ['BTC', 'ETH', 'USDT', 'USDC', 'BNB', 'ADA', 'DOT', 'XRP', 'LTC', 'BCH', 'LINK', 'SOL', 'MATIC', 'AVAX'];
+    const cryptoCurrencies = ['BTC', 'ETH', 'USDT', 'USDC', 'XRP', 'LTC', 'BCH', 'LINK'];
     const fiatCurrencies = ['USD', 'EUR', 'RUB', 'UAH', 'KZT', 'ARS', 'BRL'];
     return cryptoCurrencies.includes(fromCurrency) && fiatCurrencies.includes(toCurrency);
 }
 
 // Проверка является ли пара смешанной (фиат → крипто)
 function isFiatToCryptoPair(fromCurrency, toCurrency) {
-    const cryptoCurrencies = ['BTC', 'ETH', 'USDT', 'USDC', 'BNB', 'ADA', 'DOT', 'XRP', 'LTC', 'BCH', 'LINK', 'SOL', 'MATIC', 'AVAX'];
+    const cryptoCurrencies = ['BTC', 'ETH', 'USDT', 'USDC', 'XRP', 'LTC', 'BCH', 'LINK'];
     const fiatCurrencies = ['USD', 'EUR', 'RUB', 'UAH', 'KZT', 'ARS', 'BRL'];
     return fiatCurrencies.includes(fromCurrency) && cryptoCurrencies.includes(toCurrency);
 }
@@ -3970,4 +3980,33 @@ function setCreateButtonState(enabled) {
     } else {
         console.log('❌ setCreateButtonState: кнопка не найдена!');
     }
+}
+
+function updateCurrencyButtons() {
+    console.log('🔄 Обновляем кнопки валют...');
+    
+    const fromButton = document.querySelector('#from-currency');
+    const toButton = document.querySelector('#to-currency');
+    
+    if (fromButton) {
+        if (fromCurrency) {
+            fromButton.querySelector('.currency-icon').innerHTML = getCurrencyIcon(fromCurrency);
+            fromButton.querySelector('.currency-name').textContent = fromCurrency;
+        } else {
+            fromButton.querySelector('.currency-icon').innerHTML = '💰';
+            fromButton.querySelector('.currency-name').textContent = 'Выберите валюту';
+        }
+    }
+    
+    if (toButton) {
+        if (toCurrency) {
+            toButton.querySelector('.currency-icon').innerHTML = getCurrencyIcon(toCurrency);
+            toButton.querySelector('.currency-name').textContent = toCurrency;
+        } else {
+            toButton.querySelector('.currency-icon').innerHTML = '💰';
+            toButton.querySelector('.currency-name').textContent = 'Выберите валюту';
+        }
+    }
+    
+    console.log(`✅ Кнопки обновлены: ${fromCurrency || 'не выбрана'} → ${toCurrency || 'не выбрана'}`);
 }

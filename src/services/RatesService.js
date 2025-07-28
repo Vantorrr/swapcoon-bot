@@ -26,13 +26,7 @@ class RatesService {
             'BTC': 'bitcoin',
             'ETH': 'ethereum', 
             'USDT': 'tether',
-            'USDC': 'usd-coin',
-            'BNB': 'binancecoin',
-            'SOL': 'solana',
-            'ADA': 'cardano',
-            'DOT': 'polkadot',
-            'MATIC': 'matic-network',
-            'AVAX': 'avalanche-2'
+            'USDC': 'usd-coin'
         };
         
         // Фиатные валюты
