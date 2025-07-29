@@ -144,3 +144,78 @@ app.post('/api/calculate', async (req, res) => {
         }
     });
 });
+// API для создания заявки
+app.post('/api/create-order', async (req, res) => {
+    try {
+        console.log('🚀 API CREATE-ORDER ПОЛУЧИЛ ДАННЫЕ:', req.body);
+        console.log('🚨 === ВЫЗОВ notifyOperators ===');
+        
+        const {
+            userId,
+            fromCurrency,
+            toCurrency,
+            fromAmount,
+            toAmount,
+            fromAddress,
+            toAddress,
+            exchangeRate,
+            fee,
+            amlFromResult,
+            amlToResult,
+            pairType
+        } = req.body;
+
+        // Создаем заявку в базе данных
+        const order = await db.createOrder({
+            user_id: userId,
+            from_currency: fromCurrency,
+            to_currency: toCurrency,
+            from_amount: fromAmount,
+            to_amount: toAmount,
+            from_address: fromAddress || '',
+            to_address: toAddress || '',
+            exchange_rate: exchangeRate,
+            fee: fee || 0,
+            aml_status: JSON.stringify({ from: amlFromResult, to: amlToResult }),
+            status: 'pending',
+            source: 'web'
+        });
+
+        console.log('✅ Заявка создана в базе:', order.id);
+
+        // Получаем информацию о пользователе
+        const user = await db.getUser(userId) || {
+            firstName: 'Пользователь',
+            username: `user${userId}`
+        };
+
+        console.log('📋 Данные заявки:', order.id, order.from_currency, order.to_currency);
+
+        // Отправляем уведомление операторам
+        await notifyOperators({
+            id: order.id,
+            userName: user.first_name || user.username || `User_${userId}`,
+            fromAmount: order.from_amount,
+            fromCurrency: order.from_currency,
+            toCurrency: order.to_currency,
+            fromAddress: order.from_address || '',
+            toAddress: order.to_address || '',
+            pairType: pairType || 'fiat'
+        });
+
+        console.log('✅ ВЫЗОВ notifyOperators ЗАВЕРШЕН');
+
+        res.json({
+            success: true,
+            orderId: order.id,
+            message: 'Заявка успешно создана'
+        });
+
+    } catch (error) {
+        console.error('❌ Ошибка создания заявки:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Ошибка создания заявки'
+        });
+    }
+});
