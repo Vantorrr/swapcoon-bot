@@ -76,20 +76,32 @@ async function initializeBotAndAdmins() {
                 }
             }
             
+            console.log('🔍 ДИАГНОСТИКА CONFIG:');
+            console.log('   config существует?', !!config);
+            if (config) {
+                console.log('   config.enabled:', config.enabled);
+                console.log('   config.spreadsheet_id:', config.spreadsheet_id ? 'есть' : 'нет');
+                console.log('   config.credentials:', config.credentials ? 'есть' : 'нет');
+            }
+            
             if (config && config.enabled) {
                 console.log('🚀 Инициализируем Google Sheets Manager в combined-server...');
                 const googleSheetsManager = new GoogleSheetsManager();
                 const success = await googleSheetsManager.init(config.credentials, config.spreadsheet_id);
                 
+                console.log('🔍 Результат googleSheetsManager.init():', success);
                 if (success) {
+                    console.log('🔧 Создаем worksheets...');
                     await googleSheetsManager.createWorksheets();
                     global.googleSheetsManager = googleSheetsManager;
                     console.log('✅ Google Sheets Manager инициализирован в combined-server!');
+                    console.log('🔍 global.googleSheetsManager установлен:', !!global.googleSheetsManager);
                 } else {
                     console.log('❌ Ошибка подключения к Google Sheets API в combined-server');
                 }
             } else {
                 console.log('❌ Google Sheets не настроены или отключены в combined-server');
+                console.log('   Причина: config =', !!config, ', enabled =', config?.enabled);
             }
         } catch (sheetsInitError) {
             console.error('❌ ОШИБКА инициализации Google Sheets в combined-server:', sheetsInitError.message);
@@ -97,14 +109,63 @@ async function initializeBotAndAdmins() {
         
         // Инициализируем Google Sheets Manager глобально
         try {
+            console.log('🔍 ПРОВЕРЯЕМ BOTMODULE:');
+            console.log('   botModule существует?', !!botModule);
+            console.log('   botModule.googleSheetsManager существует?', !!botModule.googleSheetsManager);
+            
             if (botModule.googleSheetsManager) {
                 global.googleSheetsManager = botModule.googleSheetsManager;
-                console.log('📊 Google Sheets Manager доступен глобально');
+                console.log('📊 Google Sheets Manager доступен глобально из botModule');
+                console.log('🔍 global.googleSheetsManager теперь:', !!global.googleSheetsManager);
             } else {
-                console.log('⚠️ Google Sheets Manager не инициализирован');
+                console.log('⚠️ Google Sheets Manager НЕ инициализирован в botModule');
             }
         } catch (error) {
             console.log('❌ Ошибка инициализации Google Sheets Manager:', error.message);
+        }
+        
+        // 🔍 ФИНАЛЬНАЯ ПРОВЕРКА
+        console.log('🔍 ИТОГОВОЕ СОСТОЯНИЕ global.googleSheetsManager:', !!global.googleSheetsManager);
+        
+        // 🔥 ПРИНУДИТЕЛЬНАЯ ИНИЦИАЛИЗАЦИЯ ЕСЛИ НЕ УДАЛОСЬ
+        if (!global.googleSheetsManager) {
+            console.log('🔥 ПРИНУДИТЕЛЬНАЯ ИНИЦИАЛИЗАЦИЯ Google Sheets...');
+            try {
+                const fs = require('fs');
+                const path = require('path');
+                const configPath = path.join(__dirname, '..', 'config', 'google-sheets.json');
+                
+                if (fs.existsSync(configPath)) {
+                    console.log('🔥 Читаем config/google-sheets.json напрямую...');
+                    const forceConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+                    
+                    console.log('🔥 Принудительный конфиг:');
+                    console.log('   enabled:', forceConfig.enabled);
+                    console.log('   spreadsheet_id:', forceConfig.spreadsheet_id ? 'есть' : 'нет');
+                    console.log('   credentials:', forceConfig.credentials ? 'есть' : 'нет');
+                    
+                    if (forceConfig.enabled && forceConfig.spreadsheet_id && forceConfig.credentials) {
+                        const GoogleSheetsManager = require('./services/GoogleSheetsManager');
+                        const forceManager = new GoogleSheetsManager();
+                        const forceSuccess = await forceManager.init(forceConfig.credentials, forceConfig.spreadsheet_id);
+                        
+                        console.log('🔥 Результат принудительной инициализации:', forceSuccess);
+                        if (forceSuccess) {
+                            await forceManager.createWorksheets();
+                            global.googleSheetsManager = forceManager;
+                            console.log('🔥 ✅ ПРИНУДИТЕЛЬНАЯ ИНИЦИАЛИЗАЦИЯ УСПЕШНА!');
+                        } else {
+                            console.log('🔥 ❌ Принудительная инициализация не удалась');
+                        }
+                    } else {
+                        console.log('🔥 ❌ Некорректная конфигурация в файле');
+                    }
+                } else {
+                    console.log('🔥 ❌ Файл config/google-sheets.json не найден');
+                }
+            } catch (forceError) {
+                console.error('🔥 ❌ Ошибка принудительной инициализации:', forceError.message);
+            }
         }
         
         // 👑 ГАРАНТИРОВАННОЕ ДОБАВЛЕНИЕ АДМИНОВ (ВСЕГДА РАБОТАЕТ)
