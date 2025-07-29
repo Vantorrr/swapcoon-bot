@@ -109,8 +109,9 @@ async function initializeBotAndAdmins() {
         // 🔍 ФИНАЛЬНАЯ ПРОВЕРКА
         console.log('🔍 ИТОГОВОЕ СОСТОЯНИЕ global.googleSheetsManager:', !!global.googleSheetsManager);
         
-        // 🔥 ПРИНУДИТЕЛЬНАЯ ИНИЦИАЛИЗАЦИЯ ЕСЛИ НЕ УДАЛОСЬ
-        if (!global.googleSheetsManager) {
+                    // 🔥 ПРИНУДИТЕЛЬНАЯ ИНИЦИАЛИЗАЦИЯ ЕСЛИ НЕ УДАЛОСЬ
+            console.log('🔍 СОСТОЯНИЕ: global.googleSheetsManager =', !!global.googleSheetsManager);
+            if (!global.googleSheetsManager) {
             console.log('🔥🔥🔥 ПРИНУДИТЕЛЬНАЯ ИНИЦИАЛИЗАЦИЯ Google Sheets...');
             try {
                 const fs = require('fs');
@@ -164,6 +165,51 @@ async function initializeBotAndAdmins() {
                     }
                 } else {
                     console.log('🔥 ❌ Файл config/google-sheets.json не найден');
+                    console.log('🔥 ⚡ ПРОБУЕМ ПЕРЕМЕННЫЕ ОКРУЖЕНИЯ RAILWAY...');
+                    
+                    // Пробуем переменные окружения
+                    const envSpreadsheetId = process.env.GOOGLE_SHEETS_ID;
+                    const envCredentials = process.env.GOOGLE_SHEETS_CREDENTIALS;
+                    const envEnabled = process.env.GOOGLE_SHEETS_ENABLED !== 'false';
+                    
+                    console.log('🔥 Railway переменные:');
+                    console.log('   GOOGLE_SHEETS_ID:', envSpreadsheetId ? 'ЕСТЬ' : 'НЕТ');
+                    console.log('   GOOGLE_SHEETS_CREDENTIALS:', envCredentials ? 'ЕСТЬ' : 'НЕТ');
+                    console.log('   GOOGLE_SHEETS_ENABLED:', envEnabled);
+                    
+                    if (envSpreadsheetId && envCredentials && envEnabled) {
+                        try {
+                            console.log('🔥 ⚡ ПАРСИМ CREDENTIALS ИЗ RAILWAY...');
+                            const railwayCredentials = JSON.parse(envCredentials);
+                            console.log('🔥 ✅ JSON УСПЕШНО СПАРШЕН!');
+                            
+                            const railwayConfig = {
+                                enabled: true,
+                                spreadsheet_id: envSpreadsheetId,
+                                credentials: railwayCredentials
+                            };
+                            
+                            console.log('🔥 ⚡ НАЧИНАЕМ RAILWAY ИНИЦИАЛИЗАЦИЮ...');
+                            const GoogleSheetsManager = require('./services/GoogleSheetsManager');
+                            const railwayManager = new GoogleSheetsManager();
+                            
+                            console.log('🔥 ⚡ ВЫЗЫВАЕМ init() с Railway конфигом...');
+                            const railwaySuccess = await railwayManager.init(railwayConfig.credentials, railwayConfig.spreadsheet_id);
+                            
+                            if (railwaySuccess) {
+                                console.log('🔥 ⚡ RAILWAY INIT УСПЕШЕН! Создаем worksheets...');
+                                await railwayManager.createWorksheets();
+                                global.googleSheetsManager = railwayManager;
+                                console.log('🔥 ⚡ ✅ RAILWAY ИНИЦИАЛИЗАЦИЯ ЗАВЕРШЕНА!');
+                            } else {
+                                console.log('🔥 ⚡ ❌ Railway init вернул false');
+                            }
+                        } catch (railwayError) {
+                            console.error('🔥 ⚡ ❌ Ошибка Railway инициализации:', railwayError.message);
+                        }
+                    } else {
+                        console.log('🔥 ⚡ ❌ Railway переменные неполные');
+                    }
                 }
             } catch (forceError) {
                 console.error('🔥 ❌ Ошибка принудительной инициализации:', forceError.message);
