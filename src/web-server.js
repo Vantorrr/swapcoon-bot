@@ -32,120 +32,120 @@ app.get('/', (req, res) => {
 
 // API для получения курсов валют (ТОЛЬКО GOOGLE SHEETS)
 app.get('/api/rates', async (req, res) => {
-    console.log('📊 API /api/rates: возвращаем курсы ИЗ GOOGLE SHEETS');
+    console.log('📊 API /api/rates: читаем курсы ИЗ RatesService с Google Sheets');
     
-    // Жестко заданные курсы ИЗ GOOGLE SHEETS (без API!)
-    const rates = [
-        // Основные пары валют
-        { currency: 'USD', price: 1, buy: 1, sell: 1, source: 'SHEETS', type: 'fiat', lastUpdate: new Date().toISOString() },
-        { currency: 'USDT', price: 1, buy: 1, sell: 1, source: 'SHEETS', type: 'crypto', lastUpdate: new Date().toISOString() },
+    try {
+        let rates = [];
         
-        // Курсы из Google Sheets (ИСПРАВЛЕНО!)
-        { currency: 'RUB', price: 1/78, buy: 1/78, sell: 1/78, source: 'SHEETS', type: 'fiat', lastUpdate: new Date().toISOString() },
-        { currency: 'ARS', price: 1/1290, buy: 1/1290, sell: 1/1290, source: 'SHEETS', type: 'fiat', lastUpdate: new Date().toISOString() },
+        // 🔥 ЧИТАЕМ ИЗ GLOBAL.RATESSERVICE (с Google Sheets синхронизацией)
+        if (global.ratesService) {
+            console.log('✅ Используем global.ratesService с Google Sheets');
+            rates = await global.ratesService.getRates();
+            console.log(`📊 Получено ${rates.length} курсов из RatesService`);
+        } else if (ratesService) {
+            console.log('✅ Используем локальный ratesService');
+            rates = await ratesService.getRates();
+            console.log(`📊 Получено ${rates.length} курсов из локального RatesService`);
+        } else {
+            console.log('⚠️ RatesService недоступен, используем fallback курсы');
+            // Fallback курсы только если RatesService не работает
+            rates = [
+                { currency: 'USD', price: 1, buy: 1, sell: 1, source: 'FALLBACK', type: 'fiat', lastUpdate: new Date().toISOString() },
+                { currency: 'USDT', price: 1, buy: 1, sell: 1, source: 'FALLBACK', type: 'crypto', lastUpdate: new Date().toISOString() },
+                { currency: 'RUB', price: 1/78, buy: 1/78, sell: 1/78, source: 'FALLBACK', type: 'fiat', lastUpdate: new Date().toISOString() },
+                { currency: 'ARS', price: 1/1290, buy: 1/1290, sell: 1/1290, source: 'FALLBACK', type: 'fiat', lastUpdate: new Date().toISOString() },
+                { currency: 'BTC', price: 95000, buy: 95000, sell: 96000, source: 'FALLBACK', type: 'crypto', lastUpdate: new Date().toISOString() },
+                { currency: 'ETH', price: 3500, buy: 3500, sell: 3520, source: 'FALLBACK', type: 'crypto', lastUpdate: new Date().toISOString() },
+            ];
+        }
         
-        // Остальные валюты (неактивные)
-        { currency: 'EUR', price: 0.92, buy: 0.92, sell: 0.94, source: 'DISABLED', type: 'fiat', lastUpdate: new Date().toISOString() },
-        { currency: 'UAH', price: 0.026, buy: 0.025, sell: 0.027, source: 'DISABLED', type: 'fiat', lastUpdate: new Date().toISOString() },
-        { currency: 'KZT', price: 0.0022, buy: 0.0021, sell: 0.0023, source: 'DISABLED', type: 'fiat', lastUpdate: new Date().toISOString() },
-        { currency: 'BRL', price: 0.20, buy: 0.19, sell: 0.21, source: 'DISABLED', type: 'fiat', lastUpdate: new Date().toISOString() },
+        // Диагностика курсов
+        console.log('📊 ОТПРАВЛЯЕМЫЕ КУРСЫ:');
+        rates.forEach(rate => {
+            console.log(`   ${rate.currency}: ${rate.price} (источник: ${rate.source || 'неизвестно'})`);
+        });
         
-        // Крипта (неактивная)
-        { currency: 'BTC', price: 95000, buy: 95000, sell: 96000, source: 'DISABLED', type: 'crypto', lastUpdate: new Date().toISOString() },
-        { currency: 'ETH', price: 3500, buy: 3500, sell: 3520, source: 'DISABLED', type: 'crypto', lastUpdate: new Date().toISOString() },
-        { currency: 'USDC', price: 1.0, buy: 1.0, sell: 1.0, source: 'DISABLED', type: 'crypto', lastUpdate: new Date().toISOString() }
-    ];
-    
-    console.log('✅ Отправляем курсы из Google Sheets:', rates.filter(r => r.source === 'SHEETS').length, 'активных');
-    
-    res.json({ 
-        success: true, 
-        data: rates,
-        lastUpdate: new Date().toISOString(),
-        source: 'google_sheets_only'
-    });
+        res.json({ 
+            success: true, 
+            data: rates,
+            lastUpdate: new Date().toISOString(),
+            source: global.ratesService ? 'rates_service_with_sheets' : (ratesService ? 'local_rates_service' : 'fallback'),
+            count: rates.length
+        });
+        
+    } catch (error) {
+        console.error('❌ Ошибка получения курсов:', error.message);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Ошибка получения курсов',
+            source: 'error'
+        });
+    }
 });
 
-// API для расчета обмена (ТОЛЬКО GOOGLE SHEETS)
+// API для расчета обмена (ИЗ RatesService с Google Sheets)
 app.post('/api/calculate', async (req, res) => {
-    console.log('🧮 API /api/calculate: расчет ИЗ GOOGLE SHEETS');
+    console.log('🧮 API /api/calculate: расчет ИЗ RatesService с Google Sheets');
     
     const { fromCurrency, toCurrency, amount } = req.body;
     
-    // Простой расчет напрямую из Google Sheets курсов
-    let exchangeRate = 1;
-    
-    if (fromCurrency === 'USDT' && toCurrency === 'ARS') {
-        exchangeRate = 1290; // Прямо из Google Sheets
-    } else if (fromCurrency === 'ARS' && toCurrency === 'USDT') {
-        exchangeRate = 1/1290; // Обратный курс (ИСПРАВЛЕНО!)
-    } else if (fromCurrency === 'USDT' && toCurrency === 'RUB') {
-        exchangeRate = 78; // Из Google Sheets (ИСПРАВЛЕНО!)
-    } else if (fromCurrency === 'RUB' && toCurrency === 'USDT') {
-        exchangeRate = 1/78; // Обратный курс (ИСПРАВЛЕНО!)
-    } else {
-        // Для остальных пар - через USD
-        const fromUSD = fromCurrency === 'USD' ? 1 : (fromCurrency === 'USDT' ? 1 : (fromCurrency === 'RUB' ? 1/78 : (fromCurrency === 'ARS' ? 1/1290 : 1)));
-        const toUSD = toCurrency === 'USD' ? 1 : (toCurrency === 'USDT' ? 1 : (toCurrency === 'RUB' ? 1/78 : (toCurrency === 'ARS' ? 1/1290 : 1)));
-        exchangeRate = fromUSD / toUSD;
-    }
-    
-    const toAmount = amount * exchangeRate;
-    
-    console.log(`💰 ${amount} ${fromCurrency} = ${toAmount} ${toCurrency} (курс: ${exchangeRate})`);
-    
-    res.json({
-        success: true,
-        data: {
-            fromAmount: amount,
-            toAmount: toAmount,
-            exchangeRate: exchangeRate,
-            fee: 0,
-            fromCurrency: fromCurrency,
-            toCurrency: toCurrency
+    try {
+        let exchangeRate = 1;
+        
+        // 🔥 ИСПОЛЬЗУЕМ RATESSERVICE для получения курса
+        if (global.ratesService && global.ratesService.getExchangeRate) {
+            console.log(`🧮 Получаем курс ${fromCurrency} → ${toCurrency} из RatesService`);
+            exchangeRate = await global.ratesService.getExchangeRate(fromCurrency, toCurrency);
+            console.log(`📊 Курс из RatesService: ${exchangeRate}`);
+        } else if (ratesService && ratesService.getExchangeRate) {
+            console.log(`🧮 Получаем курс ${fromCurrency} → ${toCurrency} из локального RatesService`);
+            exchangeRate = await ratesService.getExchangeRate(fromCurrency, toCurrency);
+            console.log(`📊 Курс из локального RatesService: ${exchangeRate}`);
+        } else {
+            console.log('⚠️ RatesService недоступен, используем fallback расчет');
+            
+            // Fallback расчет если RatesService не работает
+            if (fromCurrency === 'USDT' && toCurrency === 'ARS') {
+                exchangeRate = 1290;
+            } else if (fromCurrency === 'ARS' && toCurrency === 'USDT') {
+                exchangeRate = 1/1290;
+            } else if (fromCurrency === 'USDT' && toCurrency === 'RUB') {
+                exchangeRate = 78;
+            } else if (fromCurrency === 'RUB' && toCurrency === 'USDT') {
+                exchangeRate = 1/78;
+            } else {
+                const fromUSD = fromCurrency === 'USD' ? 1 : (fromCurrency === 'USDT' ? 1 : (fromCurrency === 'RUB' ? 1/78 : (fromCurrency === 'ARS' ? 1/1290 : 1)));
+                const toUSD = toCurrency === 'USD' ? 1 : (toCurrency === 'USDT' ? 1 : (toCurrency === 'RUB' ? 1/78 : (toCurrency === 'ARS' ? 1/1290 : 1)));
+                exchangeRate = fromUSD / toUSD;
+            }
         }
-    });
+        
+        const toAmount = amount * exchangeRate;
+        
+        console.log(`�� РЕЗУЛЬТАТ: ${amount} ${fromCurrency} = ${toAmount} ${toCurrency} (курс: ${exchangeRate})`);
+        
+        res.json({
+            success: true,
+            data: {
+                fromAmount: amount,
+                toAmount: toAmount,
+                exchangeRate: exchangeRate,
+                fee: 0,
+                fromCurrency: fromCurrency,
+                toCurrency: toCurrency,
+                source: global.ratesService ? 'rates_service' : 'fallback'
+            }
+        });
+        
+    } catch (error) {
+        console.error('❌ Ошибка расчета обмена:', error.message);
+        res.status(500).json({
+            success: false,
+            error: 'Ошибка расчета обмена'
+        });
+    }
 });
 
-app.post('/api/calculate', async (req, res) => {
-    console.log('🧮 API /api/calculate: расчет ИЗ GOOGLE SHEETS');
-    
-    const { fromCurrency, toCurrency, amount } = req.body;
-    
-    // Простой расчет напрямую из Google Sheets курсов
-    let exchangeRate = 1;
-    
-    if (fromCurrency === 'USDT' && toCurrency === 'ARS') {
-        exchangeRate = 1290; // Прямо из Google Sheets
-    } else if (fromCurrency === 'ARS' && toCurrency === 'USDT') {
-        exchangeRate = 1/1290; // Обратный курс (ИСПРАВЛЕНО!)
-    } else if (fromCurrency === 'USDT' && toCurrency === 'RUB') {
-        exchangeRate = 78; // Из Google Sheets (ИСПРАВЛЕНО!)
-    } else if (fromCurrency === 'RUB' && toCurrency === 'USDT') {
-        exchangeRate = 1/78; // Обратный курс (ИСПРАВЛЕНО!)
-    } else {
-        // Для остальных пар - через USD
-        const fromUSD = fromCurrency === 'USD' ? 1 : (fromCurrency === 'USDT' ? 1 : (fromCurrency === 'RUB' ? 1/78 : (fromCurrency === 'ARS' ? 1/1290 : 1)));
-        const toUSD = toCurrency === 'USD' ? 1 : (toCurrency === 'USDT' ? 1 : (toCurrency === 'RUB' ? 1/78 : (toCurrency === 'ARS' ? 1/1290 : 1)));
-        exchangeRate = fromUSD / toUSD;
-    }
-    
-    const toAmount = amount * exchangeRate;
-    
-    console.log(`💰 ${amount} ${fromCurrency} = ${toAmount} ${toCurrency} (курс: ${exchangeRate})`);
-    
-    res.json({
-        success: true,
-        data: {
-            fromAmount: amount,
-            toAmount: toAmount,
-            exchangeRate: exchangeRate,
-            fee: 0,
-            fromCurrency: fromCurrency,
-            toCurrency: toCurrency
-        }
-    });
-});
 // API для создания заявки
 app.post('/api/create-order', async (req, res) => {
     try {
