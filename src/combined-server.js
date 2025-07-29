@@ -674,6 +674,7 @@ app.post('/api/create-order', async (req, res) => {
         console.log('📝 Сгенерированный ID заявки:', orderId);
 
         // Создаем заявку в базе данных
+        let realOrderId = orderId; // fallback к сгенерированному ID
         if (db && db.createOrder) {
             try {
                 const order = await db.createOrder({
@@ -691,6 +692,7 @@ app.post('/api/create-order', async (req, res) => {
                     source: 'web'
                 });
                 console.log('✅ Заявка создана в базе:', order.id);
+                realOrderId = order.id; // ← СОХРАНЯЕМ РЕАЛЬНЫЙ ID ИЗ БАЗЫ!
             } catch (dbError) {
                 console.error('❌ Ошибка сохранения в базу:', dbError);
             }
@@ -712,6 +714,7 @@ app.post('/api/create-order', async (req, res) => {
         };
 
         console.log('📋 Данные для уведомления:', {
+            realOrderId,
             orderId,
             userName: user.first_name || user.username,
             fromAmount,
@@ -723,7 +726,7 @@ app.post('/api/create-order', async (req, res) => {
         if (notifyOperators) {
             try {
                 await notifyOperators({
-                    id: orderId,
+                    id: realOrderId,                          // ← ИСПРАВЛЕНО: используем РЕАЛЬНЫЙ ID из базы!
                     userName: user.first_name || user.username || `User_${userId}`,
                     fromAmount: fromAmount,
                     fromCurrency: fromCurrency,
@@ -743,8 +746,8 @@ app.post('/api/create-order', async (req, res) => {
         res.json({ 
             success: true, 
             data: {
-                id: orderId,        // ← ИСПРАВЛЕНО: теперь "id" вместо "orderId"
-                orderId: orderId,   // ← оставляем для совместимости
+                id: realOrderId,        // ← ИСПРАВЛЕНО: используем РЕАЛЬНЫЙ ID из базы!
+                orderId: orderId,       // ← оставляем сгенерированный ID для совместимости
                 status: 'pending',
                 message: 'Заявка создана'
             }
