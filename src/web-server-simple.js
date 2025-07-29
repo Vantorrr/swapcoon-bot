@@ -73,20 +73,10 @@ app.get('/api/rates', async (req, res) => {
     }
 });
 
-// Тестовые курсы как fallback
+// 🔥 ТЕСТОВЫЕ ДАННЫЕ ОТКЛЮЧЕНЫ НАВСЕГДА!
 function getTestRates() {
-    return [
-        // 🪙 КРИПТОВАЛЮТЫ
-        { currency: 'BTC', price: 95000, buy: 95000, sell: 96000, change24h: 2.5, lastUpdate: new Date().toISOString(), type: 'crypto' },
-        { currency: 'ETH', price: 3500, buy: 3500, sell: 3520, change24h: 1.8, lastUpdate: new Date().toISOString(), type: 'crypto' },
-        { currency: 'USDT', price: 1.0, buy: 1.0, sell: 1.02, change24h: 0.1, lastUpdate: new Date().toISOString(), type: 'crypto' },
-        { currency: 'USDC', price: 1.0, buy: 1.0, sell: 1.02, change24h: 0.0, lastUpdate: new Date().toISOString(), type: 'crypto' },
-        
-        // 💰 ФИАТНЫЕ ВАЛЮТЫ
-        { currency: 'USD', price: 1.0, buy: 1.0, sell: 1.0, change24h: 0.0, lastUpdate: new Date().toISOString(), type: 'fiat' },
-        { currency: 'EUR', price: 0.92, buy: 0.92, sell: 0.94, change24h: 0.2, lastUpdate: new Date().toISOString(), type: 'fiat' },
-        { currency: 'RUB', price: 0.0105, buy: 0.0098, sell: 0.0102, change24h: -0.5, lastUpdate: new Date().toISOString(), type: 'fiat' }
-    ];
+    console.log("🔥 getTestRates() ОТКЛЮЧЕН - НЕТ ТЕСТОВЫХ ДАННЫХ!");
+    return []; // 🔥 ПУСТОЙ МАССИВ!
 }
 
 // API для создания заявки в поддержку

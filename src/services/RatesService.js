@@ -135,19 +135,13 @@ class RatesService {
     }
     
     getBasicRates() {
-        // Базовые курсы на случай полного отказа API
+        // 🔥 ТОЛЬКО МИНИМУМ! ОСТАЛЬНОЕ ИЗ GOOGLE SHEETS!
+        console.log("📊 getBasicRates: возвращаем только USD/USDT базу");
         return [
-            { currency: 'BTC', buy: 94500, sell: 95500, price: 95000, change24h: 2.4, lastUpdate: new Date().toISOString(), type: 'crypto' },
-            { currency: 'ETH', buy: 3480, sell: 3520, price: 3500, change24h: 1.8, lastUpdate: new Date().toISOString(), type: 'crypto' },
-            { currency: 'USDT', buy: 0.995, sell: 1.005, price: 1.0, change24h: 0.1, lastUpdate: new Date().toISOString(), type: 'crypto' },
-            { currency: 'USDC', buy: 0.995, sell: 1.005, price: 1.0, change24h: 0.0, lastUpdate: new Date().toISOString(), type: 'crypto' },
-            { currency: 'USD', buy: 1.0, sell: 1.0, price: 1.0, change24h: 0, lastUpdate: new Date().toISOString(), type: 'fiat' },
-            { currency: 'EUR', buy: 0.90, sell: 0.94, price: 0.92, change24h: 0, lastUpdate: new Date().toISOString(), type: 'fiat' },
-            { currency: 'RUB', buy: 0.0128, sell: 0.0128, price: 0.0128, change24h: 0, lastUpdate: new Date().toISOString(), type: 'fiat' },
-            { currency: 'ARS', buy: 0.00098, sell: 0.00102, price: 0.001, change24h: 0, lastUpdate: new Date().toISOString(), type: 'fiat' },
-            { currency: 'BRL', buy: 0.194, sell: 0.206, price: 0.20, change24h: 0, lastUpdate: new Date().toISOString(), type: 'fiat' }
+            { currency: "USD", buy: 1.0, sell: 1.0, price: 1.0, change24h: 0, lastUpdate: new Date().toISOString(), type: "fiat", source: "BASE" },
+            { currency: "USDT", buy: 1.0, sell: 1.0, price: 1.0, change24h: 0, lastUpdate: new Date().toISOString(), type: "crypto", source: "BASE" }
         ];
-    }
+    }    }
 
     initAutoUpdate() {
         // Обновляем курсы каждые 5 минут

@@ -660,29 +660,10 @@ async function loadExchangeRates() {
     }
 }
 
-// Тестовые курсы для разработки (ТОЛЬКО GOOGLE SHEETS)
+// Тестовые курсы для разработки (ОТКЛЮЧЕНО - ТОЛЬКО GOOGLE SHEETS)
 function getTestRates() {
-    console.log('📊 Используем курсы ИЗ GOOGLE SHEETS (тестовый режим)');
-    return [
-        // Базовые валюты
-        { currency: 'USD', price: 1, buy: 1, sell: 1, source: 'SHEETS', type: 'fiat', lastUpdate: new Date().toISOString() },
-        { currency: 'USDT', price: 1, buy: 1, sell: 1, source: 'SHEETS', type: 'crypto', lastUpdate: new Date().toISOString() },
-        
-        // Курсы из Google Sheets  
-        { currency: 'RUB', price: 1/78, buy: 1/78, sell: 1/78, source: 'SHEETS', type: 'fiat', lastUpdate: new Date().toISOString() },
-        { currency: 'ARS', price: 1/1300, buy: 1/1310, sell: 1/1290, source: 'SHEETS', type: 'fiat', lastUpdate: new Date().toISOString() },
-        
-        // Остальные валюты (неактивные)
-        { currency: 'EUR', price: 0.92, buy: 0.92, sell: 0.94, source: 'DISABLED', type: 'fiat', lastUpdate: new Date().toISOString() },
-        { currency: 'UAH', price: 0.026, buy: 0.025, sell: 0.027, source: 'DISABLED', type: 'fiat', lastUpdate: new Date().toISOString() },
-        { currency: 'KZT', price: 0.0022, buy: 0.0021, sell: 0.0023, source: 'DISABLED', type: 'fiat', lastUpdate: new Date().toISOString() },
-        { currency: 'BRL', price: 0.20, buy: 0.19, sell: 0.21, source: 'DISABLED', type: 'fiat', lastUpdate: new Date().toISOString() },
-        
-        // Крипта (неактивная)
-        { currency: 'BTC', price: 95000, buy: 95000, sell: 96000, source: 'DISABLED', type: 'crypto', lastUpdate: new Date().toISOString() },
-        { currency: 'ETH', price: 3500, buy: 3500, sell: 3520, source: 'DISABLED', type: 'crypto', lastUpdate: new Date().toISOString() },
-        { currency: 'USDC', price: 1.0, buy: 1.0, sell: 1.0, source: 'DISABLED', type: 'crypto', lastUpdate: new Date().toISOString() }
-    ];
+    console.log('🔥 ТЕСТОВЫЕ ДАННЫЕ ОТКЛЮЧЕНЫ! Используем ТОЛЬКО Google Sheets!');
+    return []; // 🔥 ПУСТОЙ МАССИВ - НЕТ ТЕСТОВЫХ ДАННЫХ!
 }
 // Обновление времени курсов
 function updateRatesTime() {

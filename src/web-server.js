@@ -50,14 +50,9 @@ app.get('/api/rates', async (req, res) => {
             console.log('⚠️ RatesService недоступен, используем fallback курсы');
             // Fallback курсы только если RatesService не работает
             rates = [
-                { currency: 'USD', price: 1, buy: 1, sell: 1, source: 'FALLBACK', type: 'fiat', lastUpdate: new Date().toISOString() },
-                { currency: 'USDT', price: 1, buy: 1, sell: 1, source: 'FALLBACK', type: 'crypto', lastUpdate: new Date().toISOString() },
-                { currency: 'RUB', price: 1/78, buy: 1/78, sell: 1/78, source: 'FALLBACK', type: 'fiat', lastUpdate: new Date().toISOString() },
-                { currency: 'ARS', price: 1/1290, buy: 1/1290, sell: 1/1290, source: 'FALLBACK', type: 'fiat', lastUpdate: new Date().toISOString() },
-                { currency: 'BTC', price: 95000, buy: 95000, sell: 96000, source: 'FALLBACK', type: 'crypto', lastUpdate: new Date().toISOString() },
-                { currency: 'ETH', price: 3500, buy: 3500, sell: 3520, source: 'FALLBACK', type: 'crypto', lastUpdate: new Date().toISOString() },
-            ];
-        }
+                { currency: "USD", price: 1, buy: 1, sell: 1, source: "FALLBACK", type: "fiat", lastUpdate: new Date().toISOString() },
+                { currency: "USDT", price: 1, buy: 1, sell: 1, source: "FALLBACK", type: "crypto", lastUpdate: new Date().toISOString() }
+            ];        }
         
         // Диагностика курсов
         console.log('📊 ОТПРАВЛЯЕМЫЕ КУРСЫ:');

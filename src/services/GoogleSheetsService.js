@@ -74,51 +74,9 @@ class GoogleSheetsService {
     }
 
     getTestRates() {
-        // Тестовые курсы для разработки
-        return [
-            {
-                currency: 'BTC',
-                buy: 95000,
-                sell: 96000,
-                lastUpdate: new Date().toISOString()
-            },
-            {
-                currency: 'ETH',
-                buy: 3500,
-                sell: 3520,
-                lastUpdate: new Date().toISOString()
-            },
-            {
-                currency: 'USDT',
-                buy: 1.0,
-                sell: 1.02,
-                lastUpdate: new Date().toISOString()
-            },
-            {
-                currency: 'USDC',
-                buy: 1.0,
-                sell: 1.02,
-                lastUpdate: new Date().toISOString()
-            },
-            {
-                currency: 'USD',
-                buy: 1.0,
-                sell: 1.0,
-                lastUpdate: new Date().toISOString()
-            },
-            {
-                currency: 'EUR',
-                buy: 0.92,
-                sell: 0.94,
-                lastUpdate: new Date().toISOString()
-            },
-            {
-                currency: 'RUB',
-                buy: 100,
-                sell: 102,
-                lastUpdate: new Date().toISOString()
-            }
-        ];
+        // 🔥 ТЕСТОВЫЕ ДАННЫЕ ОТКЛЮЧЕНЫ! ТОЛЬКО GOOGLE SHEETS!
+        console.log('🔥 getTestRates() ОТКЛЮЧЕН - используем ТОЛЬКО Google Sheets!');
+        return []; // 🔥 ПУСТОЙ МАССИВ!
     }
 
     async updateRates(newRates) {
