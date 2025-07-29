@@ -618,18 +618,13 @@ async function loadExchangeRates() {
     console.log('📡 Загружаем курсы валют...');
     
     try {
-        // 🔥 МОЛНИЕНОСНЫЙ TIMEOUT 500МС!
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 500);
         
         const response = await fetch('/api/rates', {
-            signal: controller.signal,
             headers: {
                 'Content-Type': 'application/json'
             }
         });
         
-        clearTimeout(timeoutId);
         
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -665,31 +660,30 @@ async function loadExchangeRates() {
     }
 }
 
-// Тестовые курсы для разработки
+// Тестовые курсы для разработки (ТОЛЬКО GOOGLE SHEETS)
 function getTestRates() {
+    console.log('📊 Используем курсы ИЗ GOOGLE SHEETS (тестовый режим)');
     return [
-        // 🪙 КРИПТОВАЛЮТЫ
-        { currency: 'BTC', price: 95000, buy: 95000, sell: 96000, change24h: 2.5, lastUpdate: new Date().toISOString(), type: 'crypto' },
-        { currency: 'ETH', price: 3500, buy: 3500, sell: 3520, change24h: 1.8, lastUpdate: new Date().toISOString(), type: 'crypto' },
-        { currency: 'USDT', price: 1.0, buy: 1.0, sell: 1.0, change24h: 0.1, lastUpdate: new Date().toISOString(), type: 'crypto' },
-        { currency: 'USDC', price: 1.0, buy: 1.0, sell: 1.02, change24h: 0.0, lastUpdate: new Date().toISOString(), type: 'crypto' },
-
-        { currency: 'XRP', price: 0.48, buy: 0.48, sell: 0.49, change24h: -0.3, lastUpdate: new Date().toISOString(), type: 'crypto' },
-        { currency: 'LTC', price: 110, buy: 110, sell: 112, change24h: 1.7, lastUpdate: new Date().toISOString(), type: 'crypto' },
-        { currency: 'BCH', price: 280, buy: 280, sell: 285, change24h: -2.1, lastUpdate: new Date().toISOString(), type: 'crypto' },
-        { currency: 'LINK', price: 18.5, buy: 18.5, sell: 18.8, change24h: 0.6, lastUpdate: new Date().toISOString(), type: 'crypto' },
+        // Базовые валюты
+        { currency: 'USD', price: 1, buy: 1, sell: 1, source: 'SHEETS', type: 'fiat', lastUpdate: new Date().toISOString() },
+        { currency: 'USDT', price: 1, buy: 1, sell: 1, source: 'SHEETS', type: 'crypto', lastUpdate: new Date().toISOString() },
         
-        // 💰 ФИАТНЫЕ ВАЛЮТЫ
-        { currency: 'USD', price: 1.0, buy: 1.0, sell: 1.0, change24h: 0.0, lastUpdate: new Date().toISOString(), type: 'fiat' },
-        { currency: 'EUR', price: 0.92, buy: 0.92, sell: 0.94, change24h: 0.2, lastUpdate: new Date().toISOString(), type: 'fiat' },
-        { currency: 'RUB', price: 0.0111, buy: 0.011, sell: 0.0143, change24h: -0.5, lastUpdate: new Date().toISOString(), type: 'fiat' },
-        { currency: 'UAH', price: 0.026, buy: 0.025, sell: 0.027, change24h: -0.3, lastUpdate: new Date().toISOString(), type: 'fiat' },
-        { currency: 'KZT', price: 0.0022, buy: 0.0021, sell: 0.0023, change24h: 0.1, lastUpdate: new Date().toISOString(), type: 'fiat' },
-        { currency: 'ARS', price: 0.000775, buy: 0.000775, sell: 0.000775, change24h: -1.2, lastUpdate: new Date().toISOString(), type: 'fiat' },
-        { currency: 'BRL', price: 0.20, buy: 0.19, sell: 0.21, change24h: 0.4, lastUpdate: new Date().toISOString(), type: 'fiat' }
+        // Курсы из Google Sheets  
+        { currency: 'RUB', price: 1/70, buy: 1/90, sell: 1/70, source: 'SHEETS', type: 'fiat', lastUpdate: new Date().toISOString() },
+        { currency: 'ARS', price: 1/1300, buy: 1/1310, sell: 1/1290, source: 'SHEETS', type: 'fiat', lastUpdate: new Date().toISOString() },
+        
+        // Остальные валюты (неактивные)
+        { currency: 'EUR', price: 0.92, buy: 0.92, sell: 0.94, source: 'DISABLED', type: 'fiat', lastUpdate: new Date().toISOString() },
+        { currency: 'UAH', price: 0.026, buy: 0.025, sell: 0.027, source: 'DISABLED', type: 'fiat', lastUpdate: new Date().toISOString() },
+        { currency: 'KZT', price: 0.0022, buy: 0.0021, sell: 0.0023, source: 'DISABLED', type: 'fiat', lastUpdate: new Date().toISOString() },
+        { currency: 'BRL', price: 0.20, buy: 0.19, sell: 0.21, source: 'DISABLED', type: 'fiat', lastUpdate: new Date().toISOString() },
+        
+        // Крипта (неактивная)
+        { currency: 'BTC', price: 95000, buy: 95000, sell: 96000, source: 'DISABLED', type: 'crypto', lastUpdate: new Date().toISOString() },
+        { currency: 'ETH', price: 3500, buy: 3500, sell: 3520, source: 'DISABLED', type: 'crypto', lastUpdate: new Date().toISOString() },
+        { currency: 'USDC', price: 1.0, buy: 1.0, sell: 1.0, source: 'DISABLED', type: 'crypto', lastUpdate: new Date().toISOString() }
     ];
 }
-
 // Обновление времени курсов
 function updateRatesTime() {
     const updateTime = document.getElementById('update-time');

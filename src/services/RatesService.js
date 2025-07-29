@@ -44,7 +44,7 @@ class RatesService {
         this.emergencySpread = 0;        // Экстренный спред в процентах
         this.ratesMultiplier = 1.0;      // Общий множитель курсов
         this.manualRates = new Map();    // Ручные курсы конкретных валют
-        this.autoUpdatePaused = false;   // Пауза автообновления
+        this.autoUpdatePaused = true; // ОТКЛЮЧЕНО НАВСЕГДА - используем ТОЛЬКО Google Sheets!   // Пауза автообновления
         this.pauseUntil = null;         // До какого времени пауза
         
         // 📊 ИНТЕГРАЦИЯ С GOOGLE SHEETS
@@ -377,7 +377,7 @@ class RatesService {
     
     // Возобновление автообновления
     resumeAutoUpdate() {
-        this.autoUpdatePaused = false;
+        this.autoUpdatePaused = true; // ОТКЛЮЧЕНО НАВСЕГДА - используем ТОЛЬКО Google Sheets!
         this.pauseUntil = null;
         console.log(`▶️ Автообновление возобновлено`);
     }
@@ -386,7 +386,7 @@ class RatesService {
     async forceUpdate() {
         console.log('🔄 Принудительное обновление курсов...');
         this.cache.clear();
-        this.autoUpdatePaused = false;
+        this.autoUpdatePaused = true; // ОТКЛЮЧЕНО НАВСЕГДА - используем ТОЛЬКО Google Sheets!
         this.pauseUntil = null;
         this.emergencySpread = 0;
         this.ratesMultiplier = 1.0;

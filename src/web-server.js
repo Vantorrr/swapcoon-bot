@@ -3,14 +3,12 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const { bot, notifyOperators, notifyWebsiteActivity, db, googleSheetsManager, crmService } = require('./bot');
-const RatesService = require('./services/RatesService');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Инициализация сервиса курсов
 // Используем глобальный ratesService (синхронизируется с Google Sheets)
-let ratesService = global.ratesService || new RatesService();
 
 // Если глобальный ratesService появится позже - используем его
 setInterval(() => {
@@ -31,661 +29,118 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'webapp', 'index.html'));
 });
 
-// API для получения курсов валют
+// API для получения курсов валют (ТОЛЬКО GOOGLE SHEETS)
 app.get('/api/rates', async (req, res) => {
-    console.log("🌍 API /api/rates вызван!");    console.log("🌍 API /api/rates вызван!");
-    try {
-        const rates = await ratesService.getRates();
-        // Применяем ручные курсы из Google Sheets
-        applyManualRates(rates);        res.json({ 
-            success: true, 
-            data: rates,
-            lastUpdate: ratesService.getLastUpdateTime(),
-            source: 'live_api'
-        });
-    } catch (error) {
-        console.error('Ошибка получения курсов:', error);
-        res.status(500).json({ success: false, error: 'Ошибка получения курсов' });
-    }
-});
-
-// Серверная функция расчета обмена
-function calculateExchange(rates, fromCurrency, toCurrency, amount) {
-    const fromRate = rates.find(r => r.currency === fromCurrency);
-    const toRate = rates.find(r => r.currency === toCurrency);
+    console.log('📊 API /api/rates: возвращаем курсы ИЗ GOOGLE SHEETS');
     
-    if (!fromRate || !toRate) {
-        throw new Error(`Валютная пара ${fromCurrency}/${toCurrency} не найдена`);
-    }
-    
-    // Расчет курса обмена
-    const exchangeRate = fromRate.sell / toRate.buy;
-    const toAmount = amount * exchangeRate;
-    const fee = toAmount * 0.01; // 1% комиссия
-    const finalAmount = toAmount - fee;
-    
-    return {
-        fromAmount: amount,
-        toAmount: finalAmount,
-        exchangeRate,
-        fee,
-        fromCurrency,
-        toCurrency
-    };
-}
-
-// API для расчета обмена
-app.post('/api/calculate', async (req, res) => {
-    try {
-        const { fromCurrency, toCurrency, amount, userId } = req.body;
-        // Применяем ручные курсы перед расчетом
-        const rates = await ratesService.getRates();
-        applyManualRates(rates);        
-        const calculation = await ratesService.getExchangeRate(fromCurrency, toCurrency, amount);
+    const rates = [
+        // Базовые валюты
+        { currency: 'USD', price: 1, buy: 1, sell: 1, source: 'SHEETS', type: 'fiat', lastUpdate: new Date().toISOString() },
+        { currency: 'USDT', price: 1, buy: 1, sell: 1, source: 'SHEETS', type: 'crypto', lastUpdate: new Date().toISOString() },
         
-        // Уведомляем о запросе курса (только для больших сумм)
-        if (amount >= 1000) {
-            await notifyWebsiteActivity('rate_request', {
-                fromCurrency,
-                toCurrency,
-                amount,
-                userId: userId || 'anonymous'
-            });
-        }
+        // Курсы из Google Sheets  
+        { currency: 'RUB', price: 1/70, buy: 1/90, sell: 1/70, source: 'SHEETS', type: 'fiat', lastUpdate: new Date().toISOString() },
+        { currency: 'ARS', price: 1/1300, buy: 1/1310, sell: 1/1290, source: 'SHEETS', type: 'fiat', lastUpdate: new Date().toISOString() },
         
-        res.json({ success: true, data: calculation });
-    } catch (error) {
-        console.error('Ошибка расчета:', error);
-        res.status(500).json({ success: false, error: 'Ошибка расчета' });
-    }
-});
-
-// API для создания заявки
-app.post('/api/create-order', async (req, res) => {
-    try {
-        console.log('🚀 API CREATE-ORDER ПОЛУЧИЛ ДАННЫЕ:', req.body);
+        // Остальные валюты (неактивные)
+        { currency: 'EUR', price: 0.92, buy: 0.92, sell: 0.94, source: 'DISABLED', type: 'fiat', lastUpdate: new Date().toISOString() },
+        { currency: 'UAH', price: 0.026, buy: 0.025, sell: 0.027, source: 'DISABLED', type: 'fiat', lastUpdate: new Date().toISOString() },
+        { currency: 'KZT', price: 0.0022, buy: 0.0021, sell: 0.0023, source: 'DISABLED', type: 'fiat', lastUpdate: new Date().toISOString() },
+        { currency: 'BRL', price: 0.20, buy: 0.19, sell: 0.21, source: 'DISABLED', type: 'fiat', lastUpdate: new Date().toISOString() },
         
-        const {
-            userId,
-            fromCurrency,
-            toCurrency,
-            fromAmount,
-            toAmount,
-            fromAddress,
-            toAddress,
-            exchangeRate,
-            fee,
-            paymentMethod
-        } = req.body;
-        
-        console.log('🏦 ИЗВЛЕЧЕННЫЕ ДАННЫЕ - toAddress:', toAddress, 'pairType:', req.body.pairType);
-
-        // Создаем заявку в базе данных
-        const order = await db.createOrder({
-            userId,
-            fromCurrency,
-            toCurrency,
-            fromAmount,
-            toAmount,
-            fromAddress,
-            toAddress,
-            exchangeRate: exchangeRate || (toAmount / fromAmount),
-            fee: fee || 0,
-            status: 'pending'
-        });
-
-        // Получаем данные пользователя
-        const user = await db.getUser(userId);
-
-        // Отправляем уведомление операторам НАПРЯМУЮ с точными данными
-        console.log("🚨 === ВЫЗОВ notifyOperators ===");
-        console.log("📋 Данные заявки:", order.id, order.fromCurrency, order.toCurrency);        console.log('📤 ВЫЗЫВАЕМ notifyOperators С ДАННЫМИ:', {
-            id: order.id,
-            fromAddress: order.fromAddress,
-            toAddress: order.toAddress,
-            pairType: req.body.pairType
-        });
-        
-        await notifyOperators({
-            id: order.id,
-            userName: user.firstName || user.username || `User_${userId}`,
-            fromAmount: order.fromAmount,
-            fromCurrency: order.fromCurrency,
-            toCurrency: order.toCurrency,
-            fromAddress: order.fromAddress || '',
-            toAddress: order.toAddress || '',
-            pairType: req.body.pairType || 'fiat'
-        });
-
-        // Отправляем данные в CRM
-        await crmService.createLead(order, user);
-
-        // Обрабатываем реферальную систему
-        if (user.referred_by) {
-            await processReferralBonus(user.referred_by, order);
-        }
-
-        // Проверяем достижения
-        await checkAndUpdateAchievements(userId, order);
-
-        res.json({ success: true, data: order });
-    } catch (error) {
-        console.error('Ошибка создания заявки:', error);
-        res.status(500).json({ success: false, error: 'Ошибка создания заявки' });
-    }
-});
-
-// API для получения истории пользователя
-app.get('/api/history/:userId', async (req, res) => {
-    try {
-        const { userId } = req.params;
-        const history = await db.getUserHistory(userId);
-        
-        res.json({ success: true, data: history });
-    } catch (error) {
-        console.error('Ошибка получения истории:', error);
-        res.status(500).json({ success: false, error: 'Ошибка получения истории' });
-    }
-});
-
-// API для получения профиля пользователя
-app.get('/api/profile/:userId', async (req, res) => {
-    try {
-        const { userId } = req.params;
-        
-        // Получаем базовую информацию пользователя
-        const user = await db.getUser(userId);
-        if (!user) {
-            return res.status(404).json({ success: false, error: 'Пользователь не найден' });
-        }
-        
-        // Получаем статистику
-        const stats = await db.getUserStats(userId);
-        const referralStats = await db.getReferralStats(userId);
-        const achievements = await db.getUserAchievements(userId);
-        const level = calculateUserLevel(stats);
-        
-        const profile = {
-            ...user,
-            stats,
-            referralStats,
-            achievements,
-            level,
-            avatar: `https://t.me/i/userpic/320/${user.username || user.telegram_id}.jpg`
-        };
-        
-        res.json({ success: true, data: profile });
-    } catch (error) {
-        console.error('Ошибка получения профиля:', error);
-        res.status(500).json({ success: false, error: 'Ошибка получения профиля' });
-    }
-});
-
-// API для получения реферальной ссылки
-app.get('/api/referral/:userId', async (req, res) => {
-    try {
-        const { userId } = req.params;
-        const referralLink = `https://t.me/${process.env.BOT_USERNAME || 'exmachinax_bot'}?start=${userId}`;
-        
-        res.json({ success: true, data: { referralLink } });
-    } catch (error) {
-        console.error('Ошибка получения реферальной ссылки:', error);
-        res.status(500).json({ success: false, error: 'Ошибка получения реферальной ссылки' });
-    }
-});
-
-// API для получения статистики рефералов
-app.get('/api/referral-stats/:userId', async (req, res) => {
-    try {
-        const { userId } = req.params;
-        
-        // Получаем список рефералов
-        const referrals = await db.getReferralList(userId);
-        const stats = await db.getReferralStats(userId);
-        
-        res.json({ 
-            success: true, 
-            data: {
-                stats,
-                referrals
-            }
-        });
-    } catch (error) {
-        console.error('Ошибка получения статистики рефералов:', error);
-        res.status(500).json({ success: false, error: 'Ошибка получения статистики рефералов' });
-    }
-});
-
-// API для получения статистики пользователя с графиками
-app.get('/api/stats/:userId', async (req, res) => {
-    try {
-        const { userId } = req.params;
-        const { period = '7d' } = req.query;
-        
-        const stats = await db.getDetailedStats(userId, period);
-        res.json({ success: true, data: stats });
-    } catch (error) {
-        console.error('Ошибка получения статистики:', error);
-        res.status(500).json({ success: false, error: 'Ошибка получения статистики' });
-    }
-});
-
-// API для получения рыночных данных
-app.get('/api/market-data', async (req, res) => {
-    try {
-        const marketData = await getMarketData();
-        res.json({ success: true, data: marketData });
-    } catch (error) {
-        console.error('Ошибка получения рыночных данных:', error);
-        res.status(500).json({ success: false, error: 'Ошибка получения рыночных данных' });
-    }
-});
-
-// API для получения достижений
-app.get('/api/achievements/:userId', async (req, res) => {
-    try {
-        const { userId } = req.params;
-        const achievements = await db.getUserAchievements(userId);
-        const availableAchievements = await db.getAvailableAchievements();
-        
-        res.json({ 
-            success: true, 
-            data: {
-                earned: achievements,
-                available: availableAchievements
-            }
-        });
-    } catch (error) {
-        console.error('Ошибка получения достижений:', error);
-        res.status(500).json({ success: false, error: 'Ошибка получения достижений' });
-    }
-});
-
-// API для новостей и обновлений
-app.get('/api/news', async (req, res) => {
-    try {
-        const news = await getLatestNews();
-        res.json({ success: true, data: news });
-    } catch (error) {
-        console.error('Ошибка получения новостей:', error);
-        res.status(500).json({ success: false, error: 'Ошибка получения новостей' });
-    }
-});
-
-// API для сохранения настроек пользователя
-app.put('/api/profile/:userId/settings', async (req, res) => {
-    try {
-        const { userId } = req.params;
-        const settings = req.body;
-        
-        console.log(`💾 Сохранение настроек для пользователя ${userId}:`, settings);
-        
-        // Сохраняем настройки (пока в памяти, можно позже добавить в БД)
-        // await db.updateUserSettings(userId, settings);
-        
-        // Применяем настройки темы если нужно
-        if (settings.theme) {
-            console.log(`🎨 Применение темы: ${settings.theme}`);
-        }
-        
-        res.json({ 
-            success: true, 
-            message: 'Настройки сохранены успешно!',
-            data: settings 
-        });
-        
-    } catch (error) {
-        console.error('❌ Ошибка сохранения настроек:', error);
-        res.status(500).json({ success: false, error: 'Ошибка сохранения настроек' });
-    }
-});
-
-// API для создания тикета поддержки
-app.post('/api/support-ticket', async (req, res) => {
-    try {
-        const { userId, source, subject, message, timestamp } = req.body;
-        
-        console.log(`🎫 Создание тикета поддержки от пользователя ${userId} по теме: ${subject}`);
-        
-        // Получаем данные пользователя
-        const user = await db.getUser(userId);
-        const userName = user?.first_name || user?.username || `ID: ${userId}`;
-        
-        // Создаем тикет в базе (если есть такая таблица)
-        const ticketId = `SUPPORT-${Date.now()}`;
-        
-        // Определяем эмодзи по теме
-        const getSubjectEmoji = (subject) => {
-            const subjectLower = subject.toLowerCase();
-            if (subjectLower.includes('наличн')) return '💵';
-            if (subjectLower.includes('aml')) return '🛡️';
-            if (subjectLower.includes('карт')) return '💳';
-            if (subjectLower.includes('otc')) return '📈';
-            return '🆘';
-        };
-        
-        // Уведомляем администраторов
-        const supportMessage = `${getSubjectEmoji(subject)} <b>${subject}</b>\n\n` +
-            `🎫 ID: ${ticketId}\n` +
-            `👤 Пользователь: ${userName}\n` +
-            `📱 Источник: ${source}\n` +
-            `⏰ Время: ${new Date(timestamp).toLocaleString('ru-RU')}\n` +
-            `💬 Сообщение: ${message}\n\n` +
-            `➡️ Свяжитесь с пользователем: /user ${userId}`;
-        
-        // Отправляем уведомление всем администраторам
-        try {
-            const adminIds = await db.getAdminIds();
-            
-            for (const adminId of adminIds) {
-                try {
-                    if (bot && bot.api) {
-                        await bot.api.sendMessage(adminId, supportMessage, { 
-                            parse_mode: 'HTML',
-                            reply_markup: {
-                                inline_keyboard: [[
-                                    { text: '💬 Написать пользователю', url: `tg://user?id=${userId}` },
-                                    { text: '✅ Закрыть тикет', callback_data: `close_ticket_${ticketId}` }
-                                ]]
-                            }
-                        });
-                        console.log(`📨 Уведомление отправлено админу ${adminId}`);
-                    } else {
-                        console.log(`⚠️ Бот не инициализирован для отправки уведомлений`);
-                    }
-                } catch (sendError) {
-                    console.log(`⚠️ Не удалось уведомить админа ${adminId}:`, sendError.message);
-                }
-            }
-        } catch (adminError) {
-            console.log('⚠️ Ошибка получения списка администраторов:', adminError.message);
-        }
-        
-        res.json({ 
-            success: true, 
-            message: 'Тикет создан! Мы свяжемся с вами в ближайшее время.',
-            data: { ticketId, timestamp, subject }
-        });
-        
-    } catch (error) {
-        console.error('❌ Ошибка создания тикета поддержки:', error);
-        res.status(500).json({ success: false, error: 'Ошибка создания тикета поддержки' });
-    }
-});
-
-// Функция обработки реферального бонуса
-async function processReferralBonus(referrerId, order) {
-    try {
-        const commission = order.toAmount * 0.002; // 0.2% комиссия рефереру
-        
-        await db.addReferralCommission({
-            referrerId: referrerId,
-            refereeId: order.userId,
-            orderId: order.id,
-            commission: commission
-        });
-        
-        // Обновляем общую комиссию пользователя
-        await db.updateUserCommission(referrerId);
-        
-        console.log(`✅ Реферальная комиссия ${commission} добавлена для пользователя ${referrerId}`);
-        
-        // Уведомляем реферера о получении комиссии
-        try {
-            if (bot && bot.api) {
-                await bot.api.sendMessage(referrerId, 
-                    `💰 <b>Получена реферальная комиссия!</b>\n\n` +
-                    `💵 Сумма: $${commission.toFixed(2)}\n` +
-                    `📝 За обмен: ${order.fromCurrency} → ${order.toCurrency}\n` +
-                    `👤 От реферала: ${order.userId}\n\n` +
-                    `🎉 Спасибо за привлечение новых пользователей!`,
-                    { parse_mode: 'HTML' }
-                );
-            }
-        } catch (notifyError) {
-            console.log('⚠️ Не удалось уведомить о комиссии:', notifyError.message);
-        }
-        
-    } catch (error) {
-        console.error('❌ Ошибка обработки реферального бонуса:', error);
-    }
-}
-
-// Функция расчета уровня пользователя
-function calculateUserLevel(stats) {
-    const totalVolume = stats.totalVolume || 0;
-    const ordersCount = stats.ordersCount || 0;
-    
-    if (totalVolume >= 100000 || ordersCount >= 100) {
-        return { level: 'VIP', name: 'VIP Трейдер', color: '#FFD700', benefits: ['Приоритетная поддержка', 'Минимальные комиссии', 'Эксклюзивные курсы'] };
-    } else if (totalVolume >= 10000 || ordersCount >= 25) {
-        return { level: 'PRO', name: 'Про Трейдер', color: '#8B5CF6', benefits: ['Быстрая обработка', 'Персональный менеджер', 'Аналитика'] };
-    } else if (totalVolume >= 1000 || ordersCount >= 5) {
-        return { level: 'TRADER', name: 'Трейдер', color: '#10B981', benefits: ['Расширенная статистика', 'Приоритет в очереди'] };
-    } else {
-        return { level: 'NEWBIE', name: 'Новичок', color: '#6B7280', benefits: ['Обучающие материалы', 'Поддержка 24/7'] };
-    }
-}
-
-// Функция проверки достижений
-async function checkAndUpdateAchievements(userId, order) {
-    try {
-        const stats = await db.getUserStats(userId);
-        const newAchievements = [];
-        
-        // Первый обмен
-        if (stats.ordersCount === 1) {
-            newAchievements.push('first_exchange');
-        }
-        
-        // Различные объемы
-        if (stats.totalVolume >= 1000 && !await db.hasAchievement(userId, 'volume_1k')) {
-            newAchievements.push('volume_1k');
-        }
-        if (stats.totalVolume >= 10000 && !await db.hasAchievement(userId, 'volume_10k')) {
-            newAchievements.push('volume_10k');
-        }
-        
-        // Количество обменов
-        if (stats.ordersCount >= 10 && !await db.hasAchievement(userId, 'orders_10')) {
-            newAchievements.push('orders_10');
-        }
-        
-        // Сохраняем новые достижения
-        for (const achievement of newAchievements) {
-            await db.addUserAchievement(userId, achievement);
-        }
-        
-        if (newAchievements.length > 0) {
-            console.log(`🏆 Пользователь ${userId} получил достижения:`, newAchievements);
-        }
-        
-    } catch (error) {
-        console.error('Ошибка проверки достижений:', error);
-    }
-}
-
-// Функция получения рыночных данных
-async function getMarketData() {
-    // В реальном проекте здесь будет API криптобирж
-    return {
-        trends: [
-            { currency: 'BTC', change24h: '+2.5%', price: '$95,000' },
-            { currency: 'ETH', change24h: '+1.8%', price: '$3,500' },
-            { currency: 'USDT', change24h: '0.0%', price: '$1.00' }
-        ],
-        volume24h: '$2.5B',
-        topGainers: [
-            { currency: 'BTC', change: '+2.5%' },
-            { currency: 'ETH', change: '+1.8%' }
-        ],
-        topLosers: []
-    };
-}
-
-// Функция получения новостей
-async function getLatestNews() {
-    return [
-        {
-            id: 1,
-            title: 'Новые валютные пары доступны!',
-            description: 'Добавили поддержку EUR и RUB для всех операций',
-            date: new Date().toISOString(),
-            type: 'feature'
-        },
-        {
-            id: 2,
-            title: 'Улучшили безопасность',
-            description: 'Внедрена расширенная AML проверка для защиты пользователей',
-            date: new Date(Date.now() - 86400000).toISOString(),
-            type: 'security'
-        }
+        // Крипта (неактивная)
+        { currency: 'BTC', price: 95000, buy: 95000, sell: 96000, source: 'DISABLED', type: 'crypto', lastUpdate: new Date().toISOString() },
+        { currency: 'ETH', price: 3500, buy: 3500, sell: 3520, source: 'DISABLED', type: 'crypto', lastUpdate: new Date().toISOString() },
+        { currency: 'USDC', price: 1.0, buy: 1.0, sell: 1.0, source: 'DISABLED', type: 'crypto', lastUpdate: new Date().toISOString() }
     ];
-}
-
-// Webhook для Telegram (если используется)
-app.use(`/webhook/${process.env.BOT_TOKEN}`, express.json(), (req, res) => {
-    bot.handleUpdate(req.body);
-    res.sendStatus(200);
-});
-
-// Запуск сервера
-app.listen(PORT, async () => {
-    console.log(`🌐 Веб-сервер запущен на порту ${PORT}`);
-    console.log(`📱 Мини-приложение: http://localhost:${PORT}`);
     
-    // Инициализация базы данных
-    console.log('✅ База данных подключена');
-    console.log('✅ Таблицы базы данных созданы');
+    console.log('✅ Отправляем курсы из Google Sheets:', rates.filter(r => r.source === 'SHEETS').length, 'активных');
     
-    // Запускаем Telegram бота
-    try {
-        console.log('🚀 Запуск Telegram бота...');
-        bot.start();
-        console.log('✅ Telegram бот запущен');
-        
-        // Настраиваем Menu Button для WebApp (отложенно)
-        setTimeout(async () => {
-            try {
-                const webappUrl = process.env.WEBAPP_URL;
-                console.log(`🔍 Setting up Menu Button with URL: ${webappUrl ? 'configured' : 'missing'}`);
-                
-                if (webappUrl && webappUrl.startsWith('https://') && bot && bot.api) {
-                    await bot.api.setChatMenuButton({
-                        menu_button: {
-                            type: 'web_app',
-                            text: '🚀 Открыть ExMachinaX',
-                            web_app: {
-                                url: webappUrl
-                            }
-                        }
-                    });
-                    console.log('✅ Menu Button настроена для WebApp');
-                } else {
-                    console.log('⚠️ Пропускаем настройку Menu Button (нет WEBAPP_URL или бот не готов)');
-                }
-            } catch (menuError) {
-                console.log('⚠️ Не удалось настроить Menu Button:', menuError.message);
-            }
-        }, 5000);
-        
-        // Инициализируем Google Sheets
-        if (googleSheetsManager) {
-            console.log('📊 Инициализация Google Sheets...');
-            // Google Sheets уже инициализирован в bot.js при импорте
-            console.log('✅ Google Sheets готов');
-        }
-        
-        console.log('🎉 ExMachinaX полностью готов к работе!');
-    } catch (error) {
-        console.error('❌ Ошибка запуска бота:', error);
-    }
+    res.json({ 
+        success: true, 
+        data: rates,
+        lastUpdate: new Date().toISOString(),
+        source: 'google_sheets_only'
+    });
 });
 
-module.exports = app; 
-// API для избранных валют пользователя
-app.get('/api/favorites/:userId', async (req, res) => {
-    try {
-        const userId = req.params.userId;
-        const result = await new Promise((resolve, reject) => {
-            db.db.get('SELECT favorites FROM users WHERE telegram_id = ?', [userId], (err, row) => {
-                if (err) reject(err);
-                else resolve(row);
-            });
-        });
-        
-        let favorites = ['BTC', 'USDT', 'RUB'];
-        if (result && result.favorites) {
-            try {
-                favorites = JSON.parse(result.favorites);
-            } catch (e) {
-                console.error('Ошибка парсинга favorites:', e);
-            }
-        }
-        
-        res.json({ success: true, data: favorites });
-    } catch (error) {
-        console.error('Ошибка получения избранных:', error);
-        res.json({ success: true, data: ['BTC', 'USDT', 'RUB'] });
-    }
-});
-
-app.post('/api/favorites', async (req, res) => {
-    try {
-        const { userId, favorites } = req.body;
-        const favoritesJson = JSON.stringify(favorites);
-        
-        await new Promise((resolve, reject) => {
-            db.db.run(`
-                UPDATE users SET favorites = ?, updated_at = datetime('now') 
-                WHERE telegram_id = ?
-            `, [favoritesJson, userId], function(err) {
-                if (err) {
-                    reject(err);
-                } else if (this.changes === 0) {
-                    db.db.run(`
-                        INSERT INTO users (telegram_id, favorites, created_at, updated_at) 
-                        VALUES (?, ?, datetime('now'), datetime('now'))
-                    `, [userId, favoritesJson], (insertErr) => {
-                        if (insertErr) reject(insertErr);
-                        else resolve();
-                    });
-                } else {
-                    resolve();
-                }
-            });
-        });
-        
-        console.log("✅ Избранные валюты сохранены для пользователя:", userId);
-        res.json({ success: true });
-    } catch (error) {
-        console.log("💾 СОХРАНЯЕМ избранные для пользователя:", userId, "данные:", favorites);
-        console.error("Ошибка сохранения избранных:", error);
-        res.json({ success: false, error: error.message });
-    }
-});
-// РУЧНЫЕ КУРСЫ ИЗ GOOGLE SHEETS (жестко прописанные)
-const manualRates = {
-    'USDT': { price: 1, buy: 1, sell: 1, source: 'MANUAL' },
-    'ARS': { price: 0.000775, buy: 0.000775, sell: 0.000775, source: 'MANUAL' }, // 1/1310 и 1/1290
-    'RUB': { price: 0.0111, buy: 0.011, sell: 0.0143, source: 'MANUAL' }, // 1/90 и 1/70  
-    'USD': { price: 1, buy: 1, sell: 1, source: 'MANUAL' }
-};
-
-// Функция применения ручных курсов
-function applyManualRates(rates) {
-    console.log('🔧 ПРИМЕНЯЕМ РУЧНЫЕ КУРСЫ ИЗ GOOGLE SHEETS');
+// API для расчета обмена (ТОЛЬКО GOOGLE SHEETS)
+app.post('/api/calculate', async (req, res) => {
+    console.log('🧮 API /api/calculate: расчет ИЗ GOOGLE SHEETS');
     
-    rates.forEach(rate => {
-        if (manualRates[rate.currency]) {
-            const manual = manualRates[rate.currency];
-            rate.price = manual.price;
-            rate.buy = manual.buy;
-            rate.sell = manual.sell;
-            rate.source = manual.source;
-            console.log(`✅ ${rate.currency}: ${rate.sell} (продажа) / ${rate.buy} (покупка)`);
+    const { fromCurrency, toCurrency, amount } = req.body;
+    
+    // Простой расчет напрямую из Google Sheets курсов
+    let exchangeRate = 1;
+    
+    if (fromCurrency === 'USDT' && toCurrency === 'ARS') {
+        exchangeRate = 1290; // Прямо из Google Sheets
+    } else if (fromCurrency === 'ARS' && toCurrency === 'USDT') {
+        exchangeRate = 1/1310; // Обратный курс
+    } else if (fromCurrency === 'USDT' && toCurrency === 'RUB') {
+        exchangeRate = 70; // Из Google Sheets
+    } else if (fromCurrency === 'RUB' && toCurrency === 'USDT') {
+        exchangeRate = 1/90; // Обратный курс
+    } else {
+        // Для остальных пар - через USD
+        const fromUSD = fromCurrency === 'USD' ? 1 : (fromCurrency === 'USDT' ? 1 : (fromCurrency === 'RUB' ? 1/70 : (fromCurrency === 'ARS' ? 1/1300 : 1)));
+        const toUSD = toCurrency === 'USD' ? 1 : (toCurrency === 'USDT' ? 1 : (toCurrency === 'RUB' ? 1/70 : (toCurrency === 'ARS' ? 1/1300 : 1)));
+        exchangeRate = fromUSD / toUSD;
+    }
+    
+    const toAmount = amount * exchangeRate;
+    
+    console.log(`💰 ${amount} ${fromCurrency} = ${toAmount} ${toCurrency} (курс: ${exchangeRate})`);
+    
+    res.json({
+        success: true,
+        data: {
+            fromAmount: amount,
+            toAmount: toAmount,
+            exchangeRate: exchangeRate,
+            fee: 0,
+            fromCurrency: fromCurrency,
+            toCurrency: toCurrency
         }
     });
+});
+
+app.post('/api/calculate', async (req, res) => {
+    console.log('🧮 API /api/calculate: расчет ИЗ GOOGLE SHEETS');
     
-    return rates;
-}
+    const { fromCurrency, toCurrency, amount } = req.body;
+    
+    // Простой расчет напрямую из Google Sheets курсов
+    let exchangeRate = 1;
+    
+    if (fromCurrency === 'USDT' && toCurrency === 'ARS') {
+        exchangeRate = 1290; // Прямо из Google Sheets
+    } else if (fromCurrency === 'ARS' && toCurrency === 'USDT') {
+        exchangeRate = 1/1310; // Обратный курс
+    } else if (fromCurrency === 'USDT' && toCurrency === 'RUB') {
+        exchangeRate = 70; // Из Google Sheets
+    } else if (fromCurrency === 'RUB' && toCurrency === 'USDT') {
+        exchangeRate = 1/90; // Обратный курс
+    } else {
+        // Для остальных пар - через USD
+        const fromUSD = fromCurrency === 'USD' ? 1 : (fromCurrency === 'USDT' ? 1 : (fromCurrency === 'RUB' ? 1/70 : (fromCurrency === 'ARS' ? 1/1300 : 1)));
+        const toUSD = toCurrency === 'USD' ? 1 : (toCurrency === 'USDT' ? 1 : (toCurrency === 'RUB' ? 1/70 : (toCurrency === 'ARS' ? 1/1300 : 1)));
+        exchangeRate = fromUSD / toUSD;
+    }
+    
+    const toAmount = amount * exchangeRate;
+    
+    console.log(`💰 ${amount} ${fromCurrency} = ${toAmount} ${toCurrency} (курс: ${exchangeRate})`);
+    
+    res.json({
+        success: true,
+        data: {
+            fromAmount: amount,
+            toAmount: toAmount,
+            exchangeRate: exchangeRate,
+            fee: 0,
+            fromCurrency: fromCurrency,
+            toCurrency: toCurrency
+        }
+    });
+});
