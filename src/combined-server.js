@@ -454,56 +454,42 @@ app.get('/api/rates', async (req, res) => {
     console.log('📈 Запрос курсов валют...');
     
     try {
-        // 🔥 ИСПОЛЬЗУЕМ GLOBAL.RATESSERVICE (с Google Sheets синхронизацией)
-        if (global.ratesService) {
-            console.log('📡 Получаем курсы через GLOBAL.RatesService с Google Sheets...');
-            const rates = await global.ratesService.getRates();
-            console.log(`📊 Получено ${rates.length} курсов из global.ratesService`);
-            
-            // Диагностика полученных курсов
-            rates.forEach(rate => {
-                if (['BTC', 'RUB', 'USDT'].includes(rate.currency)) {
-                    console.log(`   ${rate.currency}: ${rate.price} (источник: ${rate.source || 'неизвестно'})`);
-                }
+        // 🔥 ТОЛЬКО GLOBAL.RATESSERVICE!!! НИКАКИХ FALLBACK НА ТЕСТОВЫЕ ДАННЫЕ!
+        if (!global.ratesService) {
+            console.error('❌ GLOBAL.RATESSERVICE НЕ ИНИЦИАЛИЗИРОВАН!');
+            return res.status(500).json({ 
+                success: false, 
+                error: 'RatesService не инициализирован',
+                message: 'Google Sheets недоступен'
             });
-            
-            res.json({ 
-                success: true, 
-                data: rates,
-                lastUpdate: global.ratesService.getLastUpdateTime(),
-                source: 'global_rates_service_with_sheets'
-            });
-            console.log('✅ Курсы отправлены:', rates.length, 'валют');
-        } else if (ratesService) {
-            console.log('📡 Получаем курсы через локальный RatesService...');
-            const rates = await ratesService.getRates();
-            res.json({ 
-                success: true, 
-                data: rates,
-                lastUpdate: ratesService.getLastUpdateTime(),
-                source: 'local_rates_service'
-            });
-            console.log('✅ Курсы отправлены:', rates.length, 'валют');
-        } else {
-            console.log('🔄 RatesService недоступен, используем тестовые курсы...');
-            const testRates = getTestRates();
-            res.json({ 
-                success: true, 
-                data: testRates,
-                lastUpdate: new Date().toISOString(),
-                source: 'test_data'
-            });
-            console.log('✅ Тестовые курсы отправлены:', testRates.length, 'валют');
         }
-    } catch (error) {
-        console.error('❌ Ошибка получения курсов:', error.message);
-        console.log('🔄 Fallback на тестовые курсы...');
-        const testRates = getTestRates();
+
+        console.log('📡 Получаем курсы ТОЛЬКО через GLOBAL.RatesService с Google Sheets...');
+        const rates = await global.ratesService.getRates();
+        console.log(`📊 Получено ${rates.length} курсов из global.ratesService`);
+        
+        // Диагностика полученных курсов
+        rates.forEach(rate => {
+            if (['BTC', 'RUB', 'USDT'].includes(rate.currency)) {
+                console.log(`   ${rate.currency}: ${rate.price} (источник: ${rate.source || 'неизвестно'})`);
+            }
+        });
+        
         res.json({ 
             success: true, 
-            data: testRates,
-            lastUpdate: new Date().toISOString(),
-            source: 'fallback_data'
+            data: rates,
+            lastUpdate: global.ratesService.getLastUpdateTime(),
+            source: 'ТОЛЬКО_GOOGLE_SHEETS'
+        });
+        console.log('✅ Курсы отправлены:', rates.length, 'валют');
+        
+    } catch (error) {
+        console.error('❌ Ошибка получения курсов:', error.message);
+        // 🔥 НЕ ИСПОЛЬЗУЕМ ТЕСТОВЫЕ ДАННЫЕ! ВОЗВРАЩАЕМ ОШИБКУ!
+        res.status(500).json({ 
+            success: false, 
+            error: 'Не удалось получить курсы из Google Sheets',
+            message: error.message
         });
     }
 });
@@ -828,23 +814,6 @@ app.get('/api/check-files', (req, res) => {
         });
     }
 });
-
-// Тестовые курсы как fallback
-function getTestRates() {
-    return [
-        // 🪙 КРИПТОВАЛЮТЫ
-        { currency: 'BTC', price: 95000, buy: 95000, sell: 96000, change24h: 2.5, lastUpdate: new Date().toISOString(), type: 'crypto' },
-        { currency: 'ETH', price: 3500, buy: 3500, sell: 3520, change24h: 1.8, lastUpdate: new Date().toISOString(), type: 'crypto' },
-        { currency: 'USDT', price: 1.0, buy: 1.0, sell: 1.02, change24h: 0.1, lastUpdate: new Date().toISOString(), type: 'crypto' },
-        { currency: 'USDC', price: 1.0, buy: 1.0, sell: 1.02, change24h: 0.0, lastUpdate: new Date().toISOString(), type: 'crypto' },
-        { currency: 'BNB', price: 650, buy: 650, sell: 655, change24h: -0.8, lastUpdate: new Date().toISOString(), type: 'crypto' },
-        
-        // 💰 ФИАТНЫЕ ВАЛЮТЫ
-        { currency: 'USD', price: 1.0, buy: 1.0, sell: 1.0, change24h: 0.0, lastUpdate: new Date().toISOString(), type: 'fiat' },
-        { currency: 'EUR', price: 0.92, buy: 0.92, sell: 0.94, change24h: 0.2, lastUpdate: new Date().toISOString(), type: 'fiat' },
-        { currency: 'RUB', price: 0.0105, buy: 0.0098, sell: 0.0102, change24h: -0.5, lastUpdate: new Date().toISOString(), type: 'fiat' }
-    ];
-}
 
 // Запуск сервера
 app.listen(PORT, () => {
