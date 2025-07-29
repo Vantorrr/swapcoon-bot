@@ -33,6 +33,7 @@ app.get('/', (req, res) => {
 
 // API для получения курсов валют
 app.get('/api/rates', async (req, res) => {
+    console.log("🌍 API /api/rates вызван!");    console.log("🌍 API /api/rates вызван!");
     try {
         const rates = await ratesService.getRates();
         // Применяем ручные курсы из Google Sheets
@@ -665,8 +666,8 @@ app.post('/api/favorites', async (req, res) => {
 });
 // РУЧНЫЕ КУРСЫ ИЗ GOOGLE SHEETS (жестко прописанные)
 const manualRates = {
-    'USDT': { price: 1, buy: 0.99, sell: 1.01, source: 'MANUAL' },
-    'ARS': { price: 0.000775, buy: 0.000763, sell: 0.000787, source: 'MANUAL' }, // 1/1310 и 1/1290
+    'USDT': { price: 1, buy: 1, sell: 1, source: 'MANUAL' },
+    'ARS': { price: 0.000775, buy: 0.000775, sell: 0.000775, source: 'MANUAL' }, // 1/1310 и 1/1290
     'RUB': { price: 0.0111, buy: 0.011, sell: 0.0143, source: 'MANUAL' }, // 1/90 и 1/70  
     'USD': { price: 1, buy: 1, sell: 1, source: 'MANUAL' }
 };
