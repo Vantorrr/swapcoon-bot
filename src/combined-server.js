@@ -129,33 +129,53 @@ async function initializeBotAndAdmins() {
         
         // 🔥 ПРИНУДИТЕЛЬНАЯ ИНИЦИАЛИЗАЦИЯ ЕСЛИ НЕ УДАЛОСЬ
         if (!global.googleSheetsManager) {
-            console.log('🔥 ПРИНУДИТЕЛЬНАЯ ИНИЦИАЛИЗАЦИЯ Google Sheets...');
+            console.log('🔥🔥🔥 ПРИНУДИТЕЛЬНАЯ ИНИЦИАЛИЗАЦИЯ Google Sheets...');
             try {
                 const fs = require('fs');
                 const path = require('path');
                 const configPath = path.join(__dirname, '..', 'config', 'google-sheets.json');
                 
+                console.log('🔥 ПОЛНАЯ ДИАГНОСТИКА ПУТИ:');
+                console.log('   __dirname:', __dirname);
+                console.log('   configPath:', configPath);
+                console.log('   файл существует?', fs.existsSync(configPath));
+                
                 if (fs.existsSync(configPath)) {
                     console.log('🔥 Читаем config/google-sheets.json напрямую...');
-                    const forceConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+                    const fileContent = fs.readFileSync(configPath, 'utf8');
+                    console.log('🔥 СОДЕРЖИМОЕ ФАЙЛА (первые 200 символов):', fileContent.substring(0, 200));
                     
-                    console.log('🔥 Принудительный конфиг:');
+                    const forceConfig = JSON.parse(fileContent);
+                    
+                    console.log('🔥 ПАРСИНГ УСПЕШЕН! Принудительный конфиг:');
                     console.log('   enabled:', forceConfig.enabled);
                     console.log('   spreadsheet_id:', forceConfig.spreadsheet_id ? 'есть' : 'нет');
                     console.log('   credentials:', forceConfig.credentials ? 'есть' : 'нет');
+                    console.log('   credentials.type:', forceConfig.credentials?.type);
+                    console.log('   credentials.client_email:', forceConfig.credentials?.client_email ? 'есть' : 'нет');
                     
                     if (forceConfig.enabled && forceConfig.spreadsheet_id && forceConfig.credentials) {
+                        console.log('🔥 НАЧИНАЕМ ИНИЦИАЛИЗАЦИЮ GoogleSheetsManager...');
                         const GoogleSheetsManager = require('./services/GoogleSheetsManager');
                         const forceManager = new GoogleSheetsManager();
+                        
+                        console.log('🔥 GoogleSheetsManager создан, вызываем init()...');
                         const forceSuccess = await forceManager.init(forceConfig.credentials, forceConfig.spreadsheet_id);
                         
                         console.log('🔥 Результат принудительной инициализации:', forceSuccess);
                         if (forceSuccess) {
+                            console.log('🔥 init() успешен! Создаем worksheets...');
                             await forceManager.createWorksheets();
+                            
+                            console.log('🔥 worksheets созданы! Устанавливаем global...');
                             global.googleSheetsManager = forceManager;
+                            
+                            console.log('🔥 Тестируем isReady()...');
+                            console.log('🔥 forceManager.isReady():', forceManager.isReady());
+                            
                             console.log('🔥 ✅ ПРИНУДИТЕЛЬНАЯ ИНИЦИАЛИЗАЦИЯ УСПЕШНА!');
                         } else {
-                            console.log('🔥 ❌ Принудительная инициализация не удалась');
+                            console.log('🔥 ❌ Принудительная инициализация не удалась - init() вернул false');
                         }
                     } else {
                         console.log('🔥 ❌ Некорректная конфигурация в файле');
@@ -165,7 +185,19 @@ async function initializeBotAndAdmins() {
                 }
             } catch (forceError) {
                 console.error('🔥 ❌ Ошибка принудительной инициализации:', forceError.message);
+                console.error('🔥 ❌ Stack trace:', forceError.stack);
             }
+        }
+        
+        // 🔍 ФИНАЛЬНАЯ ДИАГНОСТИКА
+        console.log('🔍🔍🔍 ФИНАЛЬНАЯ ПРОВЕРКА GOOGLE SHEETS:');
+        console.log('   global.googleSheetsManager существует:', !!global.googleSheetsManager);
+        if (global.googleSheetsManager) {
+            console.log('   isReady():', global.googleSheetsManager.isReady());
+            console.log('   isConnected:', global.googleSheetsManager.isConnected);
+            console.log('   spreadsheetId:', global.googleSheetsManager.spreadsheetId ? 'есть' : 'нет');
+        } else {
+            console.log('🔥🔥🔥 КРИТИЧНО! global.googleSheetsManager = НЕТ!');
         }
         
         // 👑 ГАРАНТИРОВАННОЕ ДОБАВЛЕНИЕ АДМИНОВ (ВСЕГДА РАБОТАЕТ)
