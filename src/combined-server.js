@@ -640,10 +640,93 @@ app.get('/api/profile/:userId', async (req, res) => {
 app.post('/api/create-order', async (req, res) => {
     try {
         console.log('📝 Создание заявки (комбинированный режим):', req.body);
+        console.log('🚨 === ПЕРЕД ВЫЗОВОМ notifyOperators ===');
         
+        const {
+            userId,
+            fromCurrency,
+            toCurrency,
+            fromAmount,
+            toAmount,
+            fromAddress,
+            toAddress,
+            exchangeRate,
+            fee,
+            amlFromResult,
+            amlToResult,
+            pairType
+        } = req.body;
+
         // Генерируем уникальный ID заявки
         const orderId = `EM${Date.now()}${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
         console.log('📝 Сгенерированный ID заявки:', orderId);
+
+        // Создаем заявку в базе данных
+        if (db && db.createOrder) {
+            try {
+                const order = await db.createOrder({
+                    user_id: userId,
+                    from_currency: fromCurrency,
+                    to_currency: toCurrency,
+                    from_amount: fromAmount,
+                    to_amount: toAmount,
+                    from_address: fromAddress || '',
+                    to_address: toAddress || '',
+                    exchange_rate: exchangeRate,
+                    fee: fee || 0,
+                    aml_status: JSON.stringify({ from: amlFromResult, to: amlToResult }),
+                    status: 'pending',
+                    source: 'web'
+                });
+                console.log('✅ Заявка создана в базе:', order.id);
+            } catch (dbError) {
+                console.error('❌ Ошибка сохранения в базу:', dbError);
+            }
+        }
+
+        // Получаем информацию о пользователе
+        let user = null;
+        if (db && db.getUser) {
+            try {
+                user = await db.getUser(userId);
+            } catch (userError) {
+                console.error('❌ Ошибка получения пользователя:', userError);
+            }
+        }
+        
+        user = user || {
+            first_name: 'Пользователь',
+            username: `user${userId}`
+        };
+
+        console.log('📋 Данные для уведомления:', {
+            orderId,
+            userName: user.first_name || user.username,
+            fromAmount,
+            fromCurrency,
+            toCurrency
+        });
+
+        // Отправляем уведомление операторам
+        if (notifyOperators) {
+            try {
+                await notifyOperators({
+                    id: orderId,
+                    userName: user.first_name || user.username || `User_${userId}`,
+                    fromAmount: fromAmount,
+                    fromCurrency: fromCurrency,
+                    toCurrency: toCurrency,
+                    fromAddress: fromAddress || '',
+                    toAddress: toAddress || '',
+                    pairType: pairType || 'fiat'
+                });
+                console.log('✅ ВЫЗОВ notifyOperators ЗАВЕРШЕН');
+            } catch (notifyError) {
+                console.error('❌ Ошибка уведомления операторов:', notifyError);
+            }
+        } else {
+            console.error('❌ notifyOperators НЕ ДОСТУПЕН!');
+        }
         
         res.json({ 
             success: true, 
@@ -655,7 +738,7 @@ app.post('/api/create-order', async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Ошибка создания заявки:', error);
+        console.error('❌ Ошибка создания заявки:', error);
         res.status(500).json({ success: false, error: 'Ошибка создания заявки' });
     }
 });
