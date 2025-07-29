@@ -9,7 +9,16 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Инициализация сервиса курсов
-const ratesService = new RatesService();
+// Используем глобальный ratesService (синхронизируется с Google Sheets)
+let ratesService = global.ratesService || new RatesService();
+
+// Если глобальный ratesService появится позже - используем его
+setInterval(() => {
+    if (global.ratesService && ratesService !== global.ratesService) {
+        ratesService = global.ratesService;
+        console.log("✅ Веб-сервер теперь использует глобальный ratesService с Google Sheets!");
+    }
+}, 1000);
 
 // Middleware
 app.use(cors());
