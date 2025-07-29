@@ -766,13 +766,13 @@ function calculateExchange() {
             // Фоллбэк - старые значения, если Google Sheets недоступен
             let exchangeRate, toAmount;
             if (fromCurrency === 'BTC' && toCurrency === 'RUB') {
-                exchangeRate = 10000; // ФОЛЛБЭК
+                exchangeRate = 15000; // ФОЛЛБЭК ИЗ ТАБЛИЦЫ!
                 toAmount = fromAmount * exchangeRate;
-                console.log(`🔥 ФОЛЛБЭК BTC→RUB: 1 BTC = ${exchangeRate} RUB`);
+                console.log(`🔥 ФОЛЛБЭК BTC→RUB: 1 BTC = ${exchangeRate} RUB (ИЗ ТАБЛИЦЫ!)`);
             } else {
-                exchangeRate = 1 / 900; // ФОЛЛБЭК
+                exchangeRate = 1 / 900; // ФОЛЛБЭК ИЗ ТАБЛИЦЫ!
                 toAmount = fromAmount * exchangeRate;
-                console.log(`🔥 ФОЛЛБЭК RUB→BTC: 1 RUB = ${exchangeRate} BTC`);
+                console.log(`🔥 ФОЛЛБЭК RUB→BTC: 1 RUB = ${exchangeRate} BTC (ИЗ ТАБЛИЦЫ!)`);
             }
             
             const fee = 0;
