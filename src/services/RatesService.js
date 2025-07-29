@@ -135,14 +135,19 @@ class RatesService {
     }
     
     getBasicRates() {
-        // 🔥 ТОЛЬКО МИНИМУМ! ОСТАЛЬНОЕ ИЗ GOOGLE SHEETS!
-        console.log("📊 getBasicRates: возвращаем только USD/USDT базу");
+        // 🔥 БАЗОВЫЕ КУРСЫ ДЛЯ ВСЕХ ВАЛЮТ (заглушки для применения Google Sheets)
+        console.log("📊 getBasicRates: возвращаем заглушки для применения Google Sheets");
         return [
             { currency: "USD", buy: 1.0, sell: 1.0, price: 1.0, change24h: 0, lastUpdate: new Date().toISOString(), type: "fiat", source: "BASE" },
-            { currency: "USDT", buy: 1.0, sell: 1.0, price: 1.0, change24h: 0, lastUpdate: new Date().toISOString(), type: "crypto", source: "BASE" }
+            { currency: "USDT", buy: 1.0, sell: 1.0, price: 1.0, change24h: 0, lastUpdate: new Date().toISOString(), type: "crypto", source: "BASE" },
+            { currency: "BTC", buy: 95000, sell: 95000, price: 95000, change24h: 0, lastUpdate: new Date().toISOString(), type: "crypto", source: "BASE" },
+            { currency: "ETH", buy: 3500, sell: 3500, price: 3500, change24h: 0, lastUpdate: new Date().toISOString(), type: "crypto", source: "BASE" },
+            { currency: "RUB", buy: 0.0128, sell: 0.0128, price: 0.0128, change24h: 0, lastUpdate: new Date().toISOString(), type: "fiat", source: "BASE" },
+            { currency: "ARS", buy: 0.001, sell: 0.001, price: 0.001, change24h: 0, lastUpdate: new Date().toISOString(), type: "fiat", source: "BASE" },
+            { currency: "EUR", buy: 0.92, sell: 0.92, price: 0.92, change24h: 0, lastUpdate: new Date().toISOString(), type: "fiat", source: "BASE" },
+            { currency: "BRL", buy: 0.20, sell: 0.20, price: 0.20, change24h: 0, lastUpdate: new Date().toISOString(), type: "fiat", source: "BASE" }
         ];
     }
-
     initAutoUpdate() {
         // Обновляем курсы каждые 5 минут
         this.updateInterval = setInterval(async () => {
