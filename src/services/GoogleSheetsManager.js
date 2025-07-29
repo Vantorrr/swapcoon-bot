@@ -428,8 +428,8 @@ class GoogleSheetsManager {
                 '', // Спред - будет рассчитан автоматически
                 new Date().toLocaleString('ru'),
                 pair.status,
-                'AUTO',
-                'Автоматические курсы с API'
+                'MANUAL', 
+                'Ручные курсы (AUTO отключено)'
             ]);
 
             await this.sheets.spreadsheets.values.update({
@@ -509,7 +509,7 @@ class GoogleSheetsManager {
                 // Если это не ручной курс, обновляем автоматически
                 if (!manualPairs.has(mainPair)) {
                     updatePromises.push(
-                        this.updateRateInTable(mainPair, rate.sell, rate.buy, 'AUTO', 'Автоматическое обновление с API')
+                        this.updateRateInTable(mainPair, rate.sell, rate.buy, 'MANUAL', 'Ручные курсы (AUTO отключено)')
                     );
                 }
             }
@@ -549,7 +549,7 @@ class GoogleSheetsManager {
             }
 
             const spread = sellRate > 0 ? ((sellRate - buyRate) / sellRate * 100).toFixed(2) : '0';
-            const source = status === 'MANUAL' ? 'ADMIN' : 'AUTO';
+            const source = "MANUAL"; // 🔥 Всегда MANUAL!
             
             const updateData = [
                 pair,
