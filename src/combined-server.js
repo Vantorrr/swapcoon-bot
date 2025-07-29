@@ -657,6 +657,18 @@ app.post('/api/create-order', async (req, res) => {
             pairType
         } = req.body;
 
+        // ДЕТАЛЬНАЯ ДИАГНОСТИКА ИЗВЛЕЧЕННЫХ ДАННЫХ
+        console.log('🔍 ИЗВЛЕЧЕННЫЕ ДАННЫЕ:');
+        console.log('  userId:', userId);
+        console.log('  fromCurrency:', fromCurrency);
+        console.log('  toCurrency:', toCurrency);
+        console.log('  fromAmount:', fromAmount);
+        console.log('  toAmount:', toAmount);
+        console.log('  fromAddress:', fromAddress);
+        console.log('  toAddress:', toAddress);
+        console.log('  exchangeRate:', exchangeRate);
+        console.log('  pairType:', pairType);
+
         // Генерируем уникальный ID заявки
         const orderId = `EM${Date.now()}${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
         console.log('📝 Сгенерированный ID заявки:', orderId);
