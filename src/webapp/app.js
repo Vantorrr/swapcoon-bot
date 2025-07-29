@@ -660,10 +660,17 @@ async function loadExchangeRates() {
     }
 }
 
-// Тестовые курсы для разработки (ОТКЛЮЧЕНО - ТОЛЬКО GOOGLE SHEETS)
+// Тестовые курсы для разработки (МИНИМУМ для работы)
 function getTestRates() {
-    console.log('🔥 ТЕСТОВЫЕ ДАННЫЕ ОТКЛЮЧЕНЫ! Используем ТОЛЬКО Google Sheets!');
-    return []; // 🔥 ПУСТОЙ МАССИВ - НЕТ ТЕСТОВЫХ ДАННЫХ!
+    console.log('📊 Минимальные тестовые курсы (fallback)');
+    return [
+        // Минимум для работы приложения
+        { currency: 'USD', price: 1, buy: 1, sell: 1, source: 'FALLBACK', type: 'fiat', lastUpdate: new Date().toISOString() },
+        { currency: 'USDT', price: 1, buy: 1, sell: 1, source: 'FALLBACK', type: 'crypto', lastUpdate: new Date().toISOString() },
+        { currency: 'BTC', price: 95500, buy: 94500, sell: 95500, source: 'FALLBACK', type: 'crypto', lastUpdate: new Date().toISOString() },
+        { currency: 'RUB', price: 1/78, buy: 1/78, sell: 1/78, source: 'FALLBACK', type: 'fiat', lastUpdate: new Date().toISOString() },
+        { currency: 'ARS', price: 1/1290, buy: 1/1310, sell: 1/1290, source: 'FALLBACK', type: 'fiat', lastUpdate: new Date().toISOString() }
+    ];
 }
 // Обновление времени курсов
 function updateRatesTime() {
