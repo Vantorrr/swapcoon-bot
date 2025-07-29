@@ -49,11 +49,37 @@ async function initializeBotAndAdmins() {
             console.log('   GOOGLE_SHEETS_CREDENTIALS:', envCredentials ? 'ЕСТЬ' : 'НЕТ');
             console.log('   GOOGLE_SHEETS_ENABLED:', envEnabled);
             
+            let config = null;
+            
+            // Сначала пробуем переменные окружения
             if (envSpreadsheetId && envCredentials && envEnabled) {
-                console.log('🚀 Инициализируем Google Sheets Manager в combined-server...');
+                console.log('🌍 Используем переменные окружения для Google Sheets');
                 const parsedCredentials = JSON.parse(envCredentials);
+                config = {
+                    credentials: parsedCredentials,
+                    spreadsheet_id: envSpreadsheetId,
+                    enabled: true
+                };
+            } else {
+                // 🔥 FALLBACK: ЧИТАЕМ ИЗ ФАЙЛА config/google-sheets.json
+                console.log('📂 Переменные окружения не найдены, читаем config/google-sheets.json...');
+                const configPath = path.join(__dirname, '..', 'config', 'google-sheets.json');
+                
+                if (fs.existsSync(configPath)) {
+                    console.log('📄 Файл config/google-sheets.json найден!');
+                    config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+                    console.log('✅ Конфигурация из файла загружена');
+                    console.log('📊 Spreadsheet ID:', config.spreadsheet_id);
+                    console.log('📊 Enabled:', config.enabled);
+                } else {
+                    console.log('❌ Файл config/google-sheets.json не найден');
+                }
+            }
+            
+            if (config && config.enabled) {
+                console.log('🚀 Инициализируем Google Sheets Manager в combined-server...');
                 const googleSheetsManager = new GoogleSheetsManager();
-                const success = await googleSheetsManager.init(parsedCredentials, envSpreadsheetId);
+                const success = await googleSheetsManager.init(config.credentials, config.spreadsheet_id);
                 
                 if (success) {
                     await googleSheetsManager.createWorksheets();
@@ -63,7 +89,7 @@ async function initializeBotAndAdmins() {
                     console.log('❌ Ошибка подключения к Google Sheets API в combined-server');
                 }
             } else {
-                console.log('❌ Google Sheets переменные окружения не настроены в combined-server');
+                console.log('❌ Google Sheets не настроены или отключены в combined-server');
             }
         } catch (sheetsInitError) {
             console.error('❌ ОШИБКА инициализации Google Sheets в combined-server:', sheetsInitError.message);
