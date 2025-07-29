@@ -2,7 +2,7 @@ const axios = require('axios');
 
 class RatesService {
     constructor() {
-        this.cache = new Map();
+        this.cacheExpiry = 10 * 1000; // 🔥 10 секунд для отладки!
         this.cacheExpiry = 30 * 60 * 1000; // 30 минут
         this.lastUpdate = null;
         
@@ -59,7 +59,12 @@ class RatesService {
 
     async getRates() {
         try {
-            // Проверяем кэш
+            console.log("🔍 ===== НАЧИНАЕМ getRates() =====");
+            console.log("🔍 global.googleSheetsManager существует?", !!global.googleSheetsManager);
+            if (global.googleSheetsManager) {
+                console.log("🔍 googleSheetsManager.isReady()?", global.googleSheetsManager.isReady());
+            }
+            console.log("🔍 this.googleSheetsRates.size:", this.googleSheetsRates.size);            // Проверяем кэш
             const cached = this.cache.get('rates');
             const cacheAge = cached ? Date.now() - cached.timestamp : 'нет кэша';
             console.log(`🔍 ПРОВЕРКА КЭША: возраст ${cacheAge}ms, лимит ${this.cacheExpiry}ms`);
@@ -75,7 +80,14 @@ class RatesService {
             
             console.log('📊 Кэш истек или отсутствует - получаем свежие курсы');
 
-            // Получаем свежие курсы
+
+            // 🔥 ПРИНУДИТЕЛЬНАЯ СИНХРОНИЗАЦИЯ С GOOGLE SHEETS!
+            if (global.googleSheetsManager && global.googleSheetsManager.isReady()) {
+                console.log("🔥 Принудительно синхронизируемся с Google Sheets...");
+                await this.syncWithGoogleSheets();
+            } else {
+                console.log("❌ Google Sheets Manager недоступен для синхронизации");
+            }            // Получаем свежие курсы
             const rates = await this.fetchFreshRates();
             
             // Применяем ручные настройки
