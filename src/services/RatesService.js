@@ -401,11 +401,28 @@ class RatesService {
             if (sheetRate) {
                 console.log(`🔍 ДО ПРИМЕНЕНИЯ ${rate.currency}: sell=${adjustedRate.sell}, buy=${adjustedRate.buy}, price=${adjustedRate.price}`);
                 
-                adjustedRate.sell = sheetRate.sellRate;
-                adjustedRate.buy = sheetRate.buyRate;
-                adjustedRate.price = (sheetRate.sellRate + sheetRate.buyRate) / 2;
-                adjustedRate.source = 'GOOGLE_SHEETS';
-                
+                // 🔥 СПЕЦИАЛЬНАЯ ЛОГИКА ДЛЯ BTC И RUB - используем прямые пары!
+                if (rate.currency === "BTC" && this.googleSheetsRates.has("BTC/RUB")) {
+                    const btcRubRate = this.googleSheetsRates.get("BTC/RUB");
+                    adjustedRate.sell = btcRubRate.sellRate; // 10000
+                    adjustedRate.buy = btcRubRate.buyRate;   // 900
+                    adjustedRate.price = (btcRubRate.sellRate + btcRubRate.buyRate) / 2;
+                    adjustedRate.source = "GOOGLE_SHEETS_BTC_RUB";
+                    console.log(`🔥 ПРИМЕНЯЕМ ПРЯМОЙ КУРС BTC/RUB: ${btcRubRate.sellRate}/${btcRubRate.buyRate}`);
+                } else if (rate.currency === "RUB" && this.googleSheetsRates.has("BTC/RUB")) {
+                    const btcRubRate = this.googleSheetsRates.get("BTC/RUB");
+                    // Для RUB показываем обратный курс (сколько рублей за 1 единицу)
+                    adjustedRate.sell = 1 / btcRubRate.buyRate;   // 1/900 = 0.00111
+                    adjustedRate.buy = 1 / btcRubRate.sellRate;   // 1/10000 = 0.0001
+                    adjustedRate.price = (adjustedRate.sell + adjustedRate.buy) / 2;
+                    adjustedRate.source = "GOOGLE_SHEETS_BTC_RUB";
+                    console.log(`🔥 ПРИМЕНЯЕМ ОБРАТНЫЙ КУРС RUB (от BTC/RUB): ${adjustedRate.sell}/${adjustedRate.buy}`);
+                } else {
+                    adjustedRate.sell = sheetRate.sellRate;
+                    adjustedRate.buy = sheetRate.buyRate;
+                    adjustedRate.price = (sheetRate.sellRate + sheetRate.buyRate) / 2;
+                    adjustedRate.source = "GOOGLE_SHEETS";
+                }                
                 console.log(`📊 Применен курс из Google Sheets для ${rate.currency} (${sheetRate.pair}): продажа ${sheetRate.sellRate}, покупка ${sheetRate.buyRate}`);
                 console.log(`🔍 ПОСЛЕ ПРИМЕНЕНИЯ ${rate.currency}: sell=${adjustedRate.sell}, buy=${adjustedRate.buy}, price=${adjustedRate.price}, source=${adjustedRate.source}`);
                 
