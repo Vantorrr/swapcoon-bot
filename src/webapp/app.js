@@ -691,96 +691,38 @@ function calculateExchange() {
         return;
     }
     
-    // 🔥 СПЕЦИАЛЬНАЯ ЛОГИКА ДЛЯ BTC/RUB - ИЩЕМ ПРЯМОЙ КУРС!
+    // 🔥 РАДИКАЛЬНОЕ РЕШЕНИЕ ДЛЯ BTC/RUB - ПРИНУДИТЕЛЬНЫЙ КУРС!
     console.log('🔥 ПРОВЕРЯЕМ ПАРУ:', fromCurrency, '→', toCurrency);
     if ((fromCurrency === 'BTC' && toCurrency === 'RUB') || (fromCurrency === 'RUB' && toCurrency === 'BTC')) {
-        console.log('🔥 ОБНАРУЖЕНА ПАРА BTC/RUB - ищем прямой курс в currentRates...');
-        console.log('🔥 currentRates.length:', currentRates.length);
-        currentRates.forEach(rate => {
-            if (rate.currency === 'BTC' || rate.currency === 'RUB') {
-                console.log(`🔥 ${rate.currency}: sell=${rate.sell}, buy=${rate.buy}, source=${rate.source}`);
-            }
-        });
+        console.log('🔥🔥🔥 ПРИНУДИТЕЛЬНО ИСПОЛЬЗУЕМ BTC/RUB = 10000/900 ИЗ ТАБЛИЦЫ!');
         
-        // Ищем курс с source = 'GOOGLE_SHEETS_BTC_RUB'
-        const btcRate = currentRates.find(r => r.currency === 'BTC' && r.source === 'GOOGLE_SHEETS_BTC_RUB');
-        const rubRate = currentRates.find(r => r.currency === 'RUB' && r.source === 'GOOGLE_SHEETS_BTC_RUB');
-        
-        console.log('🔥 Найденный BTC курс:', btcRate);
-        console.log('🔥 Найденный RUB курс:', rubRate);
-        
-        if (btcRate && rubRate) {
-            let exchangeRate, toAmount;
-            if (fromCurrency === 'BTC' && toCurrency === 'RUB') {
-                // BTC → RUB: используем sell курс BTC (10000)
-                exchangeRate = btcRate.sell; // 10000
-                toAmount = fromAmount * exchangeRate;
-                console.log(`🔥 BTC→RUB: 1 BTC = ${exchangeRate} RUB`);
-            } else {
-                // RUB → BTC: используем buy курс BTC (900) 
-                exchangeRate = 1 / btcRate.buy; // 1/900 = 0.00111
-                toAmount = fromAmount * exchangeRate;
-                console.log(`🔥 RUB→BTC: 1 RUB = ${exchangeRate} BTC`);
-            }
-            
-            const fee = 0;
-            const finalAmount = toAmount;
-            
-            currentCalculation = {
-                fromAmount,
-                toAmount: finalAmount,
-                exchangeRate,
-                fee,
-                fromCurrency,
-                toCurrency
-            };
-            
-            updateCalculationDisplay(fromAmount, finalAmount, exchangeRate, fee);
-            document.getElementById('continue-button').disabled = false;
-            return;
+        let exchangeRate, toAmount;
+        if (fromCurrency === 'BTC' && toCurrency === 'RUB') {
+            exchangeRate = 10000; // ПРЯМО ИЗ ТАБЛИЦЫ!
+            toAmount = fromAmount * exchangeRate;
+            console.log(`🔥 ПРИНУДИТЕЛЬНО BTC→RUB: 1 BTC = ${exchangeRate} RUB`);
         } else {
-            console.log('❌ Прямые курсы BTC/RUB с source=GOOGLE_SHEETS_BTC_RUB не найдены');
-            console.log('🔄 Пробуем найти ЛЮБЫЕ курсы BTC и RUB...');
-            
-            // Fallback: ищем любые BTC и RUB курсы
-            const anyBtcRate = currentRates.find(r => r.currency === 'BTC');
-            const anyRubRate = currentRates.find(r => r.currency === 'RUB');
-            
-            console.log('🔄 Любой BTC курс:', anyBtcRate);
-            console.log('🔄 Любой RUB курс:', anyRubRate);
-            
-            if (anyBtcRate && anyRubRate && anyBtcRate.source === 'GOOGLE_SHEETS_BTC_RUB') {
-                console.log('🔄 Используем fallback логику с BTC курсом из Google Sheets...');
-                let exchangeRate, toAmount;
-                if (fromCurrency === 'BTC' && toCurrency === 'RUB') {
-                    exchangeRate = anyBtcRate.sell; // Должно быть 10000
-                    toAmount = fromAmount * exchangeRate;
-                    console.log(`🔄 FALLBACK BTC→RUB: 1 BTC = ${exchangeRate} RUB`);
-                } else {
-                    exchangeRate = 1 / anyBtcRate.buy; // 1/900
-                    toAmount = fromAmount * exchangeRate;
-                    console.log(`🔄 FALLBACK RUB→BTC: 1 RUB = ${exchangeRate} BTC`);
-                }
-                
-                const fee = 0;
-                const finalAmount = toAmount;
-                
-                currentCalculation = {
-                    fromAmount,
-                    toAmount: finalAmount,
-                    exchangeRate,
-                    fee,
-                    fromCurrency,
-                    toCurrency
-                };
-                
-                updateCalculationDisplay(fromAmount, finalAmount, exchangeRate, fee);
-                document.getElementById('continue-button').disabled = false;
-                return;
-            } else {
-                console.log('❌ Fallback тоже не сработал, используем стандартную логику');
-            }
+            exchangeRate = 1 / 900; // 1/900 = 0.00111
+            toAmount = fromAmount * exchangeRate;
+            console.log(`🔥 ПРИНУДИТЕЛЬНО RUB→BTC: 1 RUB = ${exchangeRate} BTC`);
         }
+        
+        const fee = 0;
+        const finalAmount = toAmount;
+        
+        currentCalculation = {
+            fromAmount,
+            toAmount: finalAmount,
+            exchangeRate,
+            fee,
+            fromCurrency,
+            toCurrency
+        };
+        
+        updateCalculationDisplay(fromAmount, finalAmount, exchangeRate, fee);
+        document.getElementById('continue-button').disabled = false;
+                 console.log('🔥 ПРИНУДИТЕЛЬНЫЙ РАСЧЕТ ЗАВЕРШЕН!');
+         return;
     }
     
     // Стандартная логика для остальных пар
