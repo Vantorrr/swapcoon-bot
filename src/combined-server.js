@@ -51,40 +51,22 @@ async function initializeBotAndAdmins() {
             
             let config = null;
             
-            // Сначала пробуем переменные окружения
-            if (envSpreadsheetId && envCredentials && envEnabled) {
-                console.log('🌍 Используем переменные окружения для Google Sheets');
-                const parsedCredentials = JSON.parse(envCredentials);
-                config = {
-                    credentials: parsedCredentials,
-                    spreadsheet_id: envSpreadsheetId,
-                    enabled: true
-                };
+            // 🔥 ПРИНУДИТЕЛЬНО ЧИТАЕМ ИЗ ФАЙЛА! НАХУЙ ПЕРЕМЕННЫЕ ОКРУЖЕНИЯ!
+            console.log("🔥 ИГНОРИРУЕМ ПЕРЕМЕННЫЕ ОКРУЖЕНИЯ! ЧИТАЕМ ТОЛЬКО ИЗ ФАЙЛА!");
+            const configPath = path.join(__dirname, "..", "config", "google-sheets.json");
+            
+            if (fs.existsSync(configPath)) {
+                console.log("📄 Файл config/google-sheets.json найден!");
+                config = JSON.parse(fs.readFileSync(configPath, "utf8"));
+                console.log("✅ Конфигурация из файла загружена");
+                console.log("📊 Spreadsheet ID:", config.spreadsheet_id);
+                console.log("📊 Enabled:", config.enabled);
+                console.log("📊 Credentials client_email:", config.credentials?.client_email);
             } else {
-                // 🔥 FALLBACK: ЧИТАЕМ ИЗ ФАЙЛА config/google-sheets.json
-                console.log('📂 Переменные окружения не найдены, читаем config/google-sheets.json...');
-                const configPath = path.join(__dirname, '..', 'config', 'google-sheets.json');
-                
-                if (fs.existsSync(configPath)) {
-                    console.log('📄 Файл config/google-sheets.json найден!');
-                    config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-                    console.log('✅ Конфигурация из файла загружена');
-                    console.log('📊 Spreadsheet ID:', config.spreadsheet_id);
-                    console.log('📊 Enabled:', config.enabled);
-                } else {
-                    console.log('❌ Файл config/google-sheets.json не найден');
-                }
-            }
-            
-            console.log('🔍 ДИАГНОСТИКА CONFIG:');
-            console.log('   config существует?', !!config);
-            if (config) {
-                console.log('   config.enabled:', config.enabled);
-                console.log('   config.spreadsheet_id:', config.spreadsheet_id ? 'есть' : 'нет');
-                console.log('   config.credentials:', config.credentials ? 'есть' : 'нет');
-            }
-            
-            if (config && config.enabled) {
+                console.log("❌ Файл config/google-sheets.json не найден");
+                        }
+
+                        if (config && config.enabled) {
                 console.log('🚀 Инициализируем Google Sheets Manager в combined-server...');
                 const googleSheetsManager = new GoogleSheetsManager();
                 const success = await googleSheetsManager.init(config.credentials, config.spreadsheet_id);
