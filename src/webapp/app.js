@@ -697,9 +697,27 @@ function calculateExchange() {
     console.log('🔥 КУРСЫ С GOOGLE:', currentRates.filter(r => r.source && r.source.includes('GOOGLE')));
     console.log('🔥 КУРС BTC:', currentRates.find(r => r.currency === 'BTC'));
     
+    // 🔥 ДИАГНОСТИКА ПРЯМО В ИНТЕРФЕЙСЕ!
+    const btcRate = currentRates.find(r => r.currency === 'BTC');
+    const googleRates = currentRates.filter(r => r.source && r.source.includes('GOOGLE'));
+    
+    // Показываем диагностику на экране
+    showNotification(`🔥 ДИАГНОСТИКА: Всего курсов: ${currentRates.length}, с Google: ${googleRates.length}`, 'info');
+    if (btcRate) {
+        showNotification(`🔥 BTC курс: sell=${btcRate.sell}, source="${btcRate.source}"`, 'info');
+    } else {
+        showNotification(`❌ BTC курс НЕ НАЙДЕН!`, 'error');
+    }
+    
     // ИЩЕМ ПРЯМЫЕ КУРСЫ ИЗ GOOGLE SHEETS В currentRates
     const googleBtcRate = currentRates.find(r => r.currency === 'BTC' && r.source && r.source.includes('GOOGLE'));
     console.log('🔥 НАЙДЕН BTC ИЗ GOOGLE?', googleBtcRate);
+    
+    if (googleBtcRate) {
+        showNotification(`✅ НАЙДЕН BTC ИЗ GOOGLE! sell=${googleBtcRate.sell}`, 'success');
+    } else {
+        showNotification(`❌ BTC ИЗ GOOGLE НЕ НАЙДЕН! Используем фоллбэк`, 'warning');
+    }
     
     if ((fromCurrency === 'BTC' && toCurrency === 'RUB') || (fromCurrency === 'RUB' && toCurrency === 'BTC')) {
         if (googleBtcRate) {
