@@ -691,38 +691,75 @@ function calculateExchange() {
         return;
     }
     
-    // 🔥 РАДИКАЛЬНОЕ РЕШЕНИЕ ДЛЯ BTC/RUB - ПРИНУДИТЕЛЬНЫЙ КУРС!
+        // 🔥 ДИНАМИЧЕСКИЙ ПОИСК КУРСОВ ИЗ GOOGLE SHEETS!
     console.log('🔥 ПРОВЕРЯЕМ ПАРУ:', fromCurrency, '→', toCurrency);
+    console.log('🔥 КУРСЫ В ПАМЯТИ:', currentRates.filter(r => r.source && r.source.includes('GOOGLE')));
+    
+    // ИЩЕМ ПРЯМЫЕ КУРСЫ ИЗ GOOGLE SHEETS В currentRates
+    const googleBtcRate = currentRates.find(r => r.currency === 'BTC' && r.source && r.source.includes('GOOGLE'));
+    
     if ((fromCurrency === 'BTC' && toCurrency === 'RUB') || (fromCurrency === 'RUB' && toCurrency === 'BTC')) {
-        console.log('🔥🔥🔥 ПРИНУДИТЕЛЬНО ИСПОЛЬЗУЕМ BTC/RUB = 10000/900 ИЗ ТАБЛИЦЫ!');
-        
-        let exchangeRate, toAmount;
-        if (fromCurrency === 'BTC' && toCurrency === 'RUB') {
-            exchangeRate = 10000; // ПРЯМО ИЗ ТАБЛИЦЫ!
-            toAmount = fromAmount * exchangeRate;
-            console.log(`🔥 ПРИНУДИТЕЛЬНО BTC→RUB: 1 BTC = ${exchangeRate} RUB`);
+        if (googleBtcRate) {
+            console.log('🔥🔥🔥 НАШЛИ BTC КУРС ИЗ GOOGLE SHEETS!', googleBtcRate);
+            
+            let exchangeRate, toAmount;
+            if (fromCurrency === 'BTC' && toCurrency === 'RUB') {
+                exchangeRate = googleBtcRate.sell; // РЕАЛЬНЫЙ КУРС ИЗ ТАБЛИЦЫ!
+                toAmount = fromAmount * exchangeRate;
+                console.log(`🔥 ДИНАМИЧЕСКИ BTC→RUB: 1 BTC = ${exchangeRate} RUB (из таблицы!)`);
+            } else {
+                exchangeRate = 1 / googleBtcRate.buy; // ОБРАТНЫЙ КУРС ИЗ ТАБЛИЦЫ!
+                toAmount = fromAmount * exchangeRate;
+                console.log(`🔥 ДИНАМИЧЕСКИ RUB→BTC: 1 RUB = ${exchangeRate} BTC (из таблицы!)`);
+            }
+            
+            const fee = 0;
+            const finalAmount = toAmount;
+            
+            currentCalculation = {
+                fromAmount,
+                toAmount: finalAmount,
+                exchangeRate,
+                fee,
+                fromCurrency,
+                toCurrency
+            };
+            
+            updateCalculationDisplay(fromAmount, finalAmount, exchangeRate, fee);
+            document.getElementById('continue-button').disabled = false;
+            console.log('🔥 ДИНАМИЧЕСКИЙ РАСЧЕТ ИЗ GOOGLE SHEETS ЗАВЕРШЕН!');
+            return;
         } else {
-            exchangeRate = 1 / 900; // 1/900 = 0.00111
-            toAmount = fromAmount * exchangeRate;
-            console.log(`🔥 ПРИНУДИТЕЛЬНО RUB→BTC: 1 RUB = ${exchangeRate} BTC`);
+            console.log('❌ BTC курс из Google Sheets НЕ НАЙДЕН! Используем фоллбэк...');
+            // Фоллбэк - старые значения, если Google Sheets недоступен
+            let exchangeRate, toAmount;
+            if (fromCurrency === 'BTC' && toCurrency === 'RUB') {
+                exchangeRate = 10000; // ФОЛЛБЭК
+                toAmount = fromAmount * exchangeRate;
+                console.log(`🔥 ФОЛЛБЭК BTC→RUB: 1 BTC = ${exchangeRate} RUB`);
+            } else {
+                exchangeRate = 1 / 900; // ФОЛЛБЭК
+                toAmount = fromAmount * exchangeRate;
+                console.log(`🔥 ФОЛЛБЭК RUB→BTC: 1 RUB = ${exchangeRate} BTC`);
+            }
+            
+            const fee = 0;
+            const finalAmount = toAmount;
+            
+            currentCalculation = {
+                fromAmount,
+                toAmount: finalAmount,
+                exchangeRate,
+                fee,
+                fromCurrency,
+                toCurrency
+            };
+            
+            updateCalculationDisplay(fromAmount, finalAmount, exchangeRate, fee);
+            document.getElementById('continue-button').disabled = false;
+            console.log('🔥 ФОЛЛБЭК РАСЧЕТ ЗАВЕРШЕН!');
+            return;
         }
-        
-        const fee = 0;
-        const finalAmount = toAmount;
-        
-        currentCalculation = {
-            fromAmount,
-            toAmount: finalAmount,
-            exchangeRate,
-            fee,
-            fromCurrency,
-            toCurrency
-        };
-        
-        updateCalculationDisplay(fromAmount, finalAmount, exchangeRate, fee);
-        document.getElementById('continue-button').disabled = false;
-                 console.log('🔥 ПРИНУДИТЕЛЬНЫЙ РАСЧЕТ ЗАВЕРШЕН!');
-         return;
     }
     
     // Стандартная логика для остальных пар
