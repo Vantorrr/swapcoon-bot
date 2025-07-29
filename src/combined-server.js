@@ -399,10 +399,10 @@ setTimeout(() => {
 let ratesService;
 try {
     console.log('📡 Инициализация RatesService...');
-const RatesService = require('./services/RatesService');
-ratesService = new RatesService();
-global.ratesService = ratesService; // Делаем доступным глобально
-console.log('✅ RatesService инициализирован и доступен глобально');
+    const RatesService = require('./services/RatesService');
+    ratesService = new RatesService();
+    global.ratesService = ratesService; // Делаем доступным глобально
+    console.log('✅ RatesService инициализирован и доступен глобально');
 } catch (error) {
     console.error('❌ Ошибка инициализации RatesService:', error.message);
     console.log('🔄 Продолжаем без RatesService - будем использовать заглушки');

@@ -10,6 +10,7 @@ const PORT = process.env.PORT || 3000;
 // Инициализация сервиса курсов
 // Используем глобальный ratesService (синхронизируется с Google Sheets)
 
+let ratesService = global.ratesService || null;
 // Если глобальный ratesService появится позже - используем его
 setInterval(() => {
     if (global.ratesService && ratesService !== global.ratesService) {
