@@ -428,14 +428,34 @@ app.get('/api/rates', async (req, res) => {
     console.log('📈 Запрос курсов валют...');
     
     try {
-        if (ratesService) {
-            console.log('📡 Получаем курсы через RatesService...');
+        // 🔥 ИСПОЛЬЗУЕМ GLOBAL.RATESSERVICE (с Google Sheets синхронизацией)
+        if (global.ratesService) {
+            console.log('📡 Получаем курсы через GLOBAL.RatesService с Google Sheets...');
+            const rates = await global.ratesService.getRates();
+            console.log(`📊 Получено ${rates.length} курсов из global.ratesService`);
+            
+            // Диагностика полученных курсов
+            rates.forEach(rate => {
+                if (['BTC', 'RUB', 'USDT'].includes(rate.currency)) {
+                    console.log(`   ${rate.currency}: ${rate.price} (источник: ${rate.source || 'неизвестно'})`);
+                }
+            });
+            
+            res.json({ 
+                success: true, 
+                data: rates,
+                lastUpdate: global.ratesService.getLastUpdateTime(),
+                source: 'global_rates_service_with_sheets'
+            });
+            console.log('✅ Курсы отправлены:', rates.length, 'валют');
+        } else if (ratesService) {
+            console.log('📡 Получаем курсы через локальный RatesService...');
             const rates = await ratesService.getRates();
             res.json({ 
                 success: true, 
                 data: rates,
                 lastUpdate: ratesService.getLastUpdateTime(),
-                source: 'live_api'
+                source: 'local_rates_service'
             });
             console.log('✅ Курсы отправлены:', rates.length, 'валют');
         } else {
