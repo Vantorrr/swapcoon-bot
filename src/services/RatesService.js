@@ -141,7 +141,7 @@ class RatesService {
             { currency: "USD", buy: 1.0, sell: 1.0, price: 1.0, change24h: 0, lastUpdate: new Date().toISOString(), type: "fiat", source: "BASE" },
             { currency: "USDT", buy: 1.0, sell: 1.0, price: 1.0, change24h: 0, lastUpdate: new Date().toISOString(), type: "crypto", source: "BASE" }
         ];
-    }    }
+    }
 
     initAutoUpdate() {
         // Обновляем курсы каждые 5 минут
