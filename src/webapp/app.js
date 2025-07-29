@@ -693,10 +693,13 @@ function calculateExchange() {
     
         // 🔥 ДИНАМИЧЕСКИЙ ПОИСК КУРСОВ ИЗ GOOGLE SHEETS!
     console.log('🔥 ПРОВЕРЯЕМ ПАРУ:', fromCurrency, '→', toCurrency);
-    console.log('🔥 КУРСЫ В ПАМЯТИ:', currentRates.filter(r => r.source && r.source.includes('GOOGLE')));
+    console.log('🔥 ВСЕ КУРСЫ В ПАМЯТИ:', currentRates);
+    console.log('🔥 КУРСЫ С GOOGLE:', currentRates.filter(r => r.source && r.source.includes('GOOGLE')));
+    console.log('🔥 КУРС BTC:', currentRates.find(r => r.currency === 'BTC'));
     
     // ИЩЕМ ПРЯМЫЕ КУРСЫ ИЗ GOOGLE SHEETS В currentRates
     const googleBtcRate = currentRates.find(r => r.currency === 'BTC' && r.source && r.source.includes('GOOGLE'));
+    console.log('🔥 НАЙДЕН BTC ИЗ GOOGLE?', googleBtcRate);
     
     if ((fromCurrency === 'BTC' && toCurrency === 'RUB') || (fromCurrency === 'RUB' && toCurrency === 'BTC')) {
         if (googleBtcRate) {
@@ -731,6 +734,7 @@ function calculateExchange() {
             return;
         } else {
             console.log('❌ BTC курс из Google Sheets НЕ НАЙДЕН! Используем фоллбэк...');
+            console.log('❌ СПИСОК ВСЕХ КУРСОВ:', currentRates.map(r => `${r.currency} (source: ${r.source})`));
             // Фоллбэк - старые значения, если Google Sheets недоступен
             let exchangeRate, toAmount;
             if (fromCurrency === 'BTC' && toCurrency === 'RUB') {
