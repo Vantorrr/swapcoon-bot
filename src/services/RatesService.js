@@ -2,9 +2,8 @@ const axios = require('axios');
 
 class RatesService {
     constructor() {
+        this.cache = new Map(); // 🔥 ИНИЦИАЛИЗАЦИЯ КЭША!
         this.cacheExpiry = 10 * 1000; // 🔥 10 секунд для отладки!
-        this.cacheExpiry = 30 * 60 * 1000; // 30 минут
-        this.lastUpdate = null;
         
         // ⚙️ НАСТРОЙКИ ПРИБЫЛЬНОСТИ (можно вынести в переменные окружения)
         this.commission = parseFloat(process.env.EXCHANGE_COMMISSION) || 0.01; // 1% по умолчанию
