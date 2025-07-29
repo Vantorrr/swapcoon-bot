@@ -529,12 +529,22 @@ app.get('/api/rates', async (req, res) => {
         const rates = await global.ratesService.getRates();
         console.log(`📊 Получено ${rates.length} курсов из global.ratesService`);
         
-        // Диагностика полученных курсов
+        console.log('🔥🔥🔥 ПОЛНАЯ ДИАГНОСТИКА КУРСОВ ДЛЯ API:');
         rates.forEach(rate => {
-            if (['BTC', 'RUB', 'USDT'].includes(rate.currency)) {
-                console.log(`   ${rate.currency}: ${rate.price} (источник: ${rate.source || 'неизвестно'})`);
+            console.log(`📊 API: ${rate.currency} = sell:${rate.sell}, buy:${rate.buy}, price:${rate.price}, source:"${rate.source || 'API'}"`);
+            if (rate.currency === 'BTC') {
+                console.log(`🔥 BTC ДЕТАЛЬНО: sell=${rate.sell}, buy=${rate.buy}, source="${rate.source}"`);
             }
         });
+        
+        // НАЙДЕМ BTC КУРС СПЕЦИАЛЬНО
+        const btcRate = rates.find(r => r.currency === 'BTC');
+        if (btcRate) {
+            console.log(`🔥🔥🔥 BTC КУРС НАЙДЕН: sell=${btcRate.sell}, source="${btcRate.source}"`);
+            console.log(`🔥 ДОЛЖЕН ЛИ FRONTEND НАЙТИ ЕГО? source.includes('GOOGLE')=${btcRate.source && btcRate.source.includes('GOOGLE')}`);
+        } else {
+            console.log(`❌❌❌ BTC КУРС НЕ НАЙДЕН В RATES!`);
+        }
         
         res.json({ 
             success: true, 
