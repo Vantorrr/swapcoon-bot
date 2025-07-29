@@ -180,7 +180,22 @@ async function initializeBotAndAdmins() {
                     if (envSpreadsheetId && envCredentials && envEnabled) {
                         try {
                             console.log('🔥 ⚡ ПАРСИМ CREDENTIALS ИЗ RAILWAY...');
-                            const railwayCredentials = JSON.parse(envCredentials);
+                            console.log('🔍 Длина envCredentials:', envCredentials.length);
+                            console.log('🔍 Первые 50 символов:', envCredentials.substring(0, 50));
+                            console.log('🔍 Последние 50 символов:', envCredentials.substring(envCredentials.length - 50));
+                            
+                            // Очищаем от возможных лишних символов
+                            let cleanCredentials = envCredentials.trim();
+                            console.log('🔍 После trim - первые 10:', cleanCredentials.substring(0, 10));
+                            
+                            // Если есть лишний = в начале - убираем его
+                            if (cleanCredentials.startsWith('=')) {
+                                console.log('🔥 ⚡ НАЙДЕН ЛИШНИЙ = В НАЧАЛЕ! Убираем...');
+                                cleanCredentials = cleanCredentials.substring(1);
+                                console.log('🔍 После удаления = - первые 10:', cleanCredentials.substring(0, 10));
+                            }
+                            
+                            const railwayCredentials = JSON.parse(cleanCredentials);
                             console.log('🔥 ✅ JSON УСПЕШНО СПАРШЕН!');
                             
                             const railwayConfig = {
