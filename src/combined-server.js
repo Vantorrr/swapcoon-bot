@@ -677,16 +677,16 @@ app.post('/api/create-order', async (req, res) => {
         if (db && db.createOrder) {
             try {
                 const order = await db.createOrder({
-                    user_id: userId,
-                    from_currency: fromCurrency,
-                    to_currency: toCurrency,
-                    from_amount: fromAmount,
-                    to_amount: toAmount,
-                    from_address: fromAddress || '',
-                    to_address: toAddress || '',
-                    exchange_rate: exchangeRate,
+                    userId: userId,                    // ← ИСПРАВЛЕНО: camelCase
+                    fromCurrency: fromCurrency,       // ← ИСПРАВЛЕНО: camelCase
+                    toCurrency: toCurrency,           // ← ИСПРАВЛЕНО: camelCase
+                    fromAmount: fromAmount,           // ← ИСПРАВЛЕНО: camelCase
+                    toAmount: toAmount,               // ← ИСПРАВЛЕНО: camelCase
+                    fromAddress: fromAddress || '',   // ← ИСПРАВЛЕНО: camelCase
+                    toAddress: toAddress || '',       // ← ИСПРАВЛЕНО: camelCase
+                    exchangeRate: exchangeRate,       // ← ИСПРАВЛЕНО: camelCase
                     fee: fee || 0,
-                    aml_status: JSON.stringify({ from: amlFromResult, to: amlToResult }),
+                    amlStatus: JSON.stringify({ from: amlFromResult, to: amlToResult }),  // ← ИСПРАВЛЕНО: camelCase
                     status: 'pending',
                     source: 'web'
                 });
