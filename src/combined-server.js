@@ -542,6 +542,49 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'webapp', 'index.html'));
 });
 
+// API для принудительной синхронизации с Google Sheets
+app.post('/api/force-sync', async (req, res) => {
+    console.log('🔥 ПРИНУДИТЕЛЬНАЯ СИНХРОНИЗАЦИЯ ЗАПРОШЕНА!');
+    
+    try {
+        if (!global.ratesService) {
+            console.error('❌ GLOBAL.RATESSERVICE НЕ ИНИЦИАЛИЗИРОВАН!');
+            return res.status(500).json({ 
+                success: false, 
+                error: 'RatesService не инициализирован'
+            });
+        }
+
+        if (!global.googleSheetsManager || !global.googleSheetsManager.isReady()) {
+            console.error('❌ GOOGLE SHEETS MANAGER НЕ ГОТОВ!');
+            return res.status(500).json({ 
+                success: false, 
+                error: 'Google Sheets Manager не готов'
+            });
+        }
+
+        console.log('🔥 Запускаем принудительную синхронизацию...');
+        await global.ratesService.syncWithGoogleSheets();
+        
+        console.log('🔥 Очищаем кэш для применения новых курсов...');
+        global.ratesService.cache.clear();
+        
+        console.log('✅ Принудительная синхронизация завершена!');
+        res.json({ 
+            success: true, 
+            message: 'Синхронизация завершена',
+            timestamp: new Date().toISOString()
+        });
+        
+    } catch (error) {
+        console.error('❌ Ошибка принудительной синхронизации:', error.message);
+        res.status(500).json({ 
+            success: false, 
+            error: error.message 
+        });
+    }
+});
+
 // API для получения курсов валют
 app.get('/api/rates', async (req, res) => {
     console.log('📈 Запрос курсов валют...');
