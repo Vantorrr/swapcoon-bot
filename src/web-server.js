@@ -35,7 +35,8 @@ app.get('/', (req, res) => {
 app.get('/api/rates', async (req, res) => {
     try {
         const rates = await ratesService.getRates();
-        res.json({ 
+        // Применяем ручные курсы из Google Sheets
+        applyManualRates(rates);        res.json({ 
             success: true, 
             data: rates,
             lastUpdate: ratesService.getLastUpdateTime(),
@@ -76,7 +77,9 @@ function calculateExchange(rates, fromCurrency, toCurrency, amount) {
 app.post('/api/calculate', async (req, res) => {
     try {
         const { fromCurrency, toCurrency, amount, userId } = req.body;
-        
+        // Применяем ручные курсы перед расчетом
+        const rates = await ratesService.getRates();
+        applyManualRates(rates);        
         const calculation = await ratesService.getExchangeRate(fromCurrency, toCurrency, amount);
         
         // Уведомляем о запросе курса (только для больших сумм)
@@ -134,7 +137,8 @@ app.post('/api/create-order', async (req, res) => {
         const user = await db.getUser(userId);
 
         // Отправляем уведомление операторам НАПРЯМУЮ с точными данными
-        console.log('📤 ВЫЗЫВАЕМ notifyOperators С ДАННЫМИ:', {
+        console.log("🚨 === ВЫЗОВ notifyOperators ===");
+        console.log("📋 Данные заявки:", order.id, order.fromCurrency, order.toCurrency);        console.log('📤 ВЫЗЫВАЕМ notifyOperators С ДАННЫМИ:', {
             id: order.id,
             fromAddress: order.fromAddress,
             toAddress: order.toAddress,
@@ -659,3 +663,28 @@ app.post('/api/favorites', async (req, res) => {
         res.json({ success: false, error: error.message });
     }
 });
+// РУЧНЫЕ КУРСЫ ИЗ GOOGLE SHEETS (жестко прописанные)
+const manualRates = {
+    'USDT': { price: 1, buy: 0.99, sell: 1.01, source: 'MANUAL' },
+    'ARS': { price: 0.000775, buy: 0.000763, sell: 0.000787, source: 'MANUAL' }, // 1/1310 и 1/1290
+    'RUB': { price: 0.0111, buy: 0.011, sell: 0.0143, source: 'MANUAL' }, // 1/90 и 1/70  
+    'USD': { price: 1, buy: 1, sell: 1, source: 'MANUAL' }
+};
+
+// Функция применения ручных курсов
+function applyManualRates(rates) {
+    console.log('🔧 ПРИМЕНЯЕМ РУЧНЫЕ КУРСЫ ИЗ GOOGLE SHEETS');
+    
+    rates.forEach(rate => {
+        if (manualRates[rate.currency]) {
+            const manual = manualRates[rate.currency];
+            rate.price = manual.price;
+            rate.buy = manual.buy;
+            rate.sell = manual.sell;
+            rate.source = manual.source;
+            console.log(`✅ ${rate.currency}: ${rate.sell} (продажа) / ${rate.buy} (покупка)`);
+        }
+    });
+    
+    return rates;
+}

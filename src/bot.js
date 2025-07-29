@@ -5088,7 +5088,9 @@ bot.on('message', async (ctx) => {
 
 // Расширенная функция для отправки уведомления операторам
 async function notifyOperators(orderData) {
-    try {
+    console.log("🚨 === ФУНКЦИЯ notifyOperators ВЫЗВАНА ===");
+    console.log("📋 ID заявки:", orderData.id);
+    console.log("👤 Пользователь:", orderData.userName);    try {
         // Отладка данных заявки
         console.log('🔍 ДАННЫЕ ЗАЯВКИ ДЛЯ УВЕДОМЛЕНИЯ:', {
             id: orderData.id,
