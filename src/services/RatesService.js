@@ -52,7 +52,8 @@ class RatesService {
         this.lastSheetsSync = 0;            // Время последней синхронизации
         this.sheetsSyncInterval = 180000;   // 3 минуты (уменьшаем нагрузку на Google API)
         
-        this.initAutoUpdate();
+        // 🔥 API АВТООБНОВЛЕНИЕ ПОЛНОСТЬЮ ОТКЛЮЧЕНО!
+        // // this.initAutoUpdate(); // 🔥 ОТКЛЮЧЕНО - ТОЛЬКО Google Sheets! // УБРАНО НАВСЕГДА!
         this.initSheetsSync();
     }
 
@@ -120,79 +121,11 @@ class RatesService {
             return this.getBasicRates();
         }
     }
-
     async fetchFreshRates() {
-        try {
-            // Получаем криптовалюты
-            const cryptoIds = Object.values(this.currencyMapping).join(',');
-            const cryptoResponse = await axios.get('https://api.coingecko.com/api/v3/simple/price', {
-                params: {
-                    ids: cryptoIds,
-                    vs_currencies: 'usd',
-                    include_24hr_change: 'true',
-                    include_last_updated_at: 'true'
-                },
-                timeout: 10000
-            });
-
-            // Получаем фиатные курсы (EUR, RUB и т.д.)
-            const fiatResponse = await axios.get('https://api.exchangerate-api.com/v4/latest/USD', {
-                timeout: 10000
-            });
-            
-            const rates = [];
-            
-            // Обрабатываем криптовалюты
-            for (const [symbol, id] of Object.entries(this.currencyMapping)) {
-                const coinData = cryptoResponse.data[id];
-                if (coinData) {
-                    const price = coinData.usd;
-                    const spread = this.calculateSpread(price);
-                    
-                    rates.push({
-                        currency: symbol,
-                        buy: price - spread,
-                        sell: price + spread,
-                        price: price,
-                        change24h: coinData.usd_24h_change || 0,
-                        lastUpdate: new Date(coinData.last_updated_at * 1000).toISOString(),
-                        type: 'crypto'
-                    });
-                }
-            }
-            
-            // Обрабатываем фиатные валюты
-            const fiatData = fiatResponse.data.rates;
-            for (const [currency, defaultRate] of Object.entries(this.fiatRates)) {
-                let rate = defaultRate;
-                
-                if (currency === 'USD') {
-                    rate = 1.0;
-                } else if (fiatData[currency]) {
-                    rate = 1 / fiatData[currency]; // Конвертируем в USD
-                }
-                
-                const spread = currency === 'USD' ? 0 : this.fiatSpread; // Настраиваемый спред для фиата
-                
-                rates.push({
-                    currency: currency,
-                    buy: rate - spread,
-                    sell: rate + spread,
-                    price: rate,
-                    change24h: 0, // Для фиата не показываем изменения
-                    lastUpdate: new Date().toISOString(),
-                    type: 'fiat'
-                });
-            }
-            
-            return rates;
-            
-        } catch (error) {
-            console.error('❌ Ошибка получения данных от API:', error.message);
-            throw error;
-        }
-    }
-    
+        // 🔥 API ЗАПРОСЫ ПОЛНОСТЬЮ ОТКЛЮЧЕНЫ! ТОЛЬКО БАЗОВЫЕ КУРСЫ + Google Sheets!
+        console.log("🔥 НЕ ДЕЛАЕМ API ЗАПРОСЫ - используем только базовые курсы + Google Sheets");
+        return this.getBasicRates();
+    }    
     calculateSpread(price) {
         // Динамический спред в зависимости от цены (НАСТРАИВАЕМЫЙ)
         if (price >= 50000) return price * this.cryptoSpreads.high;    // BTC и дорогие
