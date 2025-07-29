@@ -1,0 +1,13 @@
+[providers]
+nixpkgs = "github:NixOS/nixpkgs/nixos-unstable"
+
+[providers.nixpkgs.overlay]
+environment.systemPackages = [
+  "nodejs_22",
+  "python3",
+  "python3Packages.pip",
+  "python3Packages.setuptools",
+  "gcc",
+  "gnumake",
+  "pkg-config"
+] 
