@@ -669,7 +669,7 @@ function getTestRates() {
         { currency: 'USDT', price: 1, buy: 1, sell: 1, source: 'SHEETS', type: 'crypto', lastUpdate: new Date().toISOString() },
         
         // Курсы из Google Sheets  
-        { currency: 'RUB', price: 1/70, buy: 1/90, sell: 1/70, source: 'SHEETS', type: 'fiat', lastUpdate: new Date().toISOString() },
+        { currency: 'RUB', price: 1/78, buy: 1/78, sell: 1/78, source: 'SHEETS', type: 'fiat', lastUpdate: new Date().toISOString() },
         { currency: 'ARS', price: 1/1300, buy: 1/1310, sell: 1/1290, source: 'SHEETS', type: 'fiat', lastUpdate: new Date().toISOString() },
         
         // Остальные валюты (неактивные)

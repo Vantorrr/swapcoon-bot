@@ -33,14 +33,15 @@ app.get('/', (req, res) => {
 app.get('/api/rates', async (req, res) => {
     console.log('📊 API /api/rates: возвращаем курсы ИЗ GOOGLE SHEETS');
     
+    // Жестко заданные курсы ИЗ GOOGLE SHEETS (без API!)
     const rates = [
-        // Базовые валюты
+        // Основные пары валют
         { currency: 'USD', price: 1, buy: 1, sell: 1, source: 'SHEETS', type: 'fiat', lastUpdate: new Date().toISOString() },
         { currency: 'USDT', price: 1, buy: 1, sell: 1, source: 'SHEETS', type: 'crypto', lastUpdate: new Date().toISOString() },
         
-        // Курсы из Google Sheets  
-        { currency: 'RUB', price: 1/70, buy: 1/90, sell: 1/70, source: 'SHEETS', type: 'fiat', lastUpdate: new Date().toISOString() },
-        { currency: 'ARS', price: 1/1300, buy: 1/1310, sell: 1/1290, source: 'SHEETS', type: 'fiat', lastUpdate: new Date().toISOString() },
+        // Курсы из Google Sheets (ИСПРАВЛЕНО!)
+        { currency: 'RUB', price: 1/78, buy: 1/78, sell: 1/78, source: 'SHEETS', type: 'fiat', lastUpdate: new Date().toISOString() },
+        { currency: 'ARS', price: 1/1290, buy: 1/1290, sell: 1/1290, source: 'SHEETS', type: 'fiat', lastUpdate: new Date().toISOString() },
         
         // Остальные валюты (неактивные)
         { currency: 'EUR', price: 0.92, buy: 0.92, sell: 0.94, source: 'DISABLED', type: 'fiat', lastUpdate: new Date().toISOString() },
@@ -76,15 +77,15 @@ app.post('/api/calculate', async (req, res) => {
     if (fromCurrency === 'USDT' && toCurrency === 'ARS') {
         exchangeRate = 1290; // Прямо из Google Sheets
     } else if (fromCurrency === 'ARS' && toCurrency === 'USDT') {
-        exchangeRate = 1/1310; // Обратный курс
+        exchangeRate = 1/1290; // Обратный курс (ИСПРАВЛЕНО!)
     } else if (fromCurrency === 'USDT' && toCurrency === 'RUB') {
-        exchangeRate = 70; // Из Google Sheets
+        exchangeRate = 78; // Из Google Sheets (ИСПРАВЛЕНО!)
     } else if (fromCurrency === 'RUB' && toCurrency === 'USDT') {
-        exchangeRate = 1/90; // Обратный курс
+        exchangeRate = 1/78; // Обратный курс (ИСПРАВЛЕНО!)
     } else {
         // Для остальных пар - через USD
-        const fromUSD = fromCurrency === 'USD' ? 1 : (fromCurrency === 'USDT' ? 1 : (fromCurrency === 'RUB' ? 1/70 : (fromCurrency === 'ARS' ? 1/1300 : 1)));
-        const toUSD = toCurrency === 'USD' ? 1 : (toCurrency === 'USDT' ? 1 : (toCurrency === 'RUB' ? 1/70 : (toCurrency === 'ARS' ? 1/1300 : 1)));
+        const fromUSD = fromCurrency === 'USD' ? 1 : (fromCurrency === 'USDT' ? 1 : (fromCurrency === 'RUB' ? 1/78 : (fromCurrency === 'ARS' ? 1/1290 : 1)));
+        const toUSD = toCurrency === 'USD' ? 1 : (toCurrency === 'USDT' ? 1 : (toCurrency === 'RUB' ? 1/78 : (toCurrency === 'ARS' ? 1/1290 : 1)));
         exchangeRate = fromUSD / toUSD;
     }
     
@@ -116,15 +117,15 @@ app.post('/api/calculate', async (req, res) => {
     if (fromCurrency === 'USDT' && toCurrency === 'ARS') {
         exchangeRate = 1290; // Прямо из Google Sheets
     } else if (fromCurrency === 'ARS' && toCurrency === 'USDT') {
-        exchangeRate = 1/1310; // Обратный курс
+        exchangeRate = 1/1290; // Обратный курс (ИСПРАВЛЕНО!)
     } else if (fromCurrency === 'USDT' && toCurrency === 'RUB') {
-        exchangeRate = 70; // Из Google Sheets
+        exchangeRate = 78; // Из Google Sheets (ИСПРАВЛЕНО!)
     } else if (fromCurrency === 'RUB' && toCurrency === 'USDT') {
-        exchangeRate = 1/90; // Обратный курс
+        exchangeRate = 1/78; // Обратный курс (ИСПРАВЛЕНО!)
     } else {
         // Для остальных пар - через USD
-        const fromUSD = fromCurrency === 'USD' ? 1 : (fromCurrency === 'USDT' ? 1 : (fromCurrency === 'RUB' ? 1/70 : (fromCurrency === 'ARS' ? 1/1300 : 1)));
-        const toUSD = toCurrency === 'USD' ? 1 : (toCurrency === 'USDT' ? 1 : (toCurrency === 'RUB' ? 1/70 : (toCurrency === 'ARS' ? 1/1300 : 1)));
+        const fromUSD = fromCurrency === 'USD' ? 1 : (fromCurrency === 'USDT' ? 1 : (fromCurrency === 'RUB' ? 1/78 : (fromCurrency === 'ARS' ? 1/1290 : 1)));
+        const toUSD = toCurrency === 'USD' ? 1 : (toCurrency === 'USDT' ? 1 : (toCurrency === 'RUB' ? 1/78 : (toCurrency === 'ARS' ? 1/1290 : 1)));
         exchangeRate = fromUSD / toUSD;
     }
     
