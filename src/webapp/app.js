@@ -565,12 +565,10 @@ async function loadInitialData() {
     console.log('🚀 Начинаем загрузку начальных данных...');
     showNotification('Загружаем данные приложения...', 'info');
     
-    // 🛡️ МГНОВЕННАЯ ЗАЩИТА! СРАЗУ ЗАГРУЖАЕМ ТЕСТОВЫЕ КУРСЫ
-    console.log('🛡️ Загружаем тестовые курсы как защиту от зависания...');
-    currentRates = getTestRates();
-    updateCurrencyList();
-    updateRatesTime();
-    console.log('✅ Защитные тестовые курсы загружены');
+    // 🔥 БЕЗ FALLBACK! ЖДЕМ ТОЛЬКО GOOGLE SHEETS!
+    console.log('🔥 ЖДЕМ ТОЛЬКО GOOGLE SHEETS - НИКАКИХ FALLBACK КУРСОВ!');
+    currentRates = [];
+    // НЕ ОБНОВЛЯЕМ ИНТЕРФЕЙС ПОКА НЕ ПОЛУЧИМ РЕАЛЬНЫЕ КУРСЫ
     
     // 🔥 МГНОВЕННОЕ СКРЫТИЕ ЗАГРУЗОЧНОГО ЭКРАНА
     hideLoadingScreen();
@@ -670,17 +668,10 @@ async function loadExchangeRates() {
     }
 }
 
-// Тестовые курсы для разработки (МИНИМУМ для работы)
+// 🔥 УБРАНО! НИКАКИХ FALLBACK КУРСОВ! ТОЛЬКО GOOGLE SHEETS!
 function getTestRates() {
-    console.log('📊 Минимальные тестовые курсы (fallback)');
-    return [
-        // Минимум для работы приложения
-        { currency: 'USD', price: 1, buy: 1, sell: 1, source: 'FALLBACK', type: 'fiat', lastUpdate: new Date().toISOString() },
-        { currency: 'USDT', price: 1, buy: 1, sell: 1, source: 'FALLBACK', type: 'crypto', lastUpdate: new Date().toISOString() },
-        { currency: 'BTC', price: 95500, buy: 94500, sell: 95500, source: 'FALLBACK', type: 'crypto', lastUpdate: new Date().toISOString() },
-        { currency: 'RUB', price: 1/78, buy: 1/78, sell: 1/78, source: 'FALLBACK', type: 'fiat', lastUpdate: new Date().toISOString() },
-        { currency: 'ARS', price: 1/1290, buy: 1/1310, sell: 1/1290, source: 'FALLBACK', type: 'fiat', lastUpdate: new Date().toISOString() }
-    ];
+    console.log('❌ FALLBACK КУРСЫ ОТКЛЮЧЕНЫ! ЧИТАЕМ ТОЛЬКО ИЗ GOOGLE SHEETS!');
+    throw new Error('Fallback курсы отключены - используйте только Google Sheets!');
 }
 // Обновление времени курсов
 function updateRatesTime() {
@@ -897,22 +888,21 @@ function openCurrencyModal(type) {
     
     // 🚀 МГНОВЕННАЯ ПРОВЕРКА И ЗАГРУЗКА КУРСОВ
     if (!currentRates || currentRates.length === 0) {
-        console.log('⚡ Курсы еще не загружены - используем тестовые');
-        currentRates = getTestRates();
+        console.log('⚡ Курсы еще не загружены - ФОРСИРУЕМ ЗАГРУЗКУ ИЗ GOOGLE SHEETS!');
+        await loadExchangeRates(); // ПРИНУДИТЕЛЬНАЯ ЗАГРУЗКА
     }
     
     updateCurrencyList();
     document.getElementById('currency-modal').classList.add('active');
     
-    // 🔄 ФОРСИРУЕМ АКТУАЛЬНЫЕ КУРСЫ В ФОНЕ (не блокируем UI)
-    if (currentRates === getTestRates()) {
-        loadExchangeRates().then(() => {
-            console.log('✅ Актуальные курсы загружены - обновляем список');
-            updateCurrencyList();
-        }).catch(error => {
-            console.log('⚠️ Остаемся с тестовыми курсами:', error.message);
-        });
-    }
+    // 🔄 ВСЕГДА ФОРСИРУЕМ АКТУАЛЬНЫЕ КУРСЫ В ФОНЕ
+    loadExchangeRates().then(() => {
+        console.log('✅ Актуальные курсы загружены - обновляем список');
+        updateCurrencyList();
+    }).catch(error => {
+        console.log('❌ Ошибка загрузки курсов:', error.message);
+        showNotification('Ошибка загрузки курсов из Google Sheets', 'error');
+    });
 }
 
 // Закрытие модала валют
@@ -925,10 +915,11 @@ function updateCurrencyList() {
     const currencyList = document.getElementById('currency-list');
     currencyList.innerHTML = '';
     
-    // 🛡️ ЗАЩИТА ОТ ПУСТЫХ КУРСОВ
+    // 🔥 ЕСЛИ НЕТ КУРСОВ - ПОКАЗЫВАЕМ ЗАГРУЗКУ
     if (!currentRates || currentRates.length === 0) {
-        console.log('⚡ Нет курсов - загружаем тестовые мгновенно');
-        currentRates = getTestRates();
+        console.log('⚡ Нет курсов - показываем загрузку Google Sheets');
+        currencyList.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">📊 Загружаем курсы из Google Sheets...</div>';
+        return; // НЕ ПОКАЗЫВАЕМ НИЧЕГО ПОКА НЕ ЗАГРУЗИМ
     }
     
     // Разделяем валюты на избранные и обычные
