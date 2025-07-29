@@ -407,6 +407,7 @@ class RatesService {
     }
 
     // Применение ручных настроек к курсам
+    // Применение ручных настроек к курсам
     applyManualSettings(rates) {
         if (!rates || !Array.isArray(rates)) return rates;
         
@@ -419,7 +420,41 @@ class RatesService {
             console.log(`🔍 Обрабатываем валюту: ${rate.currency}`);
             
             // 📊 ПРИОРИТЕТ 1: Курсы из Google Sheets (самый высокий)
-            const sheetRate = this.getSheetRateForPair(rate.currency, 'USD');
+            // Ищем ЛЮБУЮ пару с этой валютой, не только USD
+            let sheetRate = null;
+            
+            // Ищем прямые пары (currency/XXX)
+            for (const [pair, rateData] of this.googleSheetsRates.entries()) {
+                if (pair.startsWith(rate.currency + '/')) {
+                    sheetRate = {
+                        sellRate: rateData.sellRate,
+                        buyRate: rateData.buyRate,
+                        source: 'GOOGLE_SHEETS',
+                        comment: rateData.comment,
+                        pair: pair
+                    };
+                    console.log(`🔍 НАЙДЕНА ПРЯМАЯ ПАРА для ${rate.currency}: ${pair}`);
+                    break;
+                }
+            }
+            
+            // Если не нашли прямую, ищем обратные пары (XXX/currency)
+            if (!sheetRate) {
+                for (const [pair, rateData] of this.googleSheetsRates.entries()) {
+                    if (pair.endsWith('/' + rate.currency)) {
+                        sheetRate = {
+                            sellRate: 1 / rateData.buyRate,  // Обращаем курсы
+                            buyRate: 1 / rateData.sellRate,
+                            source: 'GOOGLE_SHEETS',
+                            comment: rateData.comment,
+                            pair: pair + ' (обратная)'
+                        };
+                        console.log(`🔍 НАЙДЕНА ОБРАТНАЯ ПАРА для ${rate.currency}: ${pair}`);
+                        break;
+                    }
+                }
+            }
+            
             if (sheetRate) {
                 console.log(`🔍 ДО ПРИМЕНЕНИЯ ${rate.currency}: sell=${adjustedRate.sell}, buy=${adjustedRate.buy}, price=${adjustedRate.price}`);
                 
@@ -428,7 +463,7 @@ class RatesService {
                 adjustedRate.price = (sheetRate.sellRate + sheetRate.buyRate) / 2;
                 adjustedRate.source = 'GOOGLE_SHEETS';
                 
-                console.log(`📊 Применен курс из Google Sheets для ${rate.currency}: продажа ${sheetRate.sellRate}, покупка ${sheetRate.buyRate}`);
+                console.log(`📊 Применен курс из Google Sheets для ${rate.currency} (${sheetRate.pair}): продажа ${sheetRate.sellRate}, покупка ${sheetRate.buyRate}`);
                 console.log(`🔍 ПОСЛЕ ПРИМЕНЕНИЯ ${rate.currency}: sell=${adjustedRate.sell}, buy=${adjustedRate.buy}, price=${adjustedRate.price}, source=${adjustedRate.source}`);
                 
                 return adjustedRate; // Возвращаем сразу, Google Sheets имеет максимальный приоритет
