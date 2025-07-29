@@ -671,7 +671,7 @@ function getTestRates() {
         // 🪙 КРИПТОВАЛЮТЫ
         { currency: 'BTC', price: 95000, buy: 95000, sell: 96000, change24h: 2.5, lastUpdate: new Date().toISOString(), type: 'crypto' },
         { currency: 'ETH', price: 3500, buy: 3500, sell: 3520, change24h: 1.8, lastUpdate: new Date().toISOString(), type: 'crypto' },
-        { currency: 'USDT', price: 1.0, buy: 1.0, sell: 1.02, change24h: 0.1, lastUpdate: new Date().toISOString(), type: 'crypto' },
+        { currency: 'USDT', price: 1.0, buy: 1.0, sell: 1.0, change24h: 0.1, lastUpdate: new Date().toISOString(), type: 'crypto' },
         { currency: 'USDC', price: 1.0, buy: 1.0, sell: 1.02, change24h: 0.0, lastUpdate: new Date().toISOString(), type: 'crypto' },
 
         { currency: 'XRP', price: 0.48, buy: 0.48, sell: 0.49, change24h: -0.3, lastUpdate: new Date().toISOString(), type: 'crypto' },
@@ -682,10 +682,10 @@ function getTestRates() {
         // 💰 ФИАТНЫЕ ВАЛЮТЫ
         { currency: 'USD', price: 1.0, buy: 1.0, sell: 1.0, change24h: 0.0, lastUpdate: new Date().toISOString(), type: 'fiat' },
         { currency: 'EUR', price: 0.92, buy: 0.92, sell: 0.94, change24h: 0.2, lastUpdate: new Date().toISOString(), type: 'fiat' },
-        { currency: 'RUB', price: 0.0105, buy: 0.0098, sell: 0.0102, change24h: -0.5, lastUpdate: new Date().toISOString(), type: 'fiat' },
+        { currency: 'RUB', price: 0.0111, buy: 0.011, sell: 0.0143, change24h: -0.5, lastUpdate: new Date().toISOString(), type: 'fiat' },
         { currency: 'UAH', price: 0.026, buy: 0.025, sell: 0.027, change24h: -0.3, lastUpdate: new Date().toISOString(), type: 'fiat' },
         { currency: 'KZT', price: 0.0022, buy: 0.0021, sell: 0.0023, change24h: 0.1, lastUpdate: new Date().toISOString(), type: 'fiat' },
-        { currency: 'ARS', price: 0.001, buy: 0.0009, sell: 0.0011, change24h: -1.2, lastUpdate: new Date().toISOString(), type: 'fiat' },
+        { currency: 'ARS', price: 0.000775, buy: 0.000775, sell: 0.000775, change24h: -1.2, lastUpdate: new Date().toISOString(), type: 'fiat' },
         { currency: 'BRL', price: 0.20, buy: 0.19, sell: 0.21, change24h: 0.4, lastUpdate: new Date().toISOString(), type: 'fiat' }
     ];
 }
