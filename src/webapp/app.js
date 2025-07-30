@@ -692,116 +692,45 @@ function calculateExchange() {
         return;
     }
     
-        // 🔥 ДИНАМИЧЕСКИЙ ПОИСК КУРСОВ ИЗ GOOGLE SHEETS!
-    console.log('🔥 ПРОВЕРЯЕМ ПАРУ:', fromCurrency, '→', toCurrency);
-    console.log('🔥 ВСЕ КУРСЫ В ПАМЯТИ:', currentRates);
-    console.log('🔥 КУРСЫ С GOOGLE:', currentRates.filter(r => r.source && r.source.includes('GOOGLE')));
-    console.log('🔥 КУРС BTC:', currentRates.find(r => r.currency === 'BTC'));
+    // 🔥 ПРЯМОЙ ПОИСК ПАР ИЗ GOOGLE SHEETS
+    console.log(`🔥 ПОИСК ПАРЫ: ${fromCurrency} → ${toCurrency}`);
     
-    // 🔥 ДИАГНОСТИКА В КОНСОЛИ (БЕЗ СПАМА НА ЭКРАНЕ)
-    const btcRate = currentRates.find(r => r.currency === 'BTC');
-    const googleRates = currentRates.filter(r => r.source && r.source.includes('GOOGLE'));
+    // 🔥 ВСЯ ЛОГИКА ТЕПЕРЬ ЧЕРЕЗ ПРЯМЫЕ ПАРЫ - УБРАЛ СТАРЫЙ КОД
     
-    // Диагностика только в консоли
-    console.log(`🔥 ДИАГНОСТИКА: Всего курсов: ${currentRates.length}, с Google: ${googleRates.length}`);
-    if (btcRate) {
-        console.log(`🔥 BTC курс: sell=${btcRate.sell}, source="${btcRate.source}"`);
-    } else {
-        console.log(`❌ BTC курс НЕ НАЙДЕН!`);
+    // 🔥 ПОИСК ПРЯМОЙ ПАРЫ ИЗ ТАБЛИЦЫ
+    console.log(`📊 ИЩЕМ ПРЯМУЮ ПАРУ: ${fromCurrency}/${toCurrency}`);
+    let directPair = currentRates.find(r => r.pair === `${fromCurrency}/${toCurrency}`);
+    let isReverse = false;
+    
+    // Если прямой пары нет, ищем обратную
+    if (!directPair) {
+        console.log(`📊 ИЩЕМ ОБРАТНУЮ ПАРУ: ${toCurrency}/${fromCurrency}`);
+        directPair = currentRates.find(r => r.pair === `${toCurrency}/${fromCurrency}`);
+        isReverse = true;
     }
     
-    // ИЩЕМ ПРЯМЫЕ КУРСЫ ИЗ GOOGLE SHEETS В currentRates
-    const googleBtcRate = currentRates.find(r => r.currency === 'BTC' && r.source && r.source.includes('GOOGLE'));
-    console.log('🔥 НАЙДЕН BTC ИЗ GOOGLE?', googleBtcRate);
+    console.log(`📊 НАЙДЕННАЯ ПАРА:`, directPair);
     
-    // Убрал спам уведомления - только консоль
-    console.log('🔥 BTC из Google:', googleBtcRate ? 'найден' : 'не найден');
-    
-    if ((fromCurrency === 'BTC' && toCurrency === 'RUB') || (fromCurrency === 'RUB' && toCurrency === 'BTC')) {
-        if (googleBtcRate) {
-            console.log('🔥🔥🔥 НАШЛИ BTC КУРС ИЗ GOOGLE SHEETS!', googleBtcRate);
-            
-            let exchangeRate, toAmount;
-            if (fromCurrency === 'BTC' && toCurrency === 'RUB') {
-                exchangeRate = googleBtcRate.sell; // РЕАЛЬНЫЙ КУРС ИЗ ТАБЛИЦЫ!
-                toAmount = fromAmount * exchangeRate;
-                console.log(`🔥 ДИНАМИЧЕСКИ BTC→RUB: 1 BTC = ${exchangeRate} RUB (из таблицы!)`);
-            } else {
-                exchangeRate = 1 / googleBtcRate.buy; // ОБРАТНЫЙ КУРС ИЗ ТАБЛИЦЫ!
-                toAmount = fromAmount * exchangeRate;
-                console.log(`🔥 ДИНАМИЧЕСКИ RUB→BTC: 1 RUB = ${exchangeRate} BTC (из таблицы!)`);
-            }
-            
-            const fee = 0;
-            const finalAmount = toAmount;
-            
-            currentCalculation = {
-                fromAmount,
-                toAmount: finalAmount,
-                exchangeRate,
-                fee,
-                fromCurrency,
-                toCurrency
-            };
-            
-            updateCalculationDisplay(fromAmount, finalAmount, exchangeRate, fee);
-            document.getElementById('continue-button').disabled = false;
-            console.log('🔥 ДИНАМИЧЕСКИЙ РАСЧЕТ ИЗ GOOGLE SHEETS ЗАВЕРШЕН!');
-            return;
-        } else {
-            console.log('❌ BTC курс из Google Sheets НЕ НАЙДЕН! Используем фоллбэк...');
-            console.log('❌ СПИСОК ВСЕХ КУРСОВ:', currentRates.map(r => `${r.currency} (source: ${r.source})`));
-            // Фоллбэк - старые значения, если Google Sheets недоступен
-            let exchangeRate, toAmount;
-            if (fromCurrency === 'BTC' && toCurrency === 'RUB') {
-                exchangeRate = 15000; // ФОЛЛБЭК ИЗ ТАБЛИЦЫ!
-                toAmount = fromAmount * exchangeRate;
-                console.log(`🔥 ФОЛЛБЭК BTC→RUB: 1 BTC = ${exchangeRate} RUB (ИЗ ТАБЛИЦЫ!)`);
-            } else {
-                exchangeRate = 1 / 900; // ФОЛЛБЭК ИЗ ТАБЛИЦЫ!
-                toAmount = fromAmount * exchangeRate;
-                console.log(`🔥 ФОЛЛБЭК RUB→BTC: 1 RUB = ${exchangeRate} BTC (ИЗ ТАБЛИЦЫ!)`);
-            }
-            
-            const fee = 0;
-            const finalAmount = toAmount;
-            
-            currentCalculation = {
-                fromAmount,
-                toAmount: finalAmount,
-                exchangeRate,
-                fee,
-                fromCurrency,
-                toCurrency
-            };
-            
-            updateCalculationDisplay(fromAmount, finalAmount, exchangeRate, fee);
-            document.getElementById('continue-button').disabled = false;
-            console.log('🔥 ФОЛЛБЭК РАСЧЕТ ЗАВЕРШЕН!');
-            return;
-        }
-    }
-    
-    // Стандартная логика для остальных пар
-    console.log(`📊 СТАНДАРТНАЯ ЛОГИКА для ${fromCurrency} → ${toCurrency}`);
-    const fromRate = currentRates.find(r => r.currency === fromCurrency);
-    const toRate = currentRates.find(r => r.currency === toCurrency);
-    
-    console.log(`📊 fromRate (${fromCurrency}):`, fromRate);
-    console.log(`📊 toRate (${toCurrency}):`, toRate);
-    
-    // УБРАЛ ДИАГНОСТИКУ - ТОЛЬКО КОНСОЛЬ
-    console.log(`📊 КУРСЫ: ${fromCurrency}=${fromRate?.sell}, ${toCurrency}=${toRate?.buy}, source: ${fromRate?.source}, ${toRate?.source}`);
-    
-    if (!fromRate || !toRate) {
-        console.error('❌ Валютная пара не найдена');
+    if (!directPair) {
+        console.error(`❌ Пара ${fromCurrency}/${toCurrency} не найдена в таблице!`);
+        showNotification(`Пара ${fromCurrency}/${toCurrency} недоступна`, 'error');
         return;
     }
     
-    // Расчет курса обмена
-    const exchangeRate = fromRate.sell / toRate.buy;
-    const toAmount = fromAmount * exchangeRate;
-    console.log(`📊 РАСЧЕТ: ${fromRate.sell} / ${toRate.buy} = ${exchangeRate}`);
+    // Расчет курса из прямой пары
+    let exchangeRate, toAmount;
+    if (isReverse) {
+        // Обратная пара: нужно инвертировать курс
+        exchangeRate = 1 / directPair.sellRate; // Инвертируем для обратного направления
+        toAmount = fromAmount * exchangeRate;
+        console.log(`📊 ОБРАТНАЯ ПАРА: 1/${directPair.sellRate} = ${exchangeRate}`);
+    } else {
+        // Прямая пара: используем как есть
+        exchangeRate = directPair.sellRate;
+        toAmount = fromAmount * exchangeRate;
+        console.log(`📊 ПРЯМАЯ ПАРА: ${directPair.sellRate}`);
+    }
+    
     console.log(`📊 РЕЗУЛЬТАТ: ${fromAmount} * ${exchangeRate} = ${toAmount}`);
     const fee = 0; // Комиссия убрана
     const finalAmount = toAmount;
@@ -922,9 +851,28 @@ function updateCurrencyList() {
         return;
     }
     
+    // 🔥 ИЗВЛЕКАЕМ УНИКАЛЬНЫЕ ВАЛЮТЫ ИЗ ПАР
+    const allCurrencies = new Set();
+    for (const rate of currentRates) {
+        if (rate.pair) {
+            const [from, to] = rate.pair.split('/');
+            allCurrencies.add(from);
+            allCurrencies.add(to);
+        }
+    }
+    
+    // Создаем объекты валют для интерфейса
+    const currencyObjects = Array.from(allCurrencies).map(currency => ({
+        currency: currency,
+        source: 'GOOGLE_SHEETS',
+        type: currency === 'USD' || currency === 'EUR' || currency === 'RUB' || currency === 'ARS' || currency === 'BRL' ? 'fiat' : 'crypto'
+    }));
+    
+    console.log(`🔥 ИЗВЛЕЧЕНО ${currencyObjects.length} УНИКАЛЬНЫХ ВАЛЮТ:`, currencyObjects.map(c => c.currency));
+    
     // Разделяем валюты на избранные и обычные
-    const favorites = currentRates.filter(rate => isFavorite(rate.currency));
-    const others = currentRates.filter(rate => !isFavorite(rate.currency));
+    const favorites = currencyObjects.filter(rate => isFavorite(rate.currency));
+    const others = currencyObjects.filter(rate => !isFavorite(rate.currency));
     
     // Добавляем заголовок избранных (если есть)
     if (favorites.length > 0) {
