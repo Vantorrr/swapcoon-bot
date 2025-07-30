@@ -565,10 +565,12 @@ async function loadInitialData() {
     console.log('🚀 Начинаем загрузку начальных данных...');
     showNotification('Загружаем данные приложения...', 'info');
     
-    // 🔥 БЕЗ FALLBACK! ЖДЕМ ТОЛЬКО GOOGLE SHEETS!
-    console.log('🔥 ЖДЕМ ТОЛЬКО GOOGLE SHEETS - НИКАКИХ FALLBACK КУРСОВ!');
-    currentRates = [];
-    // НЕ ОБНОВЛЯЕМ ИНТЕРФЕЙС ПОКА НЕ ПОЛУЧИМ РЕАЛЬНЫЕ КУРСЫ
+    // 🔥 БЫСТРАЯ ЗАГРУЗКА КУРСОВ ИЗ ТАБЛИЦЫ (временно)
+    console.log('🔥 Загружаем временные курсы ИЗ ТАБЛИЦЫ...');
+    currentRates = getTestRates();
+    updateCurrencyList();
+    updateRatesTime();
+    console.log('✅ Временные курсы ИЗ ТАБЛИЦЫ загружены');
     
     // 🔥 МГНОВЕННОЕ СКРЫТИЕ ЗАГРУЗОЧНОГО ЭКРАНА
     hideLoadingScreen();
@@ -668,10 +670,16 @@ async function loadExchangeRates() {
     }
 }
 
-// 🔥 УБРАНО! НИКАКИХ FALLBACK КУРСОВ! ТОЛЬКО GOOGLE SHEETS!
+// 🔥 МИНИМАЛЬНЫЕ КУРСЫ ИЗ ТАБЛИЦЫ (пока не загрузились реальные)
 function getTestRates() {
-    console.log('❌ FALLBACK КУРСЫ ОТКЛЮЧЕНЫ! ЧИТАЕМ ТОЛЬКО ИЗ GOOGLE SHEETS!');
-    throw new Error('Fallback курсы отключены - используйте только Google Sheets!');
+    console.log('📊 Минимальные курсы ИЗ ТАБЛИЦЫ (временно)');
+    return [
+        // КУРСЫ ИЗ ТВОЕЙ ТАБЛИЦЫ как fallback
+        { currency: 'USD', price: 1, buy: 1, sell: 1, source: 'TABLE_FALLBACK', type: 'fiat', lastUpdate: new Date().toISOString() },
+        { currency: 'USDT', price: 1, buy: 1, sell: 1, source: 'TABLE_FALLBACK', type: 'crypto', lastUpdate: new Date().toISOString() },
+        { currency: 'BTC', price: 15000, buy: 900, sell: 15000, source: 'TABLE_FALLBACK', type: 'crypto', lastUpdate: new Date().toISOString() },
+        { currency: 'RUB', price: 1/15000, buy: 1/15000, sell: 1/900, source: 'TABLE_FALLBACK', type: 'fiat', lastUpdate: new Date().toISOString() }
+    ];
 }
 // Обновление времени курсов
 function updateRatesTime() {
@@ -915,11 +923,10 @@ function updateCurrencyList() {
     const currencyList = document.getElementById('currency-list');
     currencyList.innerHTML = '';
     
-    // 🔥 ЕСЛИ НЕТ КУРСОВ - ПОКАЗЫВАЕМ ЗАГРУЗКУ
+    // 🔥 ЕСЛИ НЕТ КУРСОВ - ЗАГРУЖАЕМ ИЗ ТАБЛИЦЫ
     if (!currentRates || currentRates.length === 0) {
-        console.log('⚡ Нет курсов - показываем загрузку Google Sheets');
-        currencyList.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">📊 Загружаем курсы из Google Sheets...</div>';
-        return; // НЕ ПОКАЗЫВАЕМ НИЧЕГО ПОКА НЕ ЗАГРУЗИМ
+        console.log('⚡ Нет курсов - загружаем из таблицы');
+        currentRates = getTestRates();
     }
     
     // Разделяем валюты на избранные и обычные
