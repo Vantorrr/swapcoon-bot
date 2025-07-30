@@ -51,8 +51,8 @@ async function initializeBotAndAdmins() {
             
             let config = null;
             
-            // 🔥 ПРИНУДИТЕЛЬНО ЧИТАЕМ ИЗ ФАЙЛА! НАХУЙ ПЕРЕМЕННЫЕ ОКРУЖЕНИЯ!
-            console.log("🔥 ИГНОРИРУЕМ ПЕРЕМЕННЫЕ ОКРУЖЕНИЯ! ЧИТАЕМ ТОЛЬКО ИЗ ФАЙЛА!");
+            // 🔥 СНАЧАЛА ФАЙЛ, ПОТОМ RAILWAY ПЕРЕМЕННЫЕ
+            console.log("🔥 ПРОБУЕМ ФАЙЛ, ПОТОМ RAILWAY ПЕРЕМЕННЫЕ!");
             const configPath = path.join(__dirname, "..", "config", "google-sheets.json");
             
             if (fs.existsSync(configPath)) {
@@ -64,7 +64,36 @@ async function initializeBotAndAdmins() {
                 console.log("📊 Credentials client_email:", config.credentials?.client_email);
             } else {
                 console.log("❌ Файл config/google-sheets.json не найден");
+                console.log("🔄 ПРОБУЕМ RAILWAY ПЕРЕМЕННЫЕ...");
+                
+                if (envSpreadsheetId && envCredentials && envEnabled) {
+                    try {
+                        console.log('🔥 ⚡ ПАРСИМ RAILWAY CREDENTIALS...');
+                        let cleanCredentials = envCredentials.trim();
+                        if (cleanCredentials.startsWith('=')) {
+                            console.log('🔧 Убираем лишний = из начала');
+                            cleanCredentials = cleanCredentials.substring(1);
                         }
+                        
+                        const railwayCredentialsObj = JSON.parse(cleanCredentials);
+                        console.log('✅ Railway JSON успешно спаршен!');
+                        
+                        config = {
+                            enabled: true,
+                            spreadsheet_id: envSpreadsheetId,
+                            credentials: railwayCredentialsObj
+                        };
+                        
+                        console.log("✅ Конфигурация из Railway переменных загружена");
+                        console.log("📊 Spreadsheet ID:", config.spreadsheet_id);
+                        console.log("📊 Credentials client_email:", config.credentials?.client_email);
+                    } catch (railwayError) {
+                        console.error('❌ Ошибка парсинга Railway credentials:', railwayError.message);
+                    }
+                } else {
+                    console.log('❌ Railway переменные неполные');
+                }
+            }
 
                         if (config && config.enabled) {
                 console.log('🚀 Инициализируем Google Sheets Manager в combined-server...');
