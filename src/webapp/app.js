@@ -565,12 +565,10 @@ async function loadInitialData() {
     console.log('🚀 Начинаем загрузку начальных данных...');
     showNotification('Загружаем данные приложения...', 'info');
     
-    // 🔥 БЫСТРАЯ ЗАГРУЗКА КУРСОВ ИЗ ТАБЛИЦЫ (временно)
-    console.log('🔥 Загружаем временные курсы ИЗ ТАБЛИЦЫ...');
-    currentRates = getTestRates();
-    updateCurrencyList();
-    updateRatesTime();
-    console.log('✅ Временные курсы ИЗ ТАБЛИЦЫ загружены');
+    // 🔥 ЖДЕМ ТОЛЬКО GOOGLE SHEETS - БЕЗ FALLBACK!
+    console.log('🔥 ЖДЕМ ЗАГРУЗКИ КУРСОВ ИЗ GOOGLE SHEETS...');
+    currentRates = [];
+    // НЕ ОБНОВЛЯЕМ ИНТЕРФЕЙС ПОКА НЕ ЗАГРУЗИМ РЕАЛЬНЫЕ КУРСЫ
     
     // 🔥 МГНОВЕННОЕ СКРЫТИЕ ЗАГРУЗОЧНОГО ЭКРАНА
     hideLoadingScreen();
@@ -670,16 +668,10 @@ async function loadExchangeRates() {
     }
 }
 
-// 🔥 МИНИМАЛЬНЫЕ КУРСЫ ИЗ ТАБЛИЦЫ (пока не загрузились реальные)
+// ❌ FALLBACK КУРСЫ ОТКЛЮЧЕНЫ - ТОЛЬКО GOOGLE SHEETS!
 function getTestRates() {
-    console.log('📊 Минимальные курсы ИЗ ТАБЛИЦЫ (временно)');
-    return [
-        // КУРСЫ ИЗ ТВОЕЙ ТАБЛИЦЫ как fallback
-        { currency: 'USD', price: 1, buy: 1, sell: 1, source: 'TABLE_FALLBACK', type: 'fiat', lastUpdate: new Date().toISOString() },
-        { currency: 'USDT', price: 1, buy: 1, sell: 1, source: 'TABLE_FALLBACK', type: 'crypto', lastUpdate: new Date().toISOString() },
-        { currency: 'BTC', price: 15000, buy: 900, sell: 15000, source: 'TABLE_FALLBACK', type: 'crypto', lastUpdate: new Date().toISOString() },
-        { currency: 'RUB', price: 1/15000, buy: 1/15000, sell: 1/900, source: 'TABLE_FALLBACK', type: 'fiat', lastUpdate: new Date().toISOString() }
-    ];
+    console.log('❌ FALLBACK КУРСЫ ОТКЛЮЧЕНЫ! ЖДЕМ GOOGLE SHEETS!');
+    return []; // ПУСТОЙ МАССИВ - НИКАКИХ КУРСОВ ПОКА НЕ ЗАГРУЗИМ ИЗ ТАБЛИЦЫ!
 }
 // Обновление времени курсов
 function updateRatesTime() {
@@ -722,11 +714,8 @@ function calculateExchange() {
     const googleBtcRate = currentRates.find(r => r.currency === 'BTC' && r.source && r.source.includes('GOOGLE'));
     console.log('🔥 НАЙДЕН BTC ИЗ GOOGLE?', googleBtcRate);
     
-    if (googleBtcRate) {
-        showNotification(`✅ НАЙДЕН BTC ИЗ GOOGLE! sell=${googleBtcRate.sell}`, 'success');
-    } else {
-        showNotification(`❌ BTC ИЗ GOOGLE НЕ НАЙДЕН! Используем фоллбэк`, 'warning');
-    }
+    // Убрал спам уведомления - только консоль
+    console.log('🔥 BTC из Google:', googleBtcRate ? 'найден' : 'не найден');
     
     if ((fromCurrency === 'BTC' && toCurrency === 'RUB') || (fromCurrency === 'RUB' && toCurrency === 'BTC')) {
         if (googleBtcRate) {
@@ -800,6 +789,9 @@ function calculateExchange() {
     
     console.log(`📊 fromRate (${fromCurrency}):`, fromRate);
     console.log(`📊 toRate (${toCurrency}):`, toRate);
+    
+    // УБРАЛ ДИАГНОСТИКУ - ТОЛЬКО КОНСОЛЬ
+    console.log(`📊 КУРСЫ: ${fromCurrency}=${fromRate?.sell}, ${toCurrency}=${toRate?.buy}, source: ${fromRate?.source}, ${toRate?.source}`);
     
     if (!fromRate || !toRate) {
         console.error('❌ Валютная пара не найдена');
@@ -923,10 +915,11 @@ function updateCurrencyList() {
     const currencyList = document.getElementById('currency-list');
     currencyList.innerHTML = '';
     
-    // 🔥 ЕСЛИ НЕТ КУРСОВ - ЗАГРУЖАЕМ ИЗ ТАБЛИЦЫ
+    // 🔥 ЕСЛИ НЕТ КУРСОВ - ПОКАЗЫВАЕМ ЗАГРУЗКУ
     if (!currentRates || currentRates.length === 0) {
-        console.log('⚡ Нет курсов - загружаем из таблицы');
-        currentRates = getTestRates();
+        console.log('⚡ Нет курсов - ждем Google Sheets');
+        currencyList.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;"><div style="font-size: 24px; margin-bottom: 10px;">📊</div><div>Загружаем курсы из Google Sheets...</div><div style="font-size: 12px; margin-top: 10px; opacity: 0.7;">Ждите, курсы загружаются из таблицы</div></div>';
+        return;
     }
     
     // Разделяем валюты на избранные и обычные
