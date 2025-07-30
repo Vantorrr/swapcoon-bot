@@ -891,7 +891,7 @@ function swapCurrencies() {
 // Открытие модала выбора валюты
 let currentCurrencyType = 'from';
 
-function openCurrencyModal(type) {
+async function openCurrencyModal(type) {
     currentCurrencyType = type;
     
     // 🚀 МГНОВЕННАЯ ПРОВЕРКА И ЗАГРУЗКА КУРСОВ
