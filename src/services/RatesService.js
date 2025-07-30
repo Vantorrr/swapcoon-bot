@@ -25,19 +25,48 @@ class RatesService {
         }
 
         const rates = [];
-        // 🔥 ПРОСТАЯ ЛОГИКА: ТОЛЬКО ПРЯМЫЕ ПАРЫ ИЗ ТАБЛИЦЫ
+        // 🔥 ВОЗВРАЩАЕМ ФОРМАТ СОВМЕСТИМЫЙ С API (currency + rates)
+        const currencyMap = new Map();
+        
         for (const rate of manualRates) {
-            console.log(`🔥 Добавляем прямую пару: ${rate.pair}, sell=${rate.sellRate}, buy=${rate.buyRate}`);
+            const [fromCurrency, toCurrency] = rate.pair.split('/');
+            console.log(`🔥 Обрабатываем пару: ${rate.pair} (${fromCurrency} → ${toCurrency})`);
             
-            // Добавляем пару КАК ЕСТЬ из таблицы
-            rates.push({
-                pair: rate.pair,
-                sellRate: rate.sellRate,
-                buyRate: rate.buyRate,
-                source: 'GOOGLE_SHEETS',
-                lastUpdate: new Date().toISOString()
-            });
+            // Добавляем fromCurrency если еще нет
+            if (!currencyMap.has(fromCurrency)) {
+                currencyMap.set(fromCurrency, {
+                    currency: fromCurrency,
+                    price: rate.sellRate,
+                    sell: rate.sellRate,
+                    buy: rate.buyRate,
+                    source: 'GOOGLE_SHEETS',
+                    type: fromCurrency === 'USD' || fromCurrency === 'EUR' || fromCurrency === 'RUB' || fromCurrency === 'ARS' || fromCurrency === 'BRL' ? 'fiat' : 'crypto',
+                    lastUpdate: new Date().toISOString(),
+                    pair: rate.pair
+                });
+                console.log(`🔥 Добавляем валюту ${fromCurrency}: sell=${rate.sellRate}, buy=${rate.buyRate}`);
+            }
+            
+            // Добавляем toCurrency если еще нет (с обратным курсом)
+            if (!currencyMap.has(toCurrency)) {
+                const reverseSell = 1 / rate.buyRate;
+                const reverseBuy = 1 / rate.sellRate;
+                currencyMap.set(toCurrency, {
+                    currency: toCurrency,
+                    price: reverseSell,
+                    sell: reverseSell,
+                    buy: reverseBuy,
+                    source: 'GOOGLE_SHEETS',
+                    type: toCurrency === 'USD' || toCurrency === 'EUR' || toCurrency === 'RUB' || toCurrency === 'ARS' || toCurrency === 'BRL' ? 'fiat' : 'crypto',
+                    lastUpdate: new Date().toISOString(),
+                    pair: `${toCurrency}/${fromCurrency}`
+                });
+                console.log(`🔥 Добавляем валюту ${toCurrency} (обратный): sell=${reverseSell}, buy=${reverseBuy}`);
+            }
         }
+        
+        // Преобразуем Map в массив
+        rates = Array.from(currencyMap.values());
 
         console.log(`🔥 ВОЗВРАЩАЕМ ${rates.length} КУРСОВ ИЗ GOOGLE SHEETS!`);
         rates.forEach(rate => {
