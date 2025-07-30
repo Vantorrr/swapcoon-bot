@@ -706,16 +706,16 @@ function calculateExchange() {
     console.log('🔥 КУРСЫ С GOOGLE:', currentRates.filter(r => r.source && r.source.includes('GOOGLE')));
     console.log('🔥 КУРС BTC:', currentRates.find(r => r.currency === 'BTC'));
     
-    // 🔥 ДИАГНОСТИКА ПРЯМО В ИНТЕРФЕЙСЕ!
+    // 🔥 ДИАГНОСТИКА В КОНСОЛИ (БЕЗ СПАМА НА ЭКРАНЕ)
     const btcRate = currentRates.find(r => r.currency === 'BTC');
     const googleRates = currentRates.filter(r => r.source && r.source.includes('GOOGLE'));
     
-    // Показываем диагностику на экране
-    showNotification(`🔥 ДИАГНОСТИКА: Всего курсов: ${currentRates.length}, с Google: ${googleRates.length}`, 'info');
+    // Диагностика только в консоли
+    console.log(`🔥 ДИАГНОСТИКА: Всего курсов: ${currentRates.length}, с Google: ${googleRates.length}`);
     if (btcRate) {
-        showNotification(`🔥 BTC курс: sell=${btcRate.sell}, source="${btcRate.source}"`, 'info');
+        console.log(`🔥 BTC курс: sell=${btcRate.sell}, source="${btcRate.source}"`);
     } else {
-        showNotification(`❌ BTC курс НЕ НАЙДЕН!`, 'error');
+        console.log(`❌ BTC курс НЕ НАЙДЕН!`);
     }
     
     // ИЩЕМ ПРЯМЫЕ КУРСЫ ИЗ GOOGLE SHEETS В currentRates
