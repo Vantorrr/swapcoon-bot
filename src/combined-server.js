@@ -926,6 +926,22 @@ app.post('/api/create-order', async (req, res) => {
         const orderId = `EM${Date.now()}${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
         console.log('📝 Сгенерированный ID заявки:', orderId);
 
+        // 🔄 АВТОМАТИЧЕСКИ РЕГИСТРИРУЕМ ПОЛЬЗОВАТЕЛЯ В БОТЕ
+        if (db && db.upsertUser) {
+            try {
+                await db.upsertUser({
+                    telegram_id: userId,
+                    first_name: 'Пользователь',
+                    last_name: '',
+                    username: `user${userId}`,
+                    is_bot: false
+                });
+                console.log('✅ Пользователь зарегистрирован в боте:', userId);
+            } catch (userError) {
+                console.error('❌ Ошибка регистрации пользователя:', userError);
+            }
+        }
+
         // Создаем заявку в базе данных
         let realOrderId = orderId; // fallback к сгенерированному ID
         if (db && db.createOrder) {
