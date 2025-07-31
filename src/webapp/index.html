@@ -36,14 +36,41 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <!-- Загрузочный экран -->
+    <!-- БОМБОВАЯ ЗАСТАВКА ТОП-1 МИРА -->
     <div id="loading-screen" class="loading-screen">
         <div class="loading-content">
             <div class="loading-logo">
                 <img src="../assets/images/logo.png" alt="ExMachinaX" class="logo-image">
+                <div class="logo-glow"></div>
             </div>
-            <div class="loading-spinner"></div>
-            <p>Загружаем курсы валют...</p>
+            
+            <!-- Прогресс бар -->
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div id="progress-fill" class="progress-fill"></div>
+                    <div class="progress-shine"></div>
+                </div>
+                <div id="progress-text" class="progress-text">0%</div>
+            </div>
+            
+            <!-- Динамический текст загрузки -->
+            <div class="loading-stage">
+                <div class="loading-icon">
+                    <i id="loading-stage-icon" class="fas fa-download"></i>
+                </div>
+                <h3 id="loading-stage-title">Инициализация системы...</h3>
+                <p id="loading-stage-subtitle">Подготавливаем всё к работе</p>
+            </div>
+            
+            <!-- Частицы для крутости -->
+            <div class="particles">
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+            </div>
         </div>
     </div>
 

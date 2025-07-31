@@ -348,11 +348,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function initTelegramWebApp() {
     console.log('🔌 Инициализация Telegram WebApp...');
     
-    // 🛡️ КРАЙНЕ БЫСТРЫЙ ТАЙМЕР БЕЗОПАСНОСТИ - 1 СЕКУНДА
-    setTimeout(() => {
-        console.log('🛡️ Таймер безопасности: принудительно скрываем заставку');
-        hideLoadingScreen();
-    }, 1000); // Еще быстрее для лучшего UX
+    // 🚀 БОМБОВАЯ ЗАСТАВКА УПРАВЛЯЕТСЯ АВТОМАТИЧЕСКИ
     
     if (window.Telegram?.WebApp) {
         tg = window.Telegram.WebApp;
@@ -571,7 +567,7 @@ async function loadInitialData() {
     // НЕ ОБНОВЛЯЕМ ИНТЕРФЕЙС ПОКА НЕ ЗАГРУЗИМ РЕАЛЬНЫЕ КУРСЫ
     
     // 🔥 МГНОВЕННОЕ СКРЫТИЕ ЗАГРУЗОЧНОГО ЭКРАНА
-    hideLoadingScreen();
+    // 🚀 БОМБОВАЯ ЗАСТАВКА УПРАВЛЯЕТСЯ АВТОМАТИЧЕСКИ
     
     // ⚡ УСКОРЕННАЯ ИНИЦИАЛИЗАЦИЯ - ВСЕ ПАРАЛЛЕЛЬНО
     // Обновляем отображение профиля с данными из Telegram
@@ -659,8 +655,7 @@ async function loadExchangeRates() {
             console.log('✅ Актуальные курсы заменили тестовые:', currentRates.length, 'валют');
             // showNotification('Курсы валют обновлены!', 'success'); // УБРАНО ПО ЗАПРОСУ
             
-            // 🔥 ПРИНУДИТЕЛЬНОЕ СКРЫТИЕ ЗАСТАВКИ ПОСЛЕ ЗАГРУЗКИ КУРСОВ
-            hideLoadingScreen();
+            // 🚀 БОМБОВАЯ ЗАСТАВКА УПРАВЛЯЕТСЯ АВТОМАТИЧЕСКИ
         } else {
             throw new Error(data.error || 'Пустой ответ от сервера');
         }
@@ -675,8 +670,7 @@ async function loadExchangeRates() {
             showNotification('Не удалось загрузить актуальные курсы', 'warning');
         }
         
-        // 🔥 ПРИНУДИТЕЛЬНОЕ СКРЫТИЕ ЗАСТАВКИ ДАЖЕ ПРИ ОШИБКЕ
-        hideLoadingScreen();
+        // 🚀 БОМБОВАЯ ЗАСТАВКА УПРАВЛЯЕТСЯ АВТОМАТИЧЕСКИ
     }
 }
 
@@ -3656,7 +3650,128 @@ window.showOrderRequisites = function(orderId, paymentMethod, orderData) {
     document.body.insertAdjacentHTML('beforeend', modalHtml);
 }; 
 
-// 🚀 БЫСТРОЕ СКРЫТИЕ ЗАГРУЗОЧНОГО ЭКРАНА
+// 🚀 БОМБОВАЯ ЗАСТАВКА С ЭТАПАМИ ЗАГРУЗКИ
+let loadingProgress = 0;
+let loadingStageIndex = 0;
+
+const loadingStages = [
+    {
+        icon: 'fas fa-rocket',
+        title: 'Инициализация системы...',
+        subtitle: 'Подготавливаем всё к работе',
+        duration: 800
+    },
+    {
+        icon: 'fas fa-chart-line',
+        title: 'Загружаем курсы валют...',
+        subtitle: 'Синхронизируемся с Google Sheets',
+        duration: 1200
+    },
+    {
+        icon: 'fas fa-user-circle',
+        title: 'Загружаем ваш профиль...',
+        subtitle: 'Настраиваем персональные данные',
+        duration: 800
+    },
+    {
+        icon: 'fas fa-shield-alt',
+        title: 'Проверяем безопасность...',
+        subtitle: 'Защищаем ваши операции',
+        duration: 600
+    },
+    {
+        icon: 'fas fa-check-circle',
+        title: 'Всё готово!',
+        subtitle: 'Добро пожаловать в ExMachinaX',
+        duration: 500
+    }
+];
+
+function updateLoadingStage(stageIndex) {
+    const stage = loadingStages[stageIndex];
+    if (!stage) return;
+    
+    const iconElement = document.getElementById('loading-stage-icon');
+    const titleElement = document.getElementById('loading-stage-title');
+    const subtitleElement = document.getElementById('loading-stage-subtitle');
+    
+    if (iconElement && titleElement && subtitleElement) {
+        // Анимация смены иконки
+        iconElement.style.transform = 'scale(0)';
+        setTimeout(() => {
+            iconElement.className = stage.icon;
+            iconElement.style.transform = 'scale(1)';
+        }, 150);
+        
+        // Анимация смены текста
+        titleElement.style.opacity = '0';
+        subtitleElement.style.opacity = '0';
+        
+        setTimeout(() => {
+            titleElement.textContent = stage.title;
+            subtitleElement.textContent = stage.subtitle;
+            titleElement.style.opacity = '1';
+            subtitleElement.style.opacity = '1';
+        }, 200);
+    }
+}
+
+function updateProgress(targetProgress) {
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    
+    if (progressFill && progressText) {
+        progressFill.style.width = targetProgress + '%';
+        
+        // Анимированный счётчик
+        const currentProgress = loadingProgress;
+        const increment = (targetProgress - currentProgress) / 20;
+        let current = currentProgress;
+        
+        const counter = setInterval(() => {
+            current += increment;
+            if (current >= targetProgress) {
+                current = targetProgress;
+                clearInterval(counter);
+            }
+            progressText.textContent = Math.round(current) + '%';
+        }, 50);
+        
+        loadingProgress = targetProgress;
+    }
+}
+
+function startLoadingSequence() {
+    let currentStage = 0;
+    let currentProgress = 0;
+    
+    function nextStage() {
+        if (currentStage < loadingStages.length) {
+            const stage = loadingStages[currentStage];
+            updateLoadingStage(currentStage);
+            
+            // Прогресс для каждого этапа
+            const progressStep = 100 / loadingStages.length;
+            currentProgress += progressStep;
+            updateProgress(Math.min(currentProgress, 100));
+            
+            currentStage++;
+            
+            if (currentStage < loadingStages.length) {
+                setTimeout(nextStage, stage.duration);
+            } else {
+                // Финальный этап - скрываем заставку
+                setTimeout(() => {
+                    hideLoadingScreen();
+                }, stage.duration);
+            }
+        }
+    }
+    
+    // Запускаем последовательность
+    setTimeout(nextStage, 500); // Небольшая задержка для эффекта
+}
+
 function hideLoadingScreen() {
     const loadingScreen = document.getElementById('loading-screen');
     const app = document.getElementById('app');
@@ -3671,10 +3786,14 @@ function hideLoadingScreen() {
                 app.classList.remove('hidden');
             }
             console.log('🎉 Приложение полностью загружено!');
-            showNotification('Приложение готово к работе!', 'success');
-        }, 300);
+        }, 500);
     }
 }
+
+// Автозапуск заставки при загрузке страницы
+document.addEventListener('DOMContentLoaded', () => {
+    startLoadingSequence();
+});
 
 // 🌐 ФУНКЦИЯ ДЛЯ ПОКАЗА СООБЩЕНИЯ О САЙТЕ В РАЗРАБОТКЕ
 function showWebsiteMessage() {
