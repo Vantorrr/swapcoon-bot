@@ -356,13 +356,52 @@ function initTelegramWebApp() {
         console.log('✅ Telegram WebApp API обнаружен');
         console.log('📱 initData:', tg.initData ? 'Есть данные' : 'Нет данных');
         
-        // 📱 ПРОСТОЙ ПОЛНОЭКРАННЫЙ РЕЖИМ КАК ПРЕДЛОЖИЛ ПОЛЬЗОВАТЕЛЬ!
+        // 🚀 НАСТОЯЩИЙ ПОЛНОЭКРАННЫЙ РЕЖИМ (Bot API 8.0+)
         window.Telegram.WebApp.ready();
         
-        // Небольшая задержка чтобы ready() успел отработать
+        // Проверяем версию и используем правильный метод
         setTimeout(() => {
-            window.Telegram.WebApp.expand(); // БАХ — НА ВЕСЬ ЭКРАН!
-            console.log('📱 EXPAND ВЫЗВАН! isExpanded:', window.Telegram.WebApp.isExpanded);
+            console.log('🔍 Telegram Bot API версия:', tg.version);
+            
+            // Обработчики событий полноэкранного режима
+            tg.onEvent('fullscreenChanged', (data) => {
+                console.log('🎯 Fullscreen changed:', data.is_fullscreen);
+                if (data.is_fullscreen) {
+                    console.log('✅ ПОЛНОЭКРАННЫЙ РЕЖИМ АКТИВИРОВАН!');
+                } else {
+                    console.log('📱 Режим обычного окна');
+                }
+            });
+            
+            tg.onEvent('fullscreenFailed', (data) => {
+                console.log('❌ Fullscreen failed:', data.error);
+                console.log('🔄 Fallback to expand...');
+                window.Telegram.WebApp.expand();
+            });
+            
+            // Используем новый метод для Bot API 8.0+
+            if (tg.isVersionAtLeast && tg.isVersionAtLeast('8.0')) {
+                console.log('🚀 ИСПОЛЬЗУЕМ НАСТОЯЩИЙ ПОЛНОЭКРАННЫЙ РЕЖИМ!');
+                try {
+                    window.Telegram.WebApp.requestFullscreen();
+                    console.log('📱 requestFullscreen() вызван!');
+                } catch (error) {
+                    console.log('❌ Ошибка requestFullscreen:', error);
+                    window.Telegram.WebApp.expand(); // Fallback
+                }
+            } else {
+                console.log('⚠️ Старая версия API, используем expand()');
+                window.Telegram.WebApp.expand(); // Fallback для старых версий
+            }
+            
+            // Логируем состояние
+            setTimeout(() => {
+                console.log('📊 Состояние после запроса:');
+                console.log('  - isExpanded:', tg.isExpanded);
+                console.log('  - isFullscreen:', tg.isFullscreen);
+                console.log('  - viewportHeight:', tg.viewportHeight);
+                console.log('  - viewportStableHeight:', tg.viewportStableHeight);
+            }, 500);
         }, 50);
         
         // Извлекаем User ID
