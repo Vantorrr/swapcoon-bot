@@ -205,6 +205,7 @@ app.post('/api/force-sync', async (req, res) => {
 // API для расчета обмена (ИЗ RatesService с Google Sheets)
 app.post('/api/calculate', async (req, res) => {
     console.log('🧮 API /api/calculate: расчет ИЗ RatesService с Google Sheets');
+    console.log('🧮 ВХОДНЫЕ ДАННЫЕ:', req.body);
     
     const { fromCurrency, toCurrency, amount } = req.body;
     

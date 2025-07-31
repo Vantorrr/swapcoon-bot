@@ -775,6 +775,15 @@ function calculateExchange() {
     if (!pairData) {
         console.log(`⚠️ Прямая пара ${fromCurrency}/${toCurrency} не найдена, используем API для расчета`);
         console.log(`📊 Доступные пары:`, window.rawPairData?.map(p => p.pair) || 'нет данных');
+        console.log(`🔍 ДЕТАЛЬНАЯ ДИАГНОСТИКА ПОИСКА ПАРЫ:`);
+        console.log(`   Ищем: ${fromCurrency}/${toCurrency}`);
+        console.log(`   Обратная: ${toCurrency}/${fromCurrency}`);
+        if (window.rawPairData) {
+            console.log(`   Всего пар:`, window.rawPairData.length);
+            window.rawPairData.forEach(pair => {
+                console.log(`     ${pair.pair}: sell=${pair.sellRate}, buy=${pair.buyRate}`);
+            });
+        }
         
         // Используем API для сложного расчета
         calculateExchangeViaAPI(fromAmount);
