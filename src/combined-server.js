@@ -905,7 +905,8 @@ app.post('/api/create-order', async (req, res) => {
             fee,
             amlFromResult,
             amlToResult,
-            pairType
+            pairType,
+            network  // ← ДОБАВЛЯЕМ ИЗВЛЕЧЕНИЕ СЕТИ!
         } = req.body;
 
         // ДЕТАЛЬНАЯ ДИАГНОСТИКА ИЗВЛЕЧЕННЫХ ДАННЫХ
@@ -919,6 +920,7 @@ app.post('/api/create-order', async (req, res) => {
         console.log('  toAddress:', toAddress);
         console.log('  exchangeRate:', exchangeRate);
         console.log('  pairType:', pairType);
+        console.log('  network:', network);  // ← ДОБАВЛЯЕМ В ДИАГНОСТИКУ!
 
         // Генерируем уникальный ID заявки
         const orderId = `EM${Date.now()}${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
@@ -984,7 +986,8 @@ app.post('/api/create-order', async (req, res) => {
                     toCurrency: toCurrency,
                     fromAddress: fromAddress || '',
                     toAddress: toAddress || '',
-                    pairType: pairType || 'fiat'
+                    pairType: pairType || 'fiat',
+                    network: network || null                  // ← ДОБАВЛЯЕМ СЕТЬ ДЛЯ ОПЕРАТОРОВ!
                 });
                 console.log('✅ ВЫЗОВ notifyOperators ЗАВЕРШЕН');
             } catch (notifyError) {

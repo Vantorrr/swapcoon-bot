@@ -2149,7 +2149,8 @@ async function createOrder() {
                 fee: currentCalculation.fee,
                 amlFromResult: currentFromAMLResult || { status: 'not_checked', risk: 'unknown' },
                 amlToResult: currentToAMLResult || { status: 'not_checked', risk: 'unknown' },
-                pairType: 'crypto'
+                pairType: 'crypto',
+                network: currentNetwork || null // ← ДОБАВЛЯЕМ СЕТЬ!
             };
         } else if (pairType === 'crypto-to-fiat') {
             // Для смешанных пар (USDT → RUB)
@@ -2183,7 +2184,8 @@ async function createOrder() {
                 fee: currentCalculation.fee,
                 amlFromResult: currentFromAMLResult || { status: 'not_checked', risk: 'unknown' },
                 amlToResult: { status: 'not_required', risk: 'none' }, // для фиатных реквизитов AML не нужен
-                pairType: 'crypto-to-fiat'
+                pairType: 'crypto-to-fiat',
+                network: currentNetwork || null // ← ДОБАВЛЯЕМ СЕТЬ ДЛЯ CRYPTO→FIAT!
             };
             console.log('🔄 ФИНАЛЬНЫЕ ДАННЫЕ CRYPTO-TO-FIAT ЗАЯВКИ:', orderData);
         } else if (pairType === 'fiat-to-crypto') {
@@ -2210,7 +2212,8 @@ async function createOrder() {
                 fee: currentCalculation.fee,
                 amlFromResult: { status: 'not_required', risk: 'none' }, // для фиатных средств AML не нужен
                 amlToResult: currentFromAMLResult || { status: 'not_checked', risk: 'unknown' }, // AML кошелька получения
-                pairType: 'fiat-to-crypto'
+                pairType: 'fiat-to-crypto',
+                network: currentNetwork || null // ← ДОБАВЛЯЕМ СЕТЬ ДЛЯ FIAT→CRYPTO!
             };
             console.log('🔄 ФИНАЛЬНЫЕ ДАННЫЕ FIAT-TO-CRYPTO ЗАЯВКИ:', orderData);
                 } else {

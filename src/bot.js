@@ -5096,7 +5096,8 @@ async function notifyOperators(orderData) {
             id: orderData.id,
             fromAddress: orderData.fromAddress,
             toAddress: orderData.toAddress,
-            pairType: orderData.pairType
+            pairType: orderData.pairType,
+            network: orderData.network  // ← ДОБАВЛЯЕМ СЕТЬ В ДИАГНОСТИКУ!
         });
 
         // Сохраняем уведомления в базу данных
@@ -5186,10 +5187,14 @@ async function notifyOperators(orderData) {
                 break;
         }
 
+        // Добавляем информацию о сети если указана
+        const networkSection = orderData.network ? `🔗 <b>Сеть:</b> ${orderData.network}\n` : '';
+        
         const message = 
             `🚨 <b>НОВАЯ ЗАЯВКА С САЙТА #${orderData.id}</b>\n\n` +
             `👤 <b>Пользователь:</b> ${orderData.userName || 'Неизвестен'}\n` +
             `💱 <b>Обмен:</b> ${orderData.fromAmount} ${orderData.fromCurrency} → ${orderData.toCurrency}\n` +
+            networkSection +  // ← ДОБАВЛЯЕМ ИНФОРМАЦИЮ О СЕТИ!
             `${pairTypeIcon} <b>Тип пары:</b> ${pairTypeText}\n` +
             `💰 <b>Ожидаемая прибыль:</b> ~$${estimatedProfit}\n\n` +
             addressSection +
