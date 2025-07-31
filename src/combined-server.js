@@ -624,25 +624,74 @@ app.get('/api/rates', async (req, res) => {
         }
 
         console.log('📡 Получаем курсы ТОЛЬКО через GLOBAL.RatesService с Google Sheets...');
-        const rates = await global.ratesService.getRates();
-        console.log(`📊 Получено ${rates.length} курсов из global.ratesService`);
+        const pairRates = await global.ratesService.getRates();
+        console.log(`📊 Получено ${pairRates.length} пар из global.ratesService`);
         
-        console.log('🔥🔥🔥 ПОЛНАЯ ДИАГНОСТИКА КУРСОВ ДЛЯ API:');
-        rates.forEach(rate => {
-            console.log(`📊 API: ${rate.currency} = sell:${rate.sell}, buy:${rate.buy}, price:${rate.price}, source:"${rate.source || 'API'}"`);
-            if (rate.currency === 'BTC') {
-                console.log(`🔥 BTC ДЕТАЛЬНО: sell=${rate.sell}, buy=${rate.buy}, source="${rate.source}"`);
+        // 🔥 ПРЕОБРАЗУЕМ ПАРЫ В ОТДЕЛЬНЫЕ ВАЛЮТЫ ДЛЯ ФРОНТЕНДА
+        console.log('🔥 Преобразуем пары в валюты для API...');
+        const currencySet = new Set();
+        const currencyRates = [];
+        
+        // Собираем все валюты из пар
+        pairRates.forEach(pairData => {
+            const [from, to] = pairData.pair.split('/');
+            currencySet.add(from);
+            currencySet.add(to);
+        });
+        
+        // Создаем объекты валют для API
+        Array.from(currencySet).forEach(currency => {
+            // 🔥 УМНЫЙ ПОИСК: ИЩЕМ ЛУЧШУЮ ПАРУ ДЛЯ ВАЛЮТЫ
+            let sell = 1;
+            let buy = 1;
+            
+            // Ищем пару где эта валюта первая (продаем эту валюту)
+            const directPair = pairRates.find(p => p.pair.startsWith(currency + '/'));
+            if (directPair) {
+                sell = directPair.sellRate;
+                buy = directPair.buyRate;
+                console.log(`💰 ${currency}: Прямая пара ${directPair.pair} → sell=${sell}, buy=${buy}`);
+            } else {
+                // Ищем пару где эта валюта вторая (покупаем эту валюту)
+                const reversePair = pairRates.find(p => p.pair.endsWith('/' + currency));
+                if (reversePair) {
+                    // Инвертируем курсы: если X/CURRENCY = sell/buy, то CURRENCY/X = buy/sell
+                    sell = 1 / reversePair.buyRate;
+                    buy = 1 / reversePair.sellRate;
+                    console.log(`💰 ${currency}: Обратная пара ${reversePair.pair} → sell=${sell}, buy=${buy}`);
+                } else {
+                    console.log(`💰 ${currency}: Пара не найдена, используем 1/1`);
+                }
             }
+            
+            currencyRates.push({
+                currency: currency,
+                price: sell,
+                sell: sell, 
+                buy: buy,
+                type: ['USD', 'EUR', 'RUB', 'ARS', 'BRL'].includes(currency) ? 'fiat' : 'crypto',
+                change24h: 0,
+                source: 'GOOGLE_SHEETS',
+                lastUpdate: new Date().toISOString()
+            });
+        });
+        
+        console.log(`📊 Создано ${currencyRates.length} валют для API`);
+        
+        console.log('🔥🔥🔥 ПОЛНАЯ ДИАГНОСТИКА ВАЛЮТ ДЛЯ API:');
+        currencyRates.forEach(rate => {
+            console.log(`📊 API: ${rate.currency} = sell:${rate.sell}, buy:${rate.buy}, price:${rate.price}, source:"${rate.source}"`);
         });
         
         // НАЙДЕМ BTC КУРС СПЕЦИАЛЬНО
-        const btcRate = rates.find(r => r.currency === 'BTC');
+        const btcRate = currencyRates.find(r => r.currency === 'BTC');
         if (btcRate) {
             console.log(`🔥🔥🔥 BTC КУРС НАЙДЕН: sell=${btcRate.sell}, source="${btcRate.source}"`);
-            console.log(`🔥 ДОЛЖЕН ЛИ FRONTEND НАЙТИ ЕГО? source.includes('GOOGLE')=${btcRate.source && btcRate.source.includes('GOOGLE')}`);
         } else {
-            console.log(`❌❌❌ BTC КУРС НЕ НАЙДЕН В RATES!`);
+            console.log(`❌❌❌ BTC КУРС НЕ НАЙДЕН В ВАЛЮТАХ!`);
         }
+        
+        const rates = currencyRates;
         
         res.json({ 
             success: true, 

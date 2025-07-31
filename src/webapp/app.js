@@ -692,37 +692,25 @@ function calculateExchange() {
         return;
     }
     
-    // 🔥 НОВАЯ ЛОГИКА: ПРЯМОЙ ПОИСК ПАР ИЗ GOOGLE SHEETS
-    console.log(`📊 ПОИСК ПАРЫ для ${fromCurrency} → ${toCurrency}`);
+    // 🔥 СТАНДАРТНАЯ ЛОГИКА: РАБОТАЕМ С ВАЛЮТАМИ ИЗ GOOGLE SHEETS
+    console.log(`📊 РАСЧЕТ КУРСА для ${fromCurrency} → ${toCurrency}`);
+    const fromRate = currentRates.find(r => r.currency === fromCurrency);
+    const toRate = currentRates.find(r => r.currency === toCurrency);
     
-    // Ищем прямую пару "FROM/TO"
-    const directPair = currentRates.find(r => r.pair === `${fromCurrency}/${toCurrency}`);
-    // Ищем обратную пару "TO/FROM"  
-    const reversePair = currentRates.find(r => r.pair === `${toCurrency}/${fromCurrency}`);
+    console.log(`📊 fromRate (${fromCurrency}):`, fromRate);
+    console.log(`📊 toRate (${toCurrency}):`, toRate);
     
-    console.log(`📊 Прямая пара (${fromCurrency}/${toCurrency}):`, directPair);
-    console.log(`📊 Обратная пара (${toCurrency}/${fromCurrency}):`, reversePair);
-    
-    let exchangeRate;
-    let toAmount;
-    
-    if (directPair) {
-        // Используем прямую пару: FROM продаем, TO покупаем
-        exchangeRate = directPair.sellRate / directPair.buyRate;
-        toAmount = fromAmount * exchangeRate;
-        console.log(`📊 ПРЯМАЯ ПАРА: ${directPair.sellRate} / ${directPair.buyRate} = ${exchangeRate}`);
-        console.log(`📊 РЕЗУЛЬТАТ: ${fromAmount} * ${exchangeRate} = ${toAmount}`);
-    } else if (reversePair) {
-        // Используем обратную пару: инвертируем
-        exchangeRate = reversePair.buyRate / reversePair.sellRate;
-        toAmount = fromAmount * exchangeRate;
-        console.log(`📊 ОБРАТНАЯ ПАРА: ${reversePair.buyRate} / ${reversePair.sellRate} = ${exchangeRate}`);
-        console.log(`📊 РЕЗУЛЬТАТ: ${fromAmount} * ${exchangeRate} = ${toAmount}`);
-    } else {
-        console.error(`❌ Пара ${fromCurrency}/${toCurrency} НЕ НАЙДЕНА в Google Sheets!`);
-        console.error(`📊 Доступные пары:`, currentRates.map(r => r.pair));
+    if (!fromRate || !toRate) {
+        console.error(`❌ Валютная пара ${fromCurrency}/${toCurrency} не найдена`);
+        console.error(`📊 Доступные валюты:`, currentRates.map(r => r.currency));
         return;
     }
+    
+    // Расчет курса обмена
+    const exchangeRate = fromRate.sell / toRate.buy;
+    const toAmount = fromAmount * exchangeRate;
+    console.log(`📊 РАСЧЕТ: ${fromRate.sell} / ${toRate.buy} = ${exchangeRate}`);
+    console.log(`📊 РЕЗУЛЬТАТ: ${fromAmount} * ${exchangeRate} = ${toAmount}`);
     const fee = 0;
     const finalAmount = toAmount;
     
@@ -749,20 +737,14 @@ function reverseCalculateExchange() {
         return;
     }
     
-    // 🔥 НОВАЯ ЛОГИКА ДЛЯ ОБРАТНОГО РАСЧЕТА: РАБОТАЕМ С ПАРАМИ
-    const directPair = currentRates.find(r => r.pair === `${fromCurrency}/${toCurrency}`);
-    const reversePair = currentRates.find(r => r.pair === `${toCurrency}/${fromCurrency}`);
+    const fromRate = currentRates.find(r => r.currency === fromCurrency);
+    const toRate = currentRates.find(r => r.currency === toCurrency);
     
-    if (!directPair && !reversePair) {
+    if (!fromRate || !toRate) {
         return;
     }
     
-    let exchangeRate;
-    if (directPair) {
-        exchangeRate = directPair.sellRate / directPair.buyRate;
-    } else {
-        exchangeRate = reversePair.buyRate / reversePair.sellRate;
-    }
+    const exchangeRate = fromRate.sell / toRate.buy;
     const fee = 0; // Комиссия убрана
     const grossAmount = toAmount; // Без комиссии
     const fromAmount = grossAmount / exchangeRate;
@@ -848,37 +830,9 @@ function updateCurrencyList() {
         return;
     }
     
-    // 🔥 ИЗВЛЕКАЕМ УНИКАЛЬНЫЕ ВАЛЮТЫ ИЗ ПАР GOOGLE SHEETS
-    console.log(`📊 Извлекаем валюты из ${currentRates.length} пар`);
-    const currencySet = new Set();
-    
-    // Собираем все валюты из пар
-    currentRates.forEach(pairData => {
-        const [from, to] = pairData.pair.split('/');
-        currencySet.add(from);
-        currencySet.add(to);
-    });
-    
-    // Создаем объекты валют для селектора
-    const currencyRates = Array.from(currencySet).map(currency => {
-        // Ищем пару где эта валюта первая (приоритет)
-        const directPair = currentRates.find(p => p.pair.startsWith(currency + '/'));
-        const price = directPair ? directPair.sellRate : 1; // Если нет прямой пары - ставим 1
-        
-        return {
-            currency: currency,
-            price: price,
-            type: ['USD', 'EUR', 'RUB', 'ARS', 'BRL'].includes(currency) ? 'fiat' : 'crypto',
-            change24h: 0, // Пока без изменений
-            source: 'GOOGLE_SHEETS'
-        };
-    });
-    
-    console.log(`📊 Создано ${currencyRates.length} валют для селектора:`, currencyRates.map(r => r.currency));
-    
     // Разделяем валюты на избранные и обычные
-    const favorites = currencyRates.filter(rate => isFavorite(rate.currency));
-    const others = currencyRates.filter(rate => !isFavorite(rate.currency));
+    const favorites = currentRates.filter(rate => isFavorite(rate.currency));
+    const others = currentRates.filter(rate => !isFavorite(rate.currency));
     
     // Добавляем заголовок избранных (если есть)
     if (favorites.length > 0) {
