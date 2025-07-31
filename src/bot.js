@@ -4790,6 +4790,71 @@ bot.on('message', async (ctx) => {
     console.log('🟢 messageText:', messageText);
     console.log('🟢 userRole:', userRole);
     
+    // 🚨 ПРИОРИТЕТНАЯ ДИАГНОСТИКА ТЕКСТОВЫХ СООБЩЕНИЙ
+    console.log('📨 ПРОВЕРЯЕМ КОНТЕКСТ ДЛЯ ПОЛЬЗОВАТЕЛЯ:', userId);
+    console.log('📨 chatContexts.has(userId):', chatContexts.has(userId));
+    if (chatContexts.has(userId)) {
+        const context = chatContexts.get(userId);
+        console.log('📨 НАЙДЕН КОНТЕКСТ:', context);
+        if (context.action === 'send_message_to_client') {
+            console.log('📨 🔥 ОБНАРУЖЕНА ОТПРАВКА СООБЩЕНИЯ КЛИЕНТУ!');
+            console.log('📨 🔥 orderId:', context.orderId);
+            console.log('📨 🔥 messageText:', messageText);
+            
+            // НЕМЕДЛЕННО ВЫПОЛНЯЕМ ОТПРАВКУ КЛИЕНТУ
+            try {
+                const order = await db.getOrderWithClient(context.orderId);
+                if (!order) {
+                    chatContexts.delete(userId);
+                    return ctx.reply('❌ Заказ не найден');
+                }
+                
+                console.log('🔥 ДАННЫЕ КЛИЕНТА ИЗ БД:');
+                console.log('🔥 order.client_id:', order.client_id);
+                console.log('🔥 order.user_id:', order.user_id);
+                console.log('🔥 order.client_first_name:', order.client_first_name);
+                
+                if (!order.client_id) {
+                    console.error('❌ client_id отсутствует!');
+                    chatContexts.delete(userId);
+                    return ctx.reply('❌ Не удалось определить ID клиента');
+                }
+                
+                // Отправляем сообщение клиенту
+                await ctx.api.sendMessage(order.client_id,
+                    `💬 <b>Сообщение от оператора</b>\n\n` +
+                    `🆔 Заказ #${context.orderId}\n` +
+                    `👨‍💼 Оператор: ${ctx.from.first_name || 'Оператор'}\n\n` +
+                    `📝 ${messageText}\n\n` +
+                    `💬 Ответьте на это сообщение, чтобы написать оператору обратно.`,
+                    { parse_mode: 'HTML' }
+                );
+                
+                console.log('✅ СООБЩЕНИЕ УСПЕШНО ОТПРАВЛЕНО КЛИЕНТУ!');
+                
+                await ctx.reply(
+                    `✅ <b>Сообщение отправлено клиенту!</b>\n\n` +
+                    `📝 "${messageText}"\n\n` +
+                    `🔙 Возврат к управлению заказом:`,
+                    { 
+                        parse_mode: 'HTML',
+                        reply_markup: new InlineKeyboard()
+                            .text('⚙️ К заказу', `manage_order_${context.orderId}`)
+                    }
+                );
+                
+                chatContexts.delete(userId);
+                return; // ВАЖНО: выходим чтобы не продолжать обработку
+                
+            } catch (error) {
+                console.error('❌ ОШИБКА ОТПРАВКИ СООБЩЕНИЯ:', error.message);
+                await ctx.reply(`❌ Ошибка отправки: ${error.message}`);
+                chatContexts.delete(userId);
+                return;
+            }
+        }
+    }
+    
     // === РУЧНОЙ ВВОД КУРСОВ ===
     if (messageText && global.manualRateInput && global.manualRateInput.has(userId)) {
         const inputState = global.manualRateInput.get(userId);

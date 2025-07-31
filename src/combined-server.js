@@ -1006,6 +1006,23 @@ app.post('/api/create-order', async (req, res) => {
             toCurrency
         });
 
+        // 🔄 ЭКСТРЕННАЯ РЕГИСТРАЦИЯ ПОЛЬЗОВАТЕЛЯ ПЕРЕД УВЕДОМЛЕНИЕМ
+        console.log('🆘 ЭКСТРЕННАЯ РЕГИСТРАЦИЯ ПОЛЬЗОВАТЕЛЯ:', userId);
+        if (db && db.upsertUser) {
+            try {
+                await db.upsertUser({
+                    telegram_id: userId,
+                    first_name: 'Пользователь',
+                    last_name: '',
+                    username: `user${userId}`,
+                    is_bot: false
+                });
+                console.log('🆘 ЭКСТРЕННО ЗАРЕГИСТРИРОВАН:', userId);
+            } catch (err) {
+                console.error('🆘 Ошибка экстренной регистрации:', err.message);
+            }
+        }
+
         // Отправляем уведомление операторам
         if (notifyOperators) {
             try {
