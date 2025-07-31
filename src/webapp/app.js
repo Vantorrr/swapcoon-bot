@@ -356,44 +356,14 @@ function initTelegramWebApp() {
         console.log('✅ Telegram WebApp API обнаружен');
         console.log('📱 initData:', tg.initData ? 'Есть данные' : 'Нет данных');
         
-        // 📱 ПОЛНОЭКРАННЫЙ РЕЖИМ TELEGRAM WEBAPP!
-        tg.ready();
+        // 📱 ПРОСТОЙ ПОЛНОЭКРАННЫЙ РЕЖИМ КАК ПРЕДЛОЖИЛ ПОЛЬЗОВАТЕЛЬ!
+        window.Telegram.WebApp.ready();
         
-        console.log('📱 Текущее состояние expanded:', tg.isExpanded);
-        console.log('📱 Viewport height:', tg.viewportHeight);
-        console.log('📱 Viewport stable height:', tg.viewportStableHeight);
-        
-        // Принудительно разворачиваем
-        tg.expand();
-        
-        // Дополнительные настройки для полноэкранного режима
-        if (tg.enableClosingConfirmation) {
-            tg.enableClosingConfirmation();
-        }
-        
-        if (tg.disableVerticalSwipes) {
-            tg.disableVerticalSwipes();
-        }
-        
-        // Настройка цветов для полноэкранного режима
-        if (tg.setHeaderColor) {
-            tg.setHeaderColor('#1a1a2e');
-        }
-        
-        if (tg.setBackgroundColor) {
-            tg.setBackgroundColor('#1a1a2e');
-        }
-        
-        // Скрываем Main Button если есть
-        if (tg.MainButton) {
-            tg.MainButton.hide();
-        }
-        
-        // Проверяем результат после expand
+        // Небольшая задержка чтобы ready() успел отработать
         setTimeout(() => {
-            console.log('📱 После expand - isExpanded:', tg.isExpanded);
-            console.log('📱 После expand - viewport height:', tg.viewportHeight);
-        }, 100);
+            window.Telegram.WebApp.expand(); // БАХ — НА ВЕСЬ ЭКРАН!
+            console.log('📱 EXPAND ВЫЗВАН! isExpanded:', window.Telegram.WebApp.isExpanded);
+        }, 50);
         
         // Извлекаем User ID
         if (tg.initDataUnsafe?.user?.id) {
@@ -408,11 +378,6 @@ function initTelegramWebApp() {
         
         // Применяем тему
         applyTelegramTheme();
-        
-        // Настраиваем полноэкранный режим ПОСЛЕ инициализации Telegram WebApp
-        setTimeout(() => {
-            setupFullscreenMode();
-        }, 100);
         
         // 👤 МГНОВЕННО ОБНОВЛЯЕМ ПРОФИЛЬ С ДАННЫМИ TELEGRAM
         setTimeout(() => {
