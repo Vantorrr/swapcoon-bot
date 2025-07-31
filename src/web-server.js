@@ -271,6 +271,16 @@ app.post('/api/create-order', async (req, res) => {
         console.log('🚀 API CREATE-ORDER ПОЛУЧИЛ ДАННЫЕ:', req.body);
         console.log('🚨 === ВЫЗОВ notifyOperators ===');
         
+        // ДИАГНОСТИКА СЕРВИСОВ
+        console.log('🔍 ДИАГНОСТИКА СЕРВИСОВ ПРИ СОЗДАНИИ ЗАКАЗА:');
+        console.log('   db:', !!db);
+        console.log('   googleSheetsManager:', !!googleSheetsManager);
+        console.log('   notifyOperators:', !!notifyOperators);
+        if (googleSheetsManager) {
+            console.log('   googleSheetsManager.isReady():', googleSheetsManager.isReady());
+            console.log('   googleSheetsManager.isConnected:', googleSheetsManager.isConnected);
+        }
+        
         const {
             userId,
             fromCurrency,
@@ -311,20 +321,40 @@ app.post('/api/create-order', async (req, res) => {
         };
 
         // Логируем заказ в Google Sheets
+        console.log('🔍 ДИАГНОСТИКА GOOGLE SHEETS:');
+        console.log('   googleSheetsManager существует?', !!googleSheetsManager);
+        if (googleSheetsManager) {
+            console.log('   googleSheetsManager.isReady():', googleSheetsManager.isReady());
+        }
+        
         if (googleSheetsManager && googleSheetsManager.isReady()) {
-            await googleSheetsManager.logOrder({
-                id: order.id,
-                user_id: userId,
-                userName: user.first_name || user.username || `User_${userId}`,
-                fromCurrency: fromCurrency,
-                toCurrency: toCurrency,
-                fromAmount: fromAmount,
-                toAmount: toAmount,
-                exchangeRate: exchangeRate,
-                fee: fee || 0,
-                status: 'pending',
-                aml_status: JSON.stringify({ from: amlFromResult, to: amlToResult })
-            });
+            console.log('📊 ЗАПИСЫВАЕМ ЗАКАЗ В GOOGLE SHEETS...');
+            try {
+                const result = await googleSheetsManager.logOrder({
+                    id: order.id,
+                    user_id: userId,
+                    userName: user.first_name || user.username || `User_${userId}`,
+                    fromCurrency: fromCurrency,
+                    toCurrency: toCurrency,
+                    fromAmount: fromAmount,
+                    toAmount: toAmount,
+                    exchangeRate: exchangeRate,
+                    fee: fee || 0,
+                    status: 'pending',
+                    aml_status: JSON.stringify({ from: amlFromResult, to: amlToResult })
+                });
+                console.log('✅ РЕЗУЛЬТАТ ЗАПИСИ В GOOGLE SHEETS:', result);
+            } catch (error) {
+                console.error('❌ ОШИБКА ЗАПИСИ В GOOGLE SHEETS:', error.message);
+                console.error('🔍 Stack trace:', error.stack);
+            }
+        } else {
+            console.log('❌ GOOGLE SHEETS НЕДОСТУПЕН! Заказ НЕ записан в таблицу');
+            if (!googleSheetsManager) {
+                console.log('   Причина: googleSheetsManager не существует');
+            } else if (!googleSheetsManager.isReady()) {
+                console.log('   Причина: googleSheetsManager не готов');
+            }
         }
 
         console.log('📋 Данные заявки:', order.id, order.from_currency, order.to_currency);
