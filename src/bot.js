@@ -4900,6 +4900,21 @@ bot.on('message', async (ctx) => {
                     return ctx.reply('❌ Заказ не найден');
                 }
                 
+                // 🔍 ДИАГНОСТИКА ДАННЫХ КЛИЕНТА
+                console.log('🔍 ОТПРАВКА СООБЩЕНИЯ КЛИЕНТУ:');
+                console.log('  orderId:', context.orderId);
+                console.log('  order.client_id:', order.client_id);
+                console.log('  order.user_id:', order.user_id);
+                console.log('  order.client_first_name:', order.client_first_name);
+                console.log('  order.client_username:', order.client_username);
+                console.log('  messageText:', messageText);
+                
+                if (!order.client_id) {
+                    console.error('❌ КРИТИЧЕСКАЯ ОШИБКА: client_id не определен!');
+                    chatContexts.delete(userId);
+                    return ctx.reply('❌ Не удалось определить ID клиента для заказа');
+                }
+                
                 // Сохраняем сообщение в чат
                 await db.addOrderMessage({
                     orderId: context.orderId,
@@ -4909,30 +4924,54 @@ bot.on('message', async (ctx) => {
                 });
                 
                 // Отправляем сообщение клиенту
-                await ctx.api.sendMessage(order.client_id,
-                    `💬 <b>Сообщение от оператора</b>\n\n` +
-                    `🆔 Заказ #${context.orderId}\n` +
-                    `👨‍💼 Оператор: ${ctx.from.first_name || 'Оператор'}\n\n` +
-                    `📝 ${messageText}\n\n` +
-                    `💬 Ответьте на это сообщение, чтобы написать оператору обратно.`,
-                    { 
-                        parse_mode: 'HTML',
-                        reply_markup: new InlineKeyboard()
-                            .text('💬 Ответить оператору', `client_chat_${context.orderId}`)
-                    }
-                );
-                
-                // Подтверждаем отправку
-                await ctx.reply(
-                    `✅ <b>Сообщение отправлено клиенту!</b>\n\n` +
-                    `📝 "${messageText}"\n\n` +
-                    `🔙 Возврат к управлению заказом:`,
-                    { 
-                        parse_mode: 'HTML',
-                        reply_markup: new InlineKeyboard()
-                            .text('⚙️ К заказу', `manage_order_${context.orderId}`)
-                    }
-                );
+                console.log('📤 Отправляем сообщение клиенту ID:', order.client_id);
+                try {
+                    await ctx.api.sendMessage(order.client_id,
+                        `💬 <b>Сообщение от оператора</b>\n\n` +
+                        `🆔 Заказ #${context.orderId}\n` +
+                        `👨‍💼 Оператор: ${ctx.from.first_name || 'Оператор'}\n\n` +
+                        `📝 ${messageText}\n\n` +
+                        `💬 Ответьте на это сообщение, чтобы написать оператору обратно.`,
+                        { 
+                            parse_mode: 'HTML',
+                            reply_markup: new InlineKeyboard()
+                                .text('💬 Ответить оператору', `client_chat_${context.orderId}`)
+                        }
+                    );
+                    console.log('✅ Сообщение успешно отправлено клиенту!');
+                    
+                    // Подтверждаем отправку
+                    await ctx.reply(
+                        `✅ <b>Сообщение отправлено клиенту!</b>\n\n` +
+                        `📝 "${messageText}"\n\n` +
+                        `🔙 Возврат к управлению заказом:`,
+                        { 
+                            parse_mode: 'HTML',
+                            reply_markup: new InlineKeyboard()
+                                .text('⚙️ К заказу', `manage_order_${context.orderId}`)
+                        }
+                    );
+                } catch (sendError) {
+                    console.error('❌ ОШИБКА ОТПРАВКИ СООБЩЕНИЯ КЛИЕНТУ:', sendError.message);
+                    console.error('❌ Полная ошибка:', sendError);
+                    
+                    // Уведомляем оператора об ошибке
+                    await ctx.reply(
+                        `❌ <b>Ошибка отправки сообщения!</b>\n\n` +
+                        `📋 Клиент ID: ${order.client_id}\n` +
+                        `❌ Ошибка: ${sendError.message}\n\n` +
+                        `💡 Возможные причины:\n` +
+                        `• Клиент заблокировал бота\n` +
+                        `• Неверный ID клиента\n` +
+                        `• Клиент не запускал бота\n\n` +
+                        `🔙 Возврат к заказу:`,
+                        { 
+                            parse_mode: 'HTML',
+                            reply_markup: new InlineKeyboard()
+                                .text('⚙️ К заказу', `manage_order_${context.orderId}`)
+                        }
+                    );
+                }
                 
                 // Удаляем контекст
                 chatContexts.delete(userId);
