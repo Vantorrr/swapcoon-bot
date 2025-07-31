@@ -773,8 +773,11 @@ function calculateExchange() {
     }
     
     if (!pairData) {
-        console.error(`❌ Пара ${fromCurrency}/${toCurrency} НЕ НАЙДЕНА!`);
-        console.error(`📊 Доступные пары:`, window.rawPairData?.map(p => p.pair) || 'нет данных');
+        console.log(`⚠️ Прямая пара ${fromCurrency}/${toCurrency} не найдена, используем API для расчета`);
+        console.log(`📊 Доступные пары:`, window.rawPairData?.map(p => p.pair) || 'нет данных');
+        
+        // Используем API для сложного расчета
+        calculateExchangeViaAPI(fromAmount);
         return;
     }
     
@@ -796,6 +799,61 @@ function calculateExchange() {
     
     updateCalculationDisplay(fromAmount, finalAmount, exchangeRate, fee);
     document.getElementById('continue-button').disabled = false;
+}
+
+// Расчет обмена через API (для сложных пар)
+async function calculateExchangeViaAPI(fromAmount) {
+    console.log(`🌐 Расчет через API: ${fromAmount} ${fromCurrency} → ${toCurrency}`);
+    
+    try {
+        const response = await fetch('/api/calculate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                fromCurrency,
+                toCurrency,
+                amount: fromAmount,
+                userId: currentUserId
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+            const toAmount = result.data.toAmount;
+            const exchangeRate = result.data.exchangeRate;
+            const fee = result.data.fee || 0;
+            const finalAmount = toAmount;
+            
+            console.log(`✅ API расчет: ${fromAmount} ${fromCurrency} = ${finalAmount} ${toCurrency} (курс: ${exchangeRate})`);
+            
+            currentCalculation = {
+                fromAmount,
+                toAmount: finalAmount,
+                exchangeRate,
+                fee,
+                fromCurrency,
+                toCurrency
+            };
+            
+            updateCalculationDisplay(fromAmount, finalAmount, exchangeRate, fee);
+            document.getElementById('continue-button').disabled = false;
+        } else {
+            throw new Error(result.error || 'Ошибка расчета');
+        }
+        
+    } catch (error) {
+        console.error('❌ Ошибка API расчета:', error.message);
+        showNotification('Ошибка расчета курса: ' + error.message, 'error');
+        updateCalculationDisplay(0, 0, 0, 0);
+        document.getElementById('continue-button').disabled = true;
+    }
 }
 
 // Обратный расчет обмена

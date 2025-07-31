@@ -70,6 +70,115 @@ class RatesService {
         return true;
     }
 
+    // Метод для получения курса обмена между двумя валютами
+    async getExchangeRate(fromCurrency, toCurrency, amount = 1) {
+        console.log(`🔥 getExchangeRate: ${fromCurrency} → ${toCurrency} (сумма: ${amount})`);
+        
+        try {
+            // Получаем все курсы из Google Sheets
+            const rates = await this.getRates();
+            console.log(`📊 Получено ${rates.length} курсов из Google Sheets`);
+            
+            // Если валюты одинаковые, курс = 1
+            if (fromCurrency === toCurrency) {
+                console.log('💡 Одинаковые валюты, курс = 1');
+                return 1;
+            }
+            
+            // Ищем прямую пару
+            const directPair = `${fromCurrency}/${toCurrency}`;
+            const directRate = rates.find(r => r.pair === directPair);
+            
+            if (directRate) {
+                console.log(`✅ Найдена прямая пара ${directPair}: sell=${directRate.sellRate}, buy=${directRate.buyRate}`);
+                // Используем средний курс между покупкой и продажей
+                const avgRate = (directRate.sellRate + directRate.buyRate) / 2;
+                console.log(`💱 Средний курс: ${avgRate}`);
+                return avgRate;
+            }
+            
+            // Ищем обратную пару
+            const reversePair = `${toCurrency}/${fromCurrency}`;
+            const reverseRate = rates.find(r => r.pair === reversePair);
+            
+            if (reverseRate) {
+                console.log(`✅ Найдена обратная пара ${reversePair}: sell=${reverseRate.sellRate}, buy=${reverseRate.buyRate}`);
+                // Для обратной пары инвертируем курс
+                const avgRate = (reverseRate.sellRate + reverseRate.buyRate) / 2;
+                const invertedRate = 1 / avgRate;
+                console.log(`💱 Обращенный курс: ${invertedRate}`);
+                return invertedRate;
+            }
+            
+            // Пытаемся найти курс через USD как промежуточную валюту
+            const fromToUsd = rates.find(r => r.pair === `${fromCurrency}/USD`);
+            const toToUsd = rates.find(r => r.pair === `${toCurrency}/USD`);
+            
+            if (fromToUsd && toToUsd) {
+                console.log(`✅ Найден путь через USD: ${fromCurrency}/USD и ${toCurrency}/USD`);
+                const fromUsdRate = (fromToUsd.sellRate + fromToUsd.buyRate) / 2;
+                const toUsdRate = (toToUsd.sellRate + toToUsd.buyRate) / 2;
+                const crossRate = fromUsdRate / toUsdRate;
+                console.log(`💱 Кросс-курс через USD: ${crossRate}`);
+                return crossRate;
+            }
+            
+            // Пытаемся найти обратные курсы к USD
+            const usdToFrom = rates.find(r => r.pair === `USD/${fromCurrency}`);
+            const usdToTo = rates.find(r => r.pair === `USD/${toCurrency}`);
+            
+            if (usdToFrom && usdToTo) {
+                console.log(`✅ Найден обратный путь через USD: USD/${fromCurrency} и USD/${toCurrency}`);
+                const fromUsdRate = 1 / ((usdToFrom.sellRate + usdToFrom.buyRate) / 2);
+                const toUsdRate = 1 / ((usdToTo.sellRate + usdToTo.buyRate) / 2);
+                const crossRate = fromUsdRate / toUsdRate;
+                console.log(`💱 Обратный кросс-курс через USD: ${crossRate}`);
+                return crossRate;
+            }
+            
+            // Если ничего не найдено, используем fallback
+            console.log(`⚠️ Пара ${fromCurrency}/${toCurrency} не найдена в таблице, используем fallback`);
+            return this.getFallbackRate(fromCurrency, toCurrency);
+            
+        } catch (error) {
+            console.error(`❌ Ошибка получения курса ${fromCurrency}/${toCurrency}:`, error.message);
+            // Возвращаем fallback курс в случае ошибки
+            return this.getFallbackRate(fromCurrency, toCurrency);
+        }
+    }
+    
+    // Fallback курсы на случай отсутствия данных в Google Sheets
+    getFallbackRate(fromCurrency, toCurrency) {
+        console.log(`🔄 Fallback курс для ${fromCurrency}/${toCurrency}`);
+        
+        // Захардкоженные курсы как запасной вариант
+        const fallbackRates = {
+            'USDT/ARS': 1290,
+            'ARS/USDT': 1/1290,
+            'USDT/RUB': 78,
+            'RUB/USDT': 1/78,
+            'USD/USDT': 1,
+            'USDT/USD': 1,
+            'USD/RUB': 78,
+            'RUB/USD': 1/78,
+            'USD/ARS': 1290,
+            'ARS/USD': 1/1290,
+            'RUB/ARS': 1290/78,
+            'ARS/RUB': 78/1290
+        };
+        
+        const pairKey = `${fromCurrency}/${toCurrency}`;
+        const rate = fallbackRates[pairKey];
+        
+        if (rate) {
+            console.log(`✅ Fallback курс найден: ${rate}`);
+            return rate;
+        }
+        
+        console.log(`⚠️ Fallback курс не найден, возвращаем 1`);
+        return 1;
+    }
+
     getLastUpdateTime() {
         return new Date().toISOString();
     }

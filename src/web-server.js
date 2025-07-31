@@ -36,23 +36,121 @@ app.get('/api/rates', async (req, res) => {
     
     try {
         let rates = [];
+        let rawPairs = [];
         
         // 🔥 ЧИТАЕМ ИЗ GLOBAL.RATESSERVICE (с Google Sheets синхронизацией)
         if (global.ratesService) {
             console.log('✅ Используем global.ratesService с Google Sheets');
-            rates = await global.ratesService.getRates();
-            console.log(`📊 Получено ${rates.length} курсов из RatesService`);
+            rawPairs = await global.ratesService.getRates();
+            console.log(`📊 Получено ${rawPairs.length} пар валют из RatesService`);
         } else if (ratesService) {
             console.log('✅ Используем локальный ratesService');
-            rates = await ratesService.getRates();
-            console.log(`📊 Получено ${rates.length} курсов из локального RatesService`);
+            rawPairs = await ratesService.getRates();
+            console.log(`📊 Получено ${rawPairs.length} пар валют из локального RatesService`);
         } else {
             console.log('⚠️ RatesService недоступен, используем fallback курсы');
             // Fallback курсы только если RatesService не работает
             rates = [
                 { currency: "USD", price: 1, buy: 1, sell: 1, source: "FALLBACK", type: "fiat", lastUpdate: new Date().toISOString() },
                 { currency: "USDT", price: 1, buy: 1, sell: 1, source: "FALLBACK", type: "crypto", lastUpdate: new Date().toISOString() }
-            ];        }
+            ];
+        }
+        
+        // 🔥 ПРЕОБРАЗУЕМ ПАРЫ ВАЛЮТ В СПИСОК УНИКАЛЬНЫХ ВАЛЮТ
+        if (rawPairs.length > 0) {
+            const currencySet = new Set();
+            const currencyData = new Map();
+            
+            // Извлекаем уникальные валюты из пар
+            for (const pair of rawPairs) {
+                const [fromCurrency, toCurrency] = pair.pair.split('/');
+                currencySet.add(fromCurrency);
+                currencySet.add(toCurrency);
+                
+                // Определяем тип валюты (крипто или фиат)
+                const getCurrencyType = (currency) => {
+                    const cryptoCurrencies = ['BTC', 'ETH', 'USDT', 'USDC', 'BNB', 'ADA', 'DOT', 'LINK'];
+                    return cryptoCurrencies.includes(currency) ? 'crypto' : 'fiat';
+                };
+                
+                // Сохраняем данные для каждой валюты (используем USD как базу)
+                if (!currencyData.has(fromCurrency)) {
+                    currencyData.set(fromCurrency, {
+                        currency: fromCurrency,
+                        type: getCurrencyType(fromCurrency),
+                        pairs: []
+                    });
+                }
+                
+                if (!currencyData.has(toCurrency)) {
+                    currencyData.set(toCurrency, {
+                        currency: toCurrency,
+                        type: getCurrencyType(toCurrency),
+                        pairs: []
+                    });
+                }
+                
+                // Добавляем информацию о паре
+                currencyData.get(fromCurrency).pairs.push(pair);
+                currencyData.get(toCurrency).pairs.push(pair);
+            }
+            
+            // Создаем список валют для веб-приложения
+            rates = Array.from(currencyData.values()).map(currencyInfo => {
+                // Пытаемся найти курс к USD для этой валюты
+                let priceInUSD = 1;
+                let buyRate = 1;
+                let sellRate = 1;
+                
+                if (currencyInfo.currency === 'USD' || currencyInfo.currency === 'USDT') {
+                    priceInUSD = 1;
+                    buyRate = 1;
+                    sellRate = 1;
+                } else {
+                    // Ищем пару с USD
+                    const usdPair = currencyInfo.pairs.find(p => 
+                        p.pair === `${currencyInfo.currency}/USD` || 
+                        p.pair === `USD/${currencyInfo.currency}` ||
+                        p.pair === `${currencyInfo.currency}/USDT` || 
+                        p.pair === `USDT/${currencyInfo.currency}`
+                    );
+                    
+                    if (usdPair) {
+                        if (usdPair.pair.startsWith(currencyInfo.currency)) {
+                            // Прямая пара (CURRENCY/USD)
+                            priceInUSD = (usdPair.sellRate + usdPair.buyRate) / 2;
+                            buyRate = usdPair.buyRate;
+                            sellRate = usdPair.sellRate;
+                        } else {
+                            // Обратная пара (USD/CURRENCY)
+                            priceInUSD = 1 / ((usdPair.sellRate + usdPair.buyRate) / 2);
+                            buyRate = 1 / usdPair.sellRate;
+                            sellRate = 1 / usdPair.buyRate;
+                        }
+                    } else {
+                        // Используем первую доступную пару для примерной оценки
+                        const firstPair = currencyInfo.pairs[0];
+                        if (firstPair) {
+                            priceInUSD = (firstPair.sellRate + firstPair.buyRate) / 2;
+                            buyRate = firstPair.buyRate;
+                            sellRate = firstPair.sellRate;
+                        }
+                    }
+                }
+                
+                return {
+                    currency: currencyInfo.currency,
+                    price: priceInUSD,
+                    buy: buyRate,
+                    sell: sellRate,
+                    source: "GOOGLE_SHEETS",
+                    type: currencyInfo.type,
+                    lastUpdate: new Date().toISOString()
+                };
+            });
+            
+            console.log(`📊 Создан список из ${rates.length} уникальных валют из ${rawPairs.length} пар`);
+        }
         
         // Диагностика курсов
         console.log('📊 ОТПРАВЛЯЕМЫЕ КУРСЫ:');
@@ -63,6 +161,7 @@ app.get('/api/rates', async (req, res) => {
         res.json({ 
             success: true, 
             data: rates,
+            rawPairs: rawPairs, // Передаем сырые пары для прямых расчетов
             lastUpdate: new Date().toISOString(),
             source: global.ratesService ? 'rates_service_with_sheets' : (ratesService ? 'local_rates_service' : 'fallback'),
             count: rates.length
@@ -74,6 +173,34 @@ app.get('/api/rates', async (req, res) => {
             success: false, 
             error: 'Ошибка получения курсов',
             source: 'error'
+        });
+    }
+});
+
+// API для принудительной синхронизации курсов
+app.post('/api/force-sync', async (req, res) => {
+    console.log('🔄 API /api/force-sync: принудительная синхронизация курсов');
+    
+    try {
+        if (global.ratesService) {
+            console.log('🔄 Вызываем синхронизацию RatesService...');
+            await global.ratesService.syncWithGoogleSheets();
+            console.log('✅ Синхронизация завершена');
+        } else {
+            console.log('⚠️ RatesService недоступен для синхронизации');
+        }
+        
+        res.json({ 
+            success: true, 
+            message: 'Синхронизация выполнена',
+            timestamp: new Date().toISOString()
+        });
+        
+    } catch (error) {
+        console.error('❌ Ошибка принудительной синхронизации:', error.message);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Ошибка синхронизации'
         });
     }
 });
