@@ -356,9 +356,44 @@ function initTelegramWebApp() {
         console.log('✅ Telegram WebApp API обнаружен');
         console.log('📱 initData:', tg.initData ? 'Есть данные' : 'Нет данных');
         
-        // Готовим WebApp
+        // 📱 ПОЛНОЭКРАННЫЙ РЕЖИМ TELEGRAM WEBAPP!
         tg.ready();
+        
+        console.log('📱 Текущее состояние expanded:', tg.isExpanded);
+        console.log('📱 Viewport height:', tg.viewportHeight);
+        console.log('📱 Viewport stable height:', tg.viewportStableHeight);
+        
+        // Принудительно разворачиваем
         tg.expand();
+        
+        // Дополнительные настройки для полноэкранного режима
+        if (tg.enableClosingConfirmation) {
+            tg.enableClosingConfirmation();
+        }
+        
+        if (tg.disableVerticalSwipes) {
+            tg.disableVerticalSwipes();
+        }
+        
+        // Настройка цветов для полноэкранного режима
+        if (tg.setHeaderColor) {
+            tg.setHeaderColor('#1a1a2e');
+        }
+        
+        if (tg.setBackgroundColor) {
+            tg.setBackgroundColor('#1a1a2e');
+        }
+        
+        // Скрываем Main Button если есть
+        if (tg.MainButton) {
+            tg.MainButton.hide();
+        }
+        
+        // Проверяем результат после expand
+        setTimeout(() => {
+            console.log('📱 После expand - isExpanded:', tg.isExpanded);
+            console.log('📱 После expand - viewport height:', tg.viewportHeight);
+        }, 100);
         
         // Извлекаем User ID
         if (tg.initDataUnsafe?.user?.id) {
@@ -373,6 +408,11 @@ function initTelegramWebApp() {
         
         // Применяем тему
         applyTelegramTheme();
+        
+        // Настраиваем полноэкранный режим ПОСЛЕ инициализации Telegram WebApp
+        setTimeout(() => {
+            setupFullscreenMode();
+        }, 100);
         
         // 👤 МГНОВЕННО ОБНОВЛЯЕМ ПРОФИЛЬ С ДАННЫМИ TELEGRAM
         setTimeout(() => {
@@ -394,6 +434,9 @@ function initTelegramWebApp() {
         console.log('⚠️ Telegram WebApp API недоступен');
         console.log('🌐 Запуск в режиме браузера с тестовыми данными');
         currentUserId = 123456789;
+        
+        // Настраиваем полноэкранный режим для обычных браузеров
+        setupFullscreenMode();
     }
     
     console.log('🔑 Финальный User ID:', currentUserId);
@@ -3792,14 +3835,37 @@ function hideLoadingScreen() {
 
 // 📱 ПОЛНОЭКРАННЫЙ РЕЖИМ ДЛЯ МОБИЛЬНЫХ
 function setupFullscreenMode() {
-    // Настройка высоты для мобильных браузеров
+    // Настройка высоты для мобильных браузеров и Telegram WebApp
     function setMobileVH() {
-        const vh = window.innerHeight * 0.01;
+        let vh = window.innerHeight * 0.01;
+        let viewportHeight = window.innerHeight;
+        
+        // Если это Telegram WebApp, используем его viewport
+        if (window.Telegram?.WebApp) {
+            const tg = window.Telegram.WebApp;
+            if (tg.viewportHeight && tg.viewportHeight > 0) {
+                viewportHeight = tg.viewportHeight;
+                vh = tg.viewportHeight * 0.01;
+                console.log('📱 Используем Telegram viewport height:', tg.viewportHeight);
+            }
+        }
+        
         document.documentElement.style.setProperty('--vh', `${vh}px`);
+        document.documentElement.style.setProperty('--tg-viewport-height', `${viewportHeight}px`);
+        
+        console.log('📱 Viewport установлен:', viewportHeight + 'px');
     }
     
     // Устанавливаем при загрузке
     setMobileVH();
+    
+    // Telegram WebApp viewport change listener
+    if (window.Telegram?.WebApp) {
+        window.Telegram.WebApp.onEvent('viewportChanged', () => {
+            console.log('📱 Telegram viewport изменился!');
+            setTimeout(setMobileVH, 50);
+        });
+    }
     
     // Обновляем при изменении ориентации/размера
     window.addEventListener('resize', setMobileVH);
@@ -3807,12 +3873,14 @@ function setupFullscreenMode() {
         setTimeout(setMobileVH, 100); // Небольшая задержка для корректного расчета
     });
     
-    // Скрыть адресную строку на мобильных
-    window.addEventListener('load', () => {
-        setTimeout(() => {
-            window.scrollTo(0, 1);
-        }, 100);
-    });
+    // Скрыть адресную строку на мобильных (только если НЕ Telegram WebApp)
+    if (!window.Telegram?.WebApp) {
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                window.scrollTo(0, 1);
+            }, 100);
+        });
+    }
     
     // Предотвращаем zoom на iOS
     document.addEventListener('gesturestart', (e) => {
@@ -3840,7 +3908,7 @@ function setupFullscreenMode() {
 
 // Автозапуск заставки при загрузке страницы
 document.addEventListener('DOMContentLoaded', () => {
-    setupFullscreenMode();
+    // setupFullscreenMode вызывается теперь из initTelegramWebApp
     startLoadingSequence();
 });
 
