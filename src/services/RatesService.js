@@ -110,29 +110,29 @@ class RatesService {
                 return invertedRate;
             }
             
-            // Пытаемся найти курс через USD как промежуточную валюту
-            const fromToUsd = rates.find(r => r.pair === `${fromCurrency}/USD`);
-            const toToUsd = rates.find(r => r.pair === `${toCurrency}/USD`);
+            // Пытаемся найти курс через USDT как промежуточную валюту
+            const fromToUsdt = rates.find(r => r.pair === `${fromCurrency}/USDT`);
+            const toToUsdt = rates.find(r => r.pair === `${toCurrency}/USDT`);
             
-            if (fromToUsd && toToUsd) {
-                console.log(`✅ Найден путь через USD: ${fromCurrency}/USD и ${toCurrency}/USD`);
-                const fromUsdRate = (fromToUsd.sellRate + fromToUsd.buyRate) / 2;
-                const toUsdRate = (toToUsd.sellRate + toToUsd.buyRate) / 2;
-                const crossRate = fromUsdRate / toUsdRate;
-                console.log(`💱 Кросс-курс через USD: ${crossRate}`);
+            if (fromToUsdt && toToUsdt) {
+                console.log(`✅ Найден путь через USDT: ${fromCurrency}/USDT и ${toCurrency}/USDT`);
+                const fromUsdtRate = (fromToUsdt.sellRate + fromToUsdt.buyRate) / 2;
+                const toUsdtRate = (toToUsdt.sellRate + toToUsdt.buyRate) / 2;
+                const crossRate = fromUsdtRate / toUsdtRate;
+                console.log(`💱 Кросс-курс через USDT: ${crossRate}`);
                 return crossRate;
             }
             
-            // Пытаемся найти обратные курсы к USD
-            const usdToFrom = rates.find(r => r.pair === `USD/${fromCurrency}`);
-            const usdToTo = rates.find(r => r.pair === `USD/${toCurrency}`);
+            // Пытаемся найти обратные курсы к USDT
+            const usdtToFrom = rates.find(r => r.pair === `USDT/${fromCurrency}`);
+            const usdtToTo = rates.find(r => r.pair === `USDT/${toCurrency}`);
             
-            if (usdToFrom && usdToTo) {
-                console.log(`✅ Найден обратный путь через USD: USD/${fromCurrency} и USD/${toCurrency}`);
-                const fromUsdRate = 1 / ((usdToFrom.sellRate + usdToFrom.buyRate) / 2);
-                const toUsdRate = 1 / ((usdToTo.sellRate + usdToTo.buyRate) / 2);
-                const crossRate = fromUsdRate / toUsdRate;
-                console.log(`💱 Обратный кросс-курс через USD: ${crossRate}`);
+            if (usdtToFrom && usdtToTo) {
+                console.log(`✅ Найден обратный путь через USDT: USDT/${fromCurrency} и USDT/${toCurrency}`);
+                const fromUsdtRate = 1 / ((usdtToFrom.sellRate + usdtToFrom.buyRate) / 2);
+                const toUsdtRate = 1 / ((usdtToTo.sellRate + usdtToTo.buyRate) / 2);
+                const crossRate = fromUsdtRate / toUsdtRate;
+                console.log(`💱 Обратный кросс-курс через USDT: ${crossRate}`);
                 return crossRate;
             }
             
@@ -157,12 +157,6 @@ class RatesService {
             'ARS/USDT': 1/1290,
             'USDT/RUB': 78,
             'RUB/USDT': 1/78,
-            'USD/USDT': 1,
-            'USDT/USD': 1,
-            'USD/RUB': 78,
-            'RUB/USD': 1/78,
-            'USD/ARS': 1290,
-            'ARS/USD': 1/1290,
             'RUB/ARS': 1290/78,
             'ARS/RUB': 78/1290
         };

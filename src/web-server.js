@@ -51,7 +51,6 @@ app.get('/api/rates', async (req, res) => {
             console.log('⚠️ RatesService недоступен, используем fallback курсы');
             // Fallback курсы только если RatesService не работает
             rates = [
-                { currency: "USD", price: 1, buy: 1, sell: 1, source: "FALLBACK", type: "fiat", lastUpdate: new Date().toISOString() },
                 { currency: "USDT", price: 1, buy: 1, sell: 1, source: "FALLBACK", type: "crypto", lastUpdate: new Date().toISOString() }
             ];
         }
@@ -97,41 +96,39 @@ app.get('/api/rates', async (req, res) => {
             
             // Создаем список валют для веб-приложения
             rates = Array.from(currencyData.values()).map(currencyInfo => {
-                // Пытаемся найти курс к USD для этой валюты
-                let priceInUSD = 1;
+                // Пытаемся найти курс к USDT для этой валюты
+                let priceInUSDT = 1;
                 let buyRate = 1;
                 let sellRate = 1;
                 
-                if (currencyInfo.currency === 'USD' || currencyInfo.currency === 'USDT') {
-                    priceInUSD = 1;
+                if (currencyInfo.currency === 'USDT') {
+                    priceInUSDT = 1;
                     buyRate = 1;
                     sellRate = 1;
                 } else {
-                    // Ищем пару с USD
-                    const usdPair = currencyInfo.pairs.find(p => 
-                        p.pair === `${currencyInfo.currency}/USD` || 
-                        p.pair === `USD/${currencyInfo.currency}` ||
+                    // Ищем пару с USDT как базовой валютой
+                    const usdtPair = currencyInfo.pairs.find(p => 
                         p.pair === `${currencyInfo.currency}/USDT` || 
                         p.pair === `USDT/${currencyInfo.currency}`
                     );
                     
-                    if (usdPair) {
-                        if (usdPair.pair.startsWith(currencyInfo.currency)) {
-                            // Прямая пара (CURRENCY/USD)
-                            priceInUSD = (usdPair.sellRate + usdPair.buyRate) / 2;
-                            buyRate = usdPair.buyRate;
-                            sellRate = usdPair.sellRate;
+                    if (usdtPair) {
+                        if (usdtPair.pair.startsWith(currencyInfo.currency)) {
+                            // Прямая пара (CURRENCY/USDT)
+                            priceInUSDT = (usdtPair.sellRate + usdtPair.buyRate) / 2;
+                            buyRate = usdtPair.buyRate;
+                            sellRate = usdtPair.sellRate;
                         } else {
-                            // Обратная пара (USD/CURRENCY)
-                            priceInUSD = 1 / ((usdPair.sellRate + usdPair.buyRate) / 2);
-                            buyRate = 1 / usdPair.sellRate;
-                            sellRate = 1 / usdPair.buyRate;
+                            // Обратная пара (USDT/CURRENCY)
+                            priceInUSDT = 1 / ((usdtPair.sellRate + usdtPair.buyRate) / 2);
+                            buyRate = 1 / usdtPair.sellRate;
+                            sellRate = 1 / usdtPair.buyRate;
                         }
                     } else {
                         // Используем первую доступную пару для примерной оценки
                         const firstPair = currencyInfo.pairs[0];
                         if (firstPair) {
-                            priceInUSD = (firstPair.sellRate + firstPair.buyRate) / 2;
+                            priceInUSDT = (firstPair.sellRate + firstPair.buyRate) / 2;
                             buyRate = firstPair.buyRate;
                             sellRate = firstPair.sellRate;
                         }
@@ -140,7 +137,7 @@ app.get('/api/rates', async (req, res) => {
                 
                 return {
                     currency: currencyInfo.currency,
-                    price: priceInUSD,
+                    price: priceInUSDT,
                     buy: buyRate,
                     sell: sellRate,
                     source: "GOOGLE_SHEETS",
