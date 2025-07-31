@@ -927,19 +927,31 @@ app.post('/api/create-order', async (req, res) => {
         console.log('📝 Сгенерированный ID заявки:', orderId);
 
         // 🔄 АВТОМАТИЧЕСКИ РЕГИСТРИРУЕМ ПОЛЬЗОВАТЕЛЯ В БОТЕ
+        console.log('🔄 ПОПЫТКА РЕГИСТРАЦИИ ПОЛЬЗОВАТЕЛЯ:', userId);
+        console.log('🔄 db существует?', !!db);
+        console.log('🔄 db.upsertUser существует?', !!(db && db.upsertUser));
+        
         if (db && db.upsertUser) {
             try {
-                await db.upsertUser({
+                console.log('🔄 Регистрируем пользователя в боте...', userId);
+                const userData = {
                     telegram_id: userId,
                     first_name: 'Пользователь',
                     last_name: '',
                     username: `user${userId}`,
                     is_bot: false
-                });
+                };
+                console.log('🔄 Данные пользователя:', userData);
+                
+                const result = await db.upsertUser(userData);
                 console.log('✅ Пользователь зарегистрирован в боте:', userId);
+                console.log('✅ Результат регистрации:', result);
             } catch (userError) {
-                console.error('❌ Ошибка регистрации пользователя:', userError);
+                console.error('❌ Ошибка регистрации пользователя:', userError.message);
+                console.error('❌ Полная ошибка:', userError);
             }
+        } else {
+            console.error('❌ КРИТИЧНО: db или db.upsertUser не доступны!');
         }
 
         // Создаем заявку в базе данных

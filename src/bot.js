@@ -4889,10 +4889,17 @@ bot.on('message', async (ctx) => {
     }
     
     // Проверяем контекст чата для операторов
+    console.log('📨 ПОЛУЧЕНО ТЕКСТОВОЕ СООБЩЕНИЕ ОТ ПОЛЬЗОВАТЕЛЯ:', userId);
+    console.log('📨 Текст сообщения:', messageText);
+    console.log('📨 chatContexts.has(userId):', chatContexts.has(userId));
+    
     if (chatContexts.has(userId)) {
         const context = chatContexts.get(userId);
+        console.log('📨 Контекст найден:', context);
         
         if (context.action === 'send_message_to_client') {
+            console.log('📨 НАЧИНАЕМ ОТПРАВКУ СООБЩЕНИЯ КЛИЕНТУ');
+            console.log('📨 orderId из контекста:', context.orderId);
             try {
                 const order = await db.getOrderWithClient(context.orderId);
                 if (!order) {
