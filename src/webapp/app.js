@@ -3659,31 +3659,31 @@ const loadingStages = [
         icon: 'fas fa-rocket',
         title: 'Инициализация системы...',
         subtitle: 'Подготавливаем всё к работе',
-        duration: 800
+        duration: 1000
     },
     {
         icon: 'fas fa-chart-line',
         title: 'Загружаем курсы валют...',
         subtitle: 'Синхронизируемся с Google Sheets',
-        duration: 1200
+        duration: 1500
     },
     {
         icon: 'fas fa-user-circle',
         title: 'Загружаем ваш профиль...',
         subtitle: 'Настраиваем персональные данные',
-        duration: 800
+        duration: 1000
     },
     {
         icon: 'fas fa-shield-alt',
         title: 'Проверяем безопасность...',
         subtitle: 'Защищаем ваши операции',
-        duration: 600
+        duration: 700
     },
     {
         icon: 'fas fa-check-circle',
         title: 'Всё готово!',
         subtitle: 'Добро пожаловать в ExMachinaX',
-        duration: 500
+        duration: 300
     }
 ];
 
