@@ -977,6 +977,44 @@ app.post('/api/create-order', async (req, res) => {
                 });
                 console.log('✅ Заявка создана в базе:', order.id);
                 realOrderId = order.id; // ← СОХРАНЯЕМ РЕАЛЬНЫЙ ID ИЗ БАЗЫ!
+
+                // 📊 ЛОГИРУЕМ ЗАКАЗ В GOOGLE SHEETS
+                console.log('🔍 ДИАГНОСТИКА GOOGLE SHEETS (COMBINED SERVER):');
+                console.log('   global.googleSheetsManager существует?', !!global.googleSheetsManager);
+                if (global.googleSheetsManager) {
+                    console.log('   global.googleSheetsManager.isReady():', global.googleSheetsManager.isReady());
+                }
+                
+                if (global.googleSheetsManager && global.googleSheetsManager.isReady()) {
+                    console.log('📊 ЗАПИСЫВАЕМ ЗАКАЗ В GOOGLE SHEETS (COMBINED)...');
+                    try {
+                        const result = await global.googleSheetsManager.logOrder({
+                            id: order.id,
+                            user_id: userId,
+                            userName: `User_${userId}`, // Временно простое имя
+                            fromCurrency: fromCurrency,
+                            toCurrency: toCurrency,
+                            fromAmount: fromAmount,
+                            toAmount: toAmount,
+                            exchangeRate: exchangeRate,
+                            fee: fee || 0,
+                            status: 'pending',
+                            aml_status: JSON.stringify({ from: amlFromResult, to: amlToResult })
+                        });
+                        console.log('✅ РЕЗУЛЬТАТ ЗАПИСИ В GOOGLE SHEETS (COMBINED):', result);
+                    } catch (error) {
+                        console.error('❌ ОШИБКА ЗАПИСИ В GOOGLE SHEETS (COMBINED):', error.message);
+                        console.error('🔍 Stack trace:', error.stack);
+                    }
+                } else {
+                    console.log('❌ GOOGLE SHEETS НЕДОСТУПЕН (COMBINED)! Заказ НЕ записан в таблицу');
+                    if (!global.googleSheetsManager) {
+                        console.log('   Причина: global.googleSheetsManager не существует');
+                    } else if (!global.googleSheetsManager.isReady()) {
+                        console.log('   Причина: global.googleSheetsManager не готов');
+                    }
+                }
+
             } catch (dbError) {
                 console.error('❌ Ошибка сохранения в базу:', dbError);
             }
