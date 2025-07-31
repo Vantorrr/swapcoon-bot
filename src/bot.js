@@ -4814,8 +4814,39 @@ bot.on('message', async (ctx) => {
                 console.log('🔥 order.user_id:', order.user_id);
                 console.log('🔥 order.client_first_name:', order.client_first_name);
                 
-                if (!order.client_id) {
-                    console.error('❌ client_id отсутствует!');
+                if (!order.client_id && order.user_id) {
+                    console.log('🆘 client_id отсутствует, но есть user_id! ЭКСТРЕННАЯ РЕГИСТРАЦИЯ!');
+                    console.log('🆘 Регистрируем пользователя:', order.user_id);
+                    
+                    // ЭКСТРЕННАЯ РЕГИСТРАЦИЯ ПРЯМО ЗДЕСЬ
+                    try {
+                        await db.upsertUser({
+                            telegram_id: order.user_id,
+                            first_name: 'Пользователь',
+                            last_name: '',
+                            username: `user${order.user_id}`,
+                            is_bot: false
+                        });
+                        console.log('🆘 ПОЛЬЗОВАТЕЛЬ ЭКСТРЕННО ЗАРЕГИСТРИРОВАН:', order.user_id);
+                        
+                        // ПЕРЕЗАГРУЖАЕМ ДАННЫЕ ЗАКАЗА
+                        const updatedOrder = await db.getOrderWithClient(context.orderId);
+                        if (updatedOrder && updatedOrder.client_id) {
+                            console.log('✅ ОБНОВЛЕННЫЕ ДАННЫЕ КЛИЕНТА:');
+                            console.log('✅ client_id:', updatedOrder.client_id);
+                            order.client_id = updatedOrder.client_id; // Обновляем для отправки
+                        } else {
+                            console.error('❌ Даже после регистрации client_id не найден!');
+                            chatContexts.delete(userId);
+                            return ctx.reply('❌ Критическая ошибка: не удалось зарегистрировать клиента');
+                        }
+                    } catch (regError) {
+                        console.error('❌ Ошибка экстренной регистрации:', regError.message);
+                        chatContexts.delete(userId);
+                        return ctx.reply('❌ Ошибка регистрации клиента');
+                    }
+                } else if (!order.client_id) {
+                    console.error('❌ client_id И user_id отсутствуют!');
                     chatContexts.delete(userId);
                     return ctx.reply('❌ Не удалось определить ID клиента');
                 }
