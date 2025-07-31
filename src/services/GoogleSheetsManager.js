@@ -387,7 +387,7 @@ class GoogleSheetsManager {
 
     // Проверка статуса подключения
     isReady() {
-        return this.isConnected && this.spreadsheetId;
+        return Boolean(this.isConnected && this.spreadsheetId);
     }
 
     // 💱 МЕТОДЫ ДЛЯ РАБОТЫ С КУРСАМИ

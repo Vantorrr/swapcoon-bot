@@ -42,7 +42,6 @@ class RatesService {
             throw new Error('Google Sheets пуст!');
         }
 
-        const rates = [];
         // 🔥 ВОЗВРАЩАЕМ ФОРМАТ СОВМЕСТИМЫЙ С API (currency + rates)
         const currencyMap = new Map();
         
@@ -84,7 +83,7 @@ class RatesService {
         }
         
         // Преобразуем Map в массив
-        rates = Array.from(currencyMap.values());
+        const rates = Array.from(currencyMap.values());
 
         console.log(`🔥 ВОЗВРАЩАЕМ ${rates.length} КУРСОВ ИЗ GOOGLE SHEETS!`);
         rates.forEach(rate => {

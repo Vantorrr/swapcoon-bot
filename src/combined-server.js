@@ -592,9 +592,6 @@ app.post('/api/force-sync', async (req, res) => {
         console.log('🔥 Запускаем принудительную синхронизацию...');
         await global.ratesService.syncWithGoogleSheets();
         
-        console.log('🔥 Очищаем кэш для применения новых курсов...');
-        global.ratesService.cache.clear();
-        
         console.log('✅ Принудительная синхронизация завершена!');
         res.json({ 
             success: true, 
