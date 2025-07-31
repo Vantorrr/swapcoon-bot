@@ -1607,9 +1607,9 @@ function validateWalletAddress() {
     
     if (!currentCalculation) {
         console.log('❌ validateWalletAddress: currentCalculation отсутствует, но проверяем базовую валидацию');
-        // Базовая валидация без currentCalculation
-        const shouldEnable = address.length > 20;
-        console.log('🔍 shouldEnable:', shouldEnable, '(адрес больше 20 символов?)');
+        // Базовая валидация без currentCalculation (ЛЮБЫЕ символы)
+        const shouldEnable = address.length >= 1;
+        console.log('🔍 shouldEnable:', shouldEnable, '(адрес заполнен?)');
         setCreateButtonState(shouldEnable);
         console.log(`🔄 БАЗОВАЯ ВАЛИДАЦИЯ: адрес ${address.length} символов`);
         console.log('🔍 ========== КОНЕЦ БАЗОВОЙ ВАЛИДАЦИИ ==========');
@@ -1642,8 +1642,8 @@ function validateCryptoAddresses() {
     
     console.log('🔄 ВАЛИДАЦИЯ CRYPTO БЕЗ AML:', { fromAddress: fromAddress.length, toAddress: toAddress.length });
     
-    // Разрешаем создание заявки если оба адреса заполнены (минимум 10 символов для адреса)
-    const shouldEnable = fromAddress.length >= 10 && toAddress.length >= 10;
+    // Разрешаем создание заявки если оба адреса заполнены (ЛЮБЫЕ символы и количество)
+    const shouldEnable = fromAddress.length >= 1 && toAddress.length >= 1;
     setCreateButtonState(shouldEnable);
     console.log(`🔄 CRYPTO ВАЛИДАЦИЯ БЕЗ AML: ${shouldEnable ? '✅ АКТИВНА' : '❌ НЕАКТИВНА'}`);
     
@@ -1671,8 +1671,8 @@ function validateFiatAccount() {
     console.log(`🏦 ВАЛИДАЦИЯ ФИАТНОГО ${fieldType.toUpperCase()}:`, account, 'длина:', account.length);
     
     if (createButton) {
-        // Для фиатных пар требуется только номер счета или реквизиты (минимум 3 символа)
-        setCreateButtonState(account.length >= 3);
+        // Для фиатных пар требуется только номер счета или реквизиты (ЛЮБЫЕ символы)
+        setCreateButtonState(account.length >= 1);
     }
     
     // Обновляем сводку заказа
@@ -1688,8 +1688,8 @@ function validateCryptoToFiatAddresses() {
     
     console.log('🔄 ВАЛИДАЦИЯ CRYPTO-TO-FIAT БЕЗ AML:', { cryptoAddress: cryptoAddress.length, receivingDetails: receivingDetails.length });
     
-    // Разрешаем создание заявки если оба поля заполнены (адрес минимум 10 символов, реквизиты минимум 3)
-    const shouldEnable = cryptoAddress.length >= 10 && receivingDetails.length >= 3;
+    // Разрешаем создание заявки если оба поля заполнены (ЛЮБЫЕ символы и количество)
+    const shouldEnable = cryptoAddress.length >= 1 && receivingDetails.length >= 1;
     setCreateButtonState(shouldEnable);
     console.log(`🔄 CRYPTO-TO-FIAT ВАЛИДАЦИЯ БЕЗ AML: ${shouldEnable ? '✅ АКТИВНА' : '❌ НЕАКТИВНА'}`);
     
@@ -1705,8 +1705,8 @@ function validateFiatToCryptoAddresses() {
     
     console.log('🔄 ВАЛИДАЦИЯ FIAT-TO-CRYPTO БЕЗ AML:', { walletAddress: walletAddress.length });
     
-    // Разрешаем создание заявки если адрес заполнен (минимум 10 символов)
-    const shouldEnable = walletAddress.length >= 10;
+    // Разрешаем создание заявки если адрес заполнен (ЛЮБЫЕ символы и количество)
+    const shouldEnable = walletAddress.length >= 1;
     setCreateButtonState(shouldEnable);
     console.log(`🔄 FIAT-TO-CRYPTO ВАЛИДАЦИЯ БЕЗ AML: ${shouldEnable ? '✅ АКТИВНА' : '❌ НЕАКТИВНА'}`);
     
