@@ -2798,8 +2798,7 @@ bot.on('callback_query:data', async (ctx) => {
                 webLogsText += `📋 <b>Последние заказы с сайта:</b>\n\n`;
                 recentOrders.forEach((order, index) => {
                     const time = new Date(order.created_at).toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' });
-                    const priority = getPriorityText(order.from_amount * 100); // примерная цена
-                    webLogsText += `${index + 1}. ${priority} Заявка #${order.id}\n`;
+                    webLogsText += `${index + 1}. 📋 Заявка #${order.id}\n`;
                     webLogsText += `⏰ ${time} | 👤 ${order.username || 'Аноним'}\n`;
                     webLogsText += `💱 ${order.from_amount} ${order.from_currency} → ${order.to_currency}\n`;
                     webLogsText += `📊 ${order.assignment_status || 'новая'}\n\n`;
@@ -5351,9 +5350,6 @@ async function notifyOperators(orderData) {
         const staff = await db.getStaffList();
         const operators = staff.filter(s => ['admin', 'operator'].includes(s.role));
         
-        // Расчет примерной прибыли (3% комиссия)
-        const estimatedProfit = (orderData.fromAmount * 0.03).toFixed(2);
-        
         // Определяем тип пары и формируем соответствующее сообщение
         const pairType = orderData.pairType || 'fiat';
         
@@ -5440,7 +5436,7 @@ async function notifyOperators(orderData) {
             `💱 <b>Обмен:</b> ${orderData.fromAmount} ${orderData.fromCurrency} → ${orderData.toCurrency}\n` +
             networkSection +  // ← ДОБАВЛЯЕМ ИНФОРМАЦИЮ О СЕТИ!
             `${pairTypeIcon} <b>Тип пары:</b> ${pairTypeText}\n` +
-            `💰 <b>Ожидаемая прибыль:</b> ~$${estimatedProfit}\n\n` +
+            `💰 <b>Ожидаемая прибыль:</b> не настроено\n\n` +
             addressSection +
             amlSection +
             `⏰ <b>Создан:</b> ${new Date().toLocaleString('ru-RU', {
@@ -5451,7 +5447,6 @@ async function notifyOperators(orderData) {
                 hour: '2-digit',
                 minute: '2-digit'
             })}\n\n` +
-            `📊 <b>Приоритет:</b> ${getPriorityText(orderData.fromAmount)}\n` +
             `📋 Используйте /operator чтобы принять заказ\n\n` +
             `#заявка #сайт #${orderData.fromCurrency}_${orderData.toCurrency} #${pairTypeText.toLowerCase()}`;
 
@@ -5497,12 +5492,7 @@ async function notifyOperators(orderData) {
     }
 }
 
-// Функция для определения приоритета заявки
-function getPriorityText(amount) {
-    if (amount >= 10000) return '🔥 ВЫСОКИЙ (от $10K)';
-    if (amount >= 1000) return '🟡 СРЕДНИЙ ($1K-$10K)';
-    return '🟢 ОБЫЧНЫЙ (до $1K)';
-}
+
 
 // Отправка ежедневных обновлений активности
 async function sendDailyActivityUpdate() {
@@ -6144,7 +6134,7 @@ webhookApp.post('/api/support-ticket', async (req, res) => {
             const subjectLower = subject.toLowerCase();
             if (subjectLower.includes('наличн')) return '💵';
             if (subjectLower.includes('aml')) return '🛡️';
-            if (subjectLower.includes('карт')) return '💳';
+            if (subjectLower.includes('карты')) return '💳';
             if (subjectLower.includes('otc')) return '📈';
             return '🆘';
         };
