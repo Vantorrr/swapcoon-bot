@@ -997,7 +997,7 @@ class Database {
             this.db.get(`
                 SELECT * FROM orders 
                 WHERE user_id = ? AND status NOT IN ('completed', 'cancelled')
-                ORDER BY created_at DESC
+                ORDER BY id DESC
                 LIMIT 1
             `, [userId], (err, row) => {
                 if (err) {
@@ -1015,7 +1015,7 @@ class Database {
             this.db.get(`
                 SELECT operator_id FROM order_assignments 
                 WHERE order_id = ? AND status = 'assigned'
-                ORDER BY created_at DESC
+                ORDER BY id DESC
                 LIMIT 1
             `, [orderId], (err, row) => {
                 if (err) {
