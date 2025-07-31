@@ -186,6 +186,23 @@ app.post('/api/create-order', async (req, res) => {
             username: `user${userId}`
         };
 
+        // Логируем заказ в Google Sheets
+        if (googleSheetsManager && googleSheetsManager.isReady()) {
+            await googleSheetsManager.logOrder({
+                id: order.id,
+                user_id: userId,
+                userName: user.first_name || user.username || `User_${userId}`,
+                fromCurrency: fromCurrency,
+                toCurrency: toCurrency,
+                fromAmount: fromAmount,
+                toAmount: toAmount,
+                exchangeRate: exchangeRate,
+                fee: fee || 0,
+                status: 'pending',
+                aml_status: JSON.stringify({ from: amlFromResult, to: amlToResult })
+            });
+        }
+
         console.log('📋 Данные заявки:', order.id, order.from_currency, order.to_currency);
 
         // Отправляем уведомление операторам
