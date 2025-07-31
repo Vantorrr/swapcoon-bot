@@ -4821,11 +4821,11 @@ bot.on('message', async (ctx) => {
                     // ЭКСТРЕННАЯ РЕГИСТРАЦИЯ ПРЯМО ЗДЕСЬ
                     try {
                         await db.upsertUser({
-                            telegram_id: order.user_id,
-                            first_name: 'Пользователь',
-                            last_name: '',
+                            telegramId: order.user_id,       // ← ИСПРАВЛЕНО!
+                            firstName: 'Пользователь',       // ← ИСПРАВЛЕНО!
+                            lastName: '',                    // ← ИСПРАВЛЕНО!
                             username: `user${order.user_id}`,
-                            is_bot: false
+                            referredBy: null
                         });
                         console.log('🆘 ПОЛЬЗОВАТЕЛЬ ЭКСТРЕННО ЗАРЕГИСТРИРОВАН:', order.user_id);
                         

@@ -938,11 +938,11 @@ app.post('/api/create-order', async (req, res) => {
             try {
                 console.log('🔄 Регистрируем пользователя в боте...', userId);
                 const userData = {
-                    telegram_id: userId,
-                    first_name: 'Пользователь',
-                    last_name: '',
+                    telegramId: userId,           // ← ИСПРАВЛЕНО!
+                    firstName: 'Пользователь',   // ← ИСПРАВЛЕНО!
+                    lastName: '',                // ← ИСПРАВЛЕНО!
                     username: `user${userId}`,
-                    is_bot: false
+                    referredBy: null
                 };
                 console.log('🔄 Данные пользователя:', userData);
                 
@@ -1011,11 +1011,11 @@ app.post('/api/create-order', async (req, res) => {
         if (db && db.upsertUser) {
             try {
                 await db.upsertUser({
-                    telegram_id: userId,
-                    first_name: 'Пользователь',
-                    last_name: '',
+                    telegramId: userId,           // ← ИСПРАВЛЕНО!
+                    firstName: 'Пользователь',   // ← ИСПРАВЛЕНО!
+                    lastName: '',                // ← ИСПРАВЛЕНО!
                     username: `user${userId}`,
-                    is_bot: false
+                    referredBy: null
                 });
                 console.log('🆘 ЭКСТРЕННО ЗАРЕГИСТРИРОВАН:', userId);
             } catch (err) {
