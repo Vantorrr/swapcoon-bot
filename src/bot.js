@@ -4785,6 +4785,11 @@ bot.on('message', async (ctx) => {
     const messageText = ctx.message.text;
     const userRole = await db.getUserRole(userId);
     
+    console.log('🟢🟢🟢 ПОЛУЧЕНО ЛЮБОЕ СООБЩЕНИЕ В БОТЕ:');
+    console.log('🟢 userId:', userId);
+    console.log('🟢 messageText:', messageText);
+    console.log('🟢 userRole:', userRole);
+    
     // === РУЧНОЙ ВВОД КУРСОВ ===
     if (messageText && global.manualRateInput && global.manualRateInput.has(userId)) {
         const inputState = global.manualRateInput.get(userId);

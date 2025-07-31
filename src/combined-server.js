@@ -889,6 +889,9 @@ app.get('/api/profile/:userId', async (req, res) => {
 
 // API для создания заявки
 app.post('/api/create-order', async (req, res) => {
+    console.log('🔥🔥🔥 ВХОД В ENDPOINT /api/create-order');
+    console.log('🔥🔥🔥 req.body:', req.body);
+    
     try {
         console.log('📝 Создание заявки (комбинированный режим):', req.body);
         console.log('🚨 === ПЕРЕД ВЫЗОВОМ notifyOperators ===');
