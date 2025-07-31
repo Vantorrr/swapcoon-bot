@@ -657,7 +657,7 @@ async function loadExchangeRates() {
             updateCurrencyList();
             updateRatesTime();
             console.log('✅ Актуальные курсы заменили тестовые:', currentRates.length, 'валют');
-            showNotification('Курсы валют обновлены!', 'success');
+            // showNotification('Курсы валют обновлены!', 'success'); // УБРАНО ПО ЗАПРОСУ
             
             // 🔥 ПРИНУДИТЕЛЬНОЕ СКРЫТИЕ ЗАСТАВКИ ПОСЛЕ ЗАГРУЗКИ КУРСОВ
             hideLoadingScreen();
