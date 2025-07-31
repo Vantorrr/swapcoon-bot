@@ -642,6 +642,18 @@ async function loadExchangeRates() {
         
         if (data.success && data.data && data.data.length > 0) {
             currentRates = data.data;
+            
+            // 🔥 СОХРАНЯЕМ СЫРЫЕ ДАННЫЕ ПАР ДЛЯ ПРЯМЫХ РАСЧЕТОВ!
+            if (data.rawPairs && data.rawPairs.length > 0) {
+                window.rawPairData = data.rawPairs;
+                console.log('🔥 Сохранены сырые данные пар:', window.rawPairData.length, 'пар');
+                window.rawPairData.forEach(pair => {
+                    console.log(`   ${pair.pair}: ${pair.sellRate}/${pair.buyRate}`);
+                });
+            } else {
+                console.log('⚠️ Нет сырых данных пар от API');
+            }
+            
             updateCurrencyList();
             updateRatesTime();
             console.log('✅ Актуальные курсы заменили тестовые:', currentRates.length, 'валют');
@@ -692,25 +704,43 @@ function calculateExchange() {
         return;
     }
     
-    // 🔥 СТАНДАРТНАЯ ЛОГИКА: РАБОТАЕМ С ВАЛЮТАМИ ИЗ GOOGLE SHEETS
-    console.log(`📊 РАСЧЕТ КУРСА для ${fromCurrency} → ${toCurrency}`);
-    const fromRate = currentRates.find(r => r.currency === fromCurrency);
-    const toRate = currentRates.find(r => r.currency === toCurrency);
+    // 🔥 ИЩЕМ ПРЯМУЮ ПАРУ В ДАННЫХ ОТ API
+    console.log(`📊 ПРЯМОЙ ПОИСК ПАРЫ ${fromCurrency}/${toCurrency} в данных...`);
     
-    console.log(`📊 fromRate (${fromCurrency}):`, fromRate);
-    console.log(`📊 toRate (${toCurrency}):`, toRate);
+    // Получаем сырые данные пар (должны быть в глобальном объекте)
+    let pairData = null;
     
-    if (!fromRate || !toRate) {
-        console.error(`❌ Валютная пара ${fromCurrency}/${toCurrency} не найдена`);
-        console.error(`📊 Доступные валюты:`, currentRates.map(r => r.currency));
+    // Пытаемся найти прямую пару FROM/TO
+    if (window.rawPairData) {
+        pairData = window.rawPairData.find(p => p.pair === `${fromCurrency}/${toCurrency}`);
+        if (pairData) {
+            console.log(`📊 НАЙДЕНА ПРЯМАЯ ПАРА: ${pairData.pair} = ${pairData.sellRate}/${pairData.buyRate}`);
+        } else {
+            // Ищем обратную пару TO/FROM
+            const reversePair = window.rawPairData.find(p => p.pair === `${toCurrency}/${fromCurrency}`);
+            if (reversePair) {
+                console.log(`📊 НАЙДЕНА ОБРАТНАЯ ПАРА: ${reversePair.pair} = ${reversePair.sellRate}/${reversePair.buyRate}`);
+                // Инвертируем для расчета
+                pairData = {
+                    pair: `${fromCurrency}/${toCurrency}`,
+                    sellRate: 1 / reversePair.buyRate,
+                    buyRate: 1 / reversePair.sellRate
+                };
+                console.log(`📊 ИНВЕРТИРОВАННАЯ ПАРА: ${pairData.sellRate}/${pairData.buyRate}`);
+            }
+        }
+    }
+    
+    if (!pairData) {
+        console.error(`❌ Пара ${fromCurrency}/${toCurrency} НЕ НАЙДЕНА!`);
+        console.error(`📊 Доступные пары:`, window.rawPairData?.map(p => p.pair) || 'нет данных');
         return;
     }
     
-    // Расчет курса обмена
-    const exchangeRate = fromRate.sell / toRate.buy;
+    // Простой расчет: используем sell rate пары
+    const exchangeRate = pairData.sellRate;
     const toAmount = fromAmount * exchangeRate;
-    console.log(`📊 РАСЧЕТ: ${fromRate.sell} / ${toRate.buy} = ${exchangeRate}`);
-    console.log(`📊 РЕЗУЛЬТАТ: ${fromAmount} * ${exchangeRate} = ${toAmount}`);
+    console.log(`📊 ПРЯМОЙ РАСЧЕТ: ${fromAmount} * ${pairData.sellRate} = ${toAmount}`);
     const fee = 0;
     const finalAmount = toAmount;
     
@@ -737,14 +767,27 @@ function reverseCalculateExchange() {
         return;
     }
     
-    const fromRate = currentRates.find(r => r.currency === fromCurrency);
-    const toRate = currentRates.find(r => r.currency === toCurrency);
+    // 🔥 ИСПОЛЬЗУЕМ ПРЯМЫЕ ПАРЫ ДЛЯ ОБРАТНОГО РАСЧЕТА
+    let pairData = null;
     
-    if (!fromRate || !toRate) {
+    if (window.rawPairData) {
+        pairData = window.rawPairData.find(p => p.pair === `${fromCurrency}/${toCurrency}`);
+        if (!pairData) {
+            const reversePair = window.rawPairData.find(p => p.pair === `${toCurrency}/${fromCurrency}`);
+            if (reversePair) {
+                pairData = {
+                    sellRate: 1 / reversePair.buyRate,
+                    buyRate: 1 / reversePair.sellRate
+                };
+            }
+        }
+    }
+    
+    if (!pairData) {
         return;
     }
     
-    const exchangeRate = fromRate.sell / toRate.buy;
+    const exchangeRate = pairData.sellRate;
     const fee = 0; // Комиссия убрана
     const grossAmount = toAmount; // Без комиссии
     const fromAmount = grossAmount / exchangeRate;

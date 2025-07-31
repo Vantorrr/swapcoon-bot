@@ -696,6 +696,7 @@ app.get('/api/rates', async (req, res) => {
         res.json({ 
             success: true, 
             data: rates,
+            rawPairs: pairRates, // 🔥 ДОБАВЛЯЕМ СЫРЫЕ ДАННЫЕ ПАР!
             lastUpdate: global.ratesService.getLastUpdateTime(),
             source: 'ТОЛЬКО_GOOGLE_SHEETS'
         });
