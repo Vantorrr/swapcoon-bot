@@ -3790,8 +3790,57 @@ function hideLoadingScreen() {
     }
 }
 
+// 📱 ПОЛНОЭКРАННЫЙ РЕЖИМ ДЛЯ МОБИЛЬНЫХ
+function setupFullscreenMode() {
+    // Настройка высоты для мобильных браузеров
+    function setMobileVH() {
+        const vh = window.innerHeight * 0.01;
+        document.documentElement.style.setProperty('--vh', `${vh}px`);
+    }
+    
+    // Устанавливаем при загрузке
+    setMobileVH();
+    
+    // Обновляем при изменении ориентации/размера
+    window.addEventListener('resize', setMobileVH);
+    window.addEventListener('orientationchange', () => {
+        setTimeout(setMobileVH, 100); // Небольшая задержка для корректного расчета
+    });
+    
+    // Скрыть адресную строку на мобильных
+    window.addEventListener('load', () => {
+        setTimeout(() => {
+            window.scrollTo(0, 1);
+        }, 100);
+    });
+    
+    // Предотвращаем zoom на iOS
+    document.addEventListener('gesturestart', (e) => {
+        e.preventDefault();
+    });
+    
+    // Предотвращаем pull-to-refresh
+    document.addEventListener('touchstart', (e) => {
+        if (e.touches.length > 1) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+    
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', (e) => {
+        const now = (new Date()).getTime();
+        if (now - lastTouchEnd <= 300) {
+            e.preventDefault();
+        }
+        lastTouchEnd = now;
+    }, false);
+    
+    console.log('📱 Полноэкранный режим настроен!');
+}
+
 // Автозапуск заставки при загрузке страницы
 document.addEventListener('DOMContentLoaded', () => {
+    setupFullscreenMode();
     startLoadingSequence();
 });
 

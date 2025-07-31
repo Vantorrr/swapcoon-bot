@@ -1,0 +1,35 @@
+{
+  "name": "ExMachinaX - Обмен валют",
+  "short_name": "ExMachinaX",
+  "description": "Быстрый и безопасный обмен криптовалют с AML проверкой",
+  "start_url": "/",
+  "display": "fullscreen",
+  "orientation": "portrait",
+  "background_color": "#1a1a2e",
+  "theme_color": "#4a90e2",
+  "scope": "/",
+  "lang": "ru",
+  "icons": [
+    {
+      "src": "../assets/images/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "../assets/images/logo.png", 
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["finance", "business"],
+  "screenshots": [
+    {
+      "src": "../assets/images/logo.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ]
+} 

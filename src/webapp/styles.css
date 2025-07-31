@@ -76,6 +76,28 @@ body {
     user-select: none;
     -webkit-user-select: none;
     overscroll-behavior: none;
+    
+    /* ПОЛНОЭКРАННЫЙ РЕЖИМ ДЛЯ МОБИЛЬНЫХ */
+    width: 100%;
+    height: 100%;
+    min-height: 100vh;
+    min-height: 100dvh; /* Динамическая высота viewport для мобильных */
+    min-height: -webkit-fill-available; /* Safari поддержка */
+    overflow-x: hidden;
+}
+
+/* Поддержка полноэкранного режима */
+html {
+    height: 100%;
+    height: -webkit-fill-available;
+    overflow: hidden;
+}
+
+/* Убираем скролл на мобильных */
+@supports (-webkit-touch-callout: none) {
+    body {
+        min-height: -webkit-fill-available;
+    }
 }
 
 /* БОМБОВАЯ ЗАСТАВКА ТОП-1 МИРА */
@@ -85,6 +107,7 @@ body {
     left: 0;
     width: 100%;
     height: 100vh;
+    height: calc(var(--vh, 1vh) * 100); /* Динамическая высота для мобильных */
     background: 
         radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
         radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
@@ -315,6 +338,9 @@ body {
 /* App Layout */
 .app {
     min-height: 100vh;
+    min-height: calc(var(--vh, 1vh) * 100); /* Динамическая высота для мобильных */
+    height: 100vh;
+    height: calc(var(--vh, 1vh) * 100);
     display: flex;
     flex-direction: column;
     width: 100%;
@@ -322,6 +348,7 @@ body {
     margin: 0 auto;
     background-color: var(--surface-color);
     transition: opacity 0.3s ease;
+    overflow: hidden; /* Убираем скролл для полноэкранного режима */
 }
 
 .app.hidden {
