@@ -991,6 +991,42 @@ class Database {
         });
     }
 
+    // Получение последнего активного заказа пользователя
+    async getLastOrderByUserId(userId) {
+        return new Promise((resolve, reject) => {
+            this.db.get(`
+                SELECT * FROM orders 
+                WHERE user_id = ? AND status NOT IN ('completed', 'cancelled')
+                ORDER BY created_at DESC
+                LIMIT 1
+            `, [userId], (err, row) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(row);
+                }
+            });
+        });
+    }
+
+    // Получение оператора заказа
+    async getOrderOperator(orderId) {
+        return new Promise((resolve, reject) => {
+            this.db.get(`
+                SELECT operator_id FROM order_assignments 
+                WHERE order_id = ? AND status = 'assigned'
+                ORDER BY created_at DESC
+                LIMIT 1
+            `, [orderId], (err, row) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(row);
+                }
+            });
+        });
+    }
+
     // Обновление статуса заказа с автоматическим сообщением в чат
     async updateOrderStatusWithMessage(orderId, newStatus, operatorId, statusMessage = null) {
         return new Promise((resolve, reject) => {
