@@ -1582,9 +1582,7 @@ bot.on('callback_query:data', async (ctx) => {
             action: 'input_custom_details',
             orderId: orderId
         });
-        console.log('🔧 КОНТЕКСТ УСТАНОВЛЕН для пользователя:', userId);
-        console.log('🔧 chatContexts.size:', chatContexts.size);
-        console.log('🔧 Проверяем сразу chatContexts.has(userId):', chatContexts.has(userId));
+
         
         await ctx.reply(
             `✍️ <b>ВВОД НОВОГО АДРЕСА</b>\n\n` +
@@ -4944,14 +4942,109 @@ bot.on('message', async (ctx) => {
     console.log('🟢 userId:', userId);
     console.log('🟢 messageText:', messageText);
     console.log('🟢 userRole:', userRole);
-    console.log('🔧 chatContexts.size в начале обработки:', chatContexts.size);
-    console.log('🔧 chatContexts.has(userId) в начале:', chatContexts.has(userId));
+
     
     // 🚨 ПРИОРИТЕТНАЯ ДИАГНОСТИКА ТЕКСТОВЫХ СООБЩЕНИЙ
     if (chatContexts.has(userId)) {
         const context = chatContexts.get(userId);
-        console.log('🔧 КОНТЕКСТ НАЙДЕН:', context);
-        console.log('🔧 context.action:', context.action);
+
+        if (context.action === 'input_custom_details') {
+            console.log('🔧 ОБРАБОТКА input_custom_details, текст:', messageText);
+            
+            try {
+                const orderId = context.orderId;
+                const customDetailsText = messageText.trim();
+                
+                // Парсим введенные данные адреса
+                const lines = customDetailsText.split('\n').map(line => line.trim()).filter(line => line);
+                console.log('🔧 Получено строк:', lines.length, 'данные:', lines);
+                
+                if (lines.length < 2) {
+                    console.log('❌ НЕДОСТАТОЧНО СТРОК, отправляем ошибку');
+                    await ctx.reply(
+                        `❌ <b>Недостаточно данных!</b>\n\n` +
+                        `Введите минимум:\n` +
+                        `• Название сети\n` +
+                        `• Адрес\n\n` +
+                        `<b>Пример:</b>\n` +
+                        `TRC-20 USDT\n` +
+                        `THcSDj69NjoD9Ev53mK9cx3jF7AswMDtcW\n\n` +
+                        `Попробуйте еще раз:`,
+                        { 
+                            parse_mode: 'HTML',
+                            reply_markup: new InlineKeyboard()
+                                .text('❌ Отмена', `send_payment_details_${orderId}`)
+                        }
+                    );
+                    // НЕ удаляем контекст, чтобы можно было ввести заново
+                    return;
+                }
+                
+                const networkName = lines[0];
+                const address = lines[1];
+                const networkDescription = lines[2] || 'Блокчейн';
+                const currency = lines[3] || 'USDT';
+                
+                console.log('✅ ДАННЫЕ ОБРАБОТАНЫ:', { networkName, address, networkDescription, currency });
+                
+                // Обновляем статус заказа
+                const result = await db.updateOrderStatusWithMessage(orderId, 'payment_details_sent', userId, 
+                    `💳 Новый адрес (${networkName}) отправлен клиенту. Ожидаем поступления средств.`);
+                
+                const order = await db.getOrderWithClient(orderId);
+                
+                // Отправляем адрес клиенту
+                await ctx.api.sendMessage(order.client_id,
+                    `💳 <b>АДРЕС ДЛЯ ПЕРЕВОДА</b>\n\n` +
+                    `🆔 Заказ #${orderId}\n` +
+                    `💰 К переводу: <b>${order.from_amount} ${order.from_currency}</b>\n\n` +
+                    `🏦 <b>${networkName}</b>\n` +
+                    `📍 Адрес: <code>${address}</code>\n` +
+                    `🏛️ Сеть: ${networkDescription}\n` +
+                    `💎 Валюта: ${currency}\n\n` +
+                    `⚠️ <b>ВАЖНО:</b>\n` +
+                    `• Переводите ТОЧНУЮ сумму: ${order.from_amount} ${order.from_currency}\n` +
+                    `• Проверьте сеть перевода!\n` +
+                    `• После перевода нажмите "✅ Отправил"\n` +
+                    `• Время зачисления: 5-30 минут\n\n` +
+                    `📞 Вопросы? Напишите оператору!`,
+                    { 
+                        parse_mode: 'HTML',
+                        reply_markup: new InlineKeyboard()
+                            .text('✅ Я отправил', `client_paid_${orderId}`)
+                            .text('💬 Связаться с оператором', `client_chat_${orderId}`)
+                            .row()
+                            .text('📋 Копировать адрес', `copy_address_${address}`)
+                    }
+                );
+                
+                // Подтверждаем отправку оператору
+                await ctx.reply(
+                    `✅ <b>Новый адрес отправлен!</b>\n\n` +
+                    `🏦 Сеть: ${networkName}\n` +
+                    `📍 Адрес: ${address}\n` +
+                    `💎 Валюта: ${currency}\n` +
+                    `🆔 Заказ #${orderId}\n\n` +
+                    `${result.message}`,
+                    { 
+                        parse_mode: 'HTML',
+                        reply_markup: new InlineKeyboard()
+                            .text('🎛️ Управление заказом', `manage_order_${orderId}`)
+                    }
+                );
+                
+                console.log('✅ АДРЕС УСПЕШНО ОТПРАВЛЕН КЛИЕНТУ И ОПЕРАТОРУ');
+                chatContexts.delete(userId);
+                return;
+                
+            } catch (error) {
+                console.error('Ошибка отправки нового адреса:', error);
+                await ctx.reply('❌ Ошибка отправки адреса');
+                chatContexts.delete(userId);
+                return;
+            }
+        }
+        
         if (context.action === 'send_message_to_client') {
             console.log('📨 🔥 ОБНАРУЖЕНА ОТПРАВКА СООБЩЕНИЯ КЛИЕНТУ!');
             console.log('📨 🔥 orderId:', context.orderId);
