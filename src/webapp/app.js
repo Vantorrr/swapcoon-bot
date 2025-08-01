@@ -1215,9 +1215,7 @@ function closeBankModal() {
 }
 
 function selectBank(bank) {
-    console.log('🏦 ВЫБОР БАНКА:', bank);
     currentBank = bank;
-    console.log('🏦 currentBank установлен в:', currentBank);
     finalizeCurrencySelection('RUB', bank);
     closeBankModal();
 }
@@ -2264,7 +2262,8 @@ async function createOrder() {
                 amlFromResult: currentFromAMLResult || { status: 'not_checked', risk: 'unknown' },
                 amlToResult: currentToAMLResult || { status: 'not_checked', risk: 'unknown' },
                 pairType: 'crypto',
-                network: currentNetwork || null // ← ДОБАВЛЯЕМ СЕТЬ!
+                network: currentNetwork || null,
+                bank: (currentCalculation.fromCurrency === 'RUB' || currentCalculation.toCurrency === 'RUB') ? currentBank : null
             };
         } else if (pairType === 'crypto-to-fiat') {
             // Для смешанных пар (USDT → RUB)
@@ -2300,7 +2299,8 @@ async function createOrder() {
                 amlFromResult: currentFromAMLResult || { status: 'not_checked', risk: 'unknown' },
                 amlToResult: { status: 'not_required', risk: 'none' }, // для фиатных реквизитов AML не нужен
                 pairType: 'crypto-to-fiat',
-                network: currentNetwork || null // ← ДОБАВЛЯЕМ СЕТЬ ДЛЯ CRYPTO→FIAT!
+                network: currentNetwork || null,
+                bank: (currentCalculation.fromCurrency === 'RUB' || currentCalculation.toCurrency === 'RUB') ? currentBank : null
             };
             console.log('🔄 ФИНАЛЬНЫЕ ДАННЫЕ CRYPTO-TO-FIAT ЗАЯВКИ:', orderData);
         } else if (pairType === 'fiat-to-crypto') {
@@ -2329,7 +2329,8 @@ async function createOrder() {
                 amlFromResult: { status: 'not_required', risk: 'none' }, // для фиатных средств AML не нужен
                 amlToResult: currentFromAMLResult || { status: 'not_checked', risk: 'unknown' }, // AML кошелька получения
                 pairType: 'fiat-to-crypto',
-                network: currentNetwork || null // ← ДОБАВЛЯЕМ СЕТЬ ДЛЯ FIAT→CRYPTO!
+                network: currentNetwork || null,
+                bank: (currentCalculation.fromCurrency === 'RUB' || currentCalculation.toCurrency === 'RUB') ? currentBank : null
             };
             console.log('🔄 ФИНАЛЬНЫЕ ДАННЫЕ FIAT-TO-CRYPTO ЗАЯВКИ:', orderData);
                 } else {
@@ -2345,7 +2346,6 @@ async function createOrder() {
              if (isSpecialCase) {
                  const pairName = `${currentCalculation.fromCurrency}→${currentCalculation.toCurrency}`;
                                  console.log(`💳 СОЗДАНИЕ ${pairName} ЗАЯВКИ - реквизиты:`, address);
-                console.log('🏦 currentBank при создании заявки:', currentBank);
                                 orderData = {
                     userId: currentUserId,
                     userData: currentUserData, // Добавляем данные пользователя
@@ -2363,7 +2363,6 @@ async function createOrder() {
                  console.log(`💳 ФИНАЛЬНЫЕ ДАННЫЕ ${pairName} ЗАЯВКИ:`, orderData);
              } else {
                                  console.log('🏦 СОЗДАНИЕ ФИАТНОЙ ЗАЯВКИ - номер счета:', address);
-                console.log('🏦 currentBank при создании фиатной заявки:', currentBank);
                                 orderData = {
                     userId: currentUserId,
                     userData: currentUserData, // Добавляем данные пользователя

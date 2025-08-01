@@ -4943,12 +4943,8 @@ bot.on('message', async (ctx) => {
     console.log('🟢 userRole:', userRole);
     
     // 🚨 ПРИОРИТЕТНАЯ ДИАГНОСТИКА ТЕКСТОВЫХ СООБЩЕНИЙ
-    console.log('📨 ПРОВЕРЯЕМ КОНТЕКСТ ДЛЯ ПОЛЬЗОВАТЕЛЯ:', userId);
-    console.log('📨 chatContexts.has(userId):', chatContexts.has(userId));
     if (chatContexts.has(userId)) {
         const context = chatContexts.get(userId);
-        console.log('📨 НАЙДЕН КОНТЕКСТ:', context);
-        console.log('📨 context.action:', context.action);
         if (context.action === 'send_message_to_client') {
             console.log('📨 🔥 ОБНАРУЖЕНА ОТПРАВКА СООБЩЕНИЯ КЛИЕНТУ!');
             console.log('📨 🔥 orderId:', context.orderId);
@@ -5344,9 +5340,6 @@ bot.on('message', async (ctx) => {
         }
 
         if (context.action === 'input_custom_details') {
-            console.log('🔍 ВХОДИМ В ОБРАБОТЧИК input_custom_details');
-            console.log('🔍 messageText:', messageText);
-            console.log('🔍 orderId:', context.orderId);
             
             try {
                 const orderId = context.orderId;
@@ -5354,12 +5347,8 @@ bot.on('message', async (ctx) => {
                 
                 // Парсим введенные данные адреса
                 const lines = customDetailsText.split('\n').map(line => line.trim()).filter(line => line);
-                console.log('🔍 Парсинг данных input_custom_details:');
-                console.log('🔍 lines:', lines);
-                console.log('🔍 lines.length:', lines.length);
                 
                 if (lines.length < 3) {
-                    console.log('❌ НЕДОСТАТОЧНО ДАННЫХ! Отправляем сообщение об ошибке');
                     await ctx.reply(
                         `❌ <b>Недостаточно данных!</b>\n\n` +
                         `Введите минимум:\n` +
@@ -5441,11 +5430,6 @@ bot.on('message', async (ctx) => {
 
         // Обработка ручного ввода криптоадреса из панели оператора
         if (context.action === 'input_manual_crypto') {
-            console.log('🔍 ВХОДИМ В ОБРАБОТЧИК input_manual_crypto');
-            console.log('🔍 messageText:', messageText);
-            console.log('🔍 userId:', userId);
-            console.log('🔍 context:', context);
-            
             try {
                 const customDetailsText = messageText.trim();
                 
@@ -5845,10 +5829,7 @@ async function notifyOperators(orderData) {
         const networkSection = orderData.network ? `🔗 <b>Сеть:</b> ${orderData.network}\n` : '';
         
         // Добавляем информацию о банке если указан
-        console.log('🏦 ДИАГНОСТИКА БАНКА В notifyOperators:');
-        console.log('🏦 orderData.bank:', orderData.bank);
         const bankSection = orderData.bank ? `🏦 <b>Банк:</b> ${orderData.bank}\n` : '';
-        console.log('🏦 bankSection:', bankSection);
         
         const message = 
             `🚨 <b>НОВАЯ ЗАЯВКА С САЙТА #${orderData.id}</b>\n\n` +

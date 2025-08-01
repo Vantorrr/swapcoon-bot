@@ -340,15 +340,6 @@ class Database {
 
             console.log('🔄 Создание заявки в базе данных...');
             console.log('📋 Данные заказа:', { userId, fromCurrency, toCurrency, fromAmount, toAmount, source });
-            console.log('🏦 КРИТИЧНО - toAddress в БД:', toAddress, 'fromAddress:', fromAddress);
-            console.log('🔍 ДИАГНОСТИКА ID: bank=', bank, 'network=', network);
-            
-            // Проверим текущий максимальный ID
-            this.db.get('SELECT MAX(id) as maxId FROM orders', (err, row) => {
-                if (!err) {
-                    console.log('🔍 ТЕКУЩИЙ МАКСИМАЛЬНЫЙ ID В ТАБЛИЦЕ:', row?.maxId || 'НЕТ ЗАПИСЕЙ');
-                }
-            });
 
             const sql = `
                 INSERT INTO orders 
@@ -369,12 +360,8 @@ class Database {
                     console.error('❌🔥 ПОЛНАЯ ОШИБКА:', err);
                     reject(err);
                 } else {
-                    console.log('✅🎉 ЗАКАЗ УСПЕШНО СОЗДАН В БД! ID:', this.lastID);
-                    console.log('🔍 ДИАГНОСТИКА БАНКА В БД:');
-                    console.log('🔍 bank from orderData:', orderData.bank);
-                    console.log('🔍 network from orderData:', orderData.network);
+                    console.log('✅ ЗАКАЗ УСПЕШНО СОЗДАН В БД! ID:', this.lastID);
                     const createdOrder = { id: this.lastID, ...orderData };
-                    console.log('🏦 ВОЗВРАЩАЕМ ИЗ БД:', createdOrder);
                     resolve(createdOrder);
                 }
             });
