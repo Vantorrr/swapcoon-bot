@@ -5340,6 +5340,7 @@ bot.on('message', async (ctx) => {
         }
 
         if (context.action === 'input_custom_details') {
+            console.log('🔧 ОБРАБОТКА input_custom_details, текст:', messageText);
             
             try {
                 const orderId = context.orderId;
@@ -5347,14 +5348,18 @@ bot.on('message', async (ctx) => {
                 
                 // Парсим введенные данные адреса
                 const lines = customDetailsText.split('\n').map(line => line.trim()).filter(line => line);
+                console.log('🔧 Получено строк:', lines.length, 'данные:', lines);
                 
-                if (lines.length < 3) {
+                if (lines.length < 2) {
+                    console.log('❌ НЕДОСТАТОЧНО СТРОК, отправляем ошибку');
                     await ctx.reply(
                         `❌ <b>Недостаточно данных!</b>\n\n` +
                         `Введите минимум:\n` +
                         `• Название сети\n` +
-                        `• Адрес\n` +
-                        `• Описание сети\n\n` +
+                        `• Адрес\n\n` +
+                        `<b>Пример:</b>\n` +
+                        `TRC-20 USDT\n` +
+                        `THcSDj69NjoD9Ev53mK9cx3jF7AswMDtcW\n\n` +
                         `Попробуйте еще раз:`,
                         { 
                             parse_mode: 'HTML',
@@ -5362,13 +5367,16 @@ bot.on('message', async (ctx) => {
                                 .text('❌ Отмена', `send_payment_details_${orderId}`)
                         }
                     );
+                    // НЕ удаляем контекст, чтобы можно было ввести заново
                     return;
                 }
                 
                 const networkName = lines[0];
                 const address = lines[1];
-                const networkDescription = lines[2];
+                const networkDescription = lines[2] || 'Блокчейн';
                 const currency = lines[3] || 'USDT';
+                
+                console.log('✅ ДАННЫЕ ОБРАБОТАНЫ:', { networkName, address, networkDescription, currency });
                 
                 // Обновляем статус заказа
                 const result = await db.updateOrderStatusWithMessage(orderId, 'payment_details_sent', userId, 
@@ -5416,6 +5424,7 @@ bot.on('message', async (ctx) => {
                     }
                 );
                 
+                console.log('✅ АДРЕС УСПЕШНО ОТПРАВЛЕН КЛИЕНТУ И ОПЕРАТОРУ');
                 // Удаляем контекст
                 chatContexts.delete(userId);
                 return;
