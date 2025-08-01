@@ -4361,6 +4361,155 @@ bot.on('callback_query:data', async (ctx) => {
         }
     }
 
+    // Клиент подтверждает получение средств
+    if (data.startsWith('client_received_')) {
+        const orderId = parseInt(data.replace('client_received_', ''));
+        const clientName = ctx.from.first_name || ctx.from.username || `ID: ${userId}`;
+        
+        await ctx.answerCallbackQuery('✅ Спасибо за подтверждение!');
+        
+        try {
+            // Обновляем статус заказа
+            const result = await db.updateOrderStatusWithMessage(orderId, 'completed', userId, 
+                `✅ Клиент подтвердил получение средств. Заказ завершен!`);
+                
+            const order = await db.getOrderWithClient(orderId);
+            
+            // Уведомляем клиента
+            await ctx.reply(
+                `🎉 <b>ЗАКАЗ ЗАВЕРШЕН!</b>\n\n` +
+                `🎫 Заказ #${orderId}\n` +
+                `✅ Вы подтвердили получение средств\n` +
+                `💰 ${order.to_amount} ${order.to_currency}\n\n` +
+                `Благодарим за использование нашего сервиса!\n\n` +
+                `⭐ Оцените качество обслуживания:`,
+                { 
+                    parse_mode: 'HTML',
+                    reply_markup: new InlineKeyboard()
+                        .text('⭐⭐⭐⭐⭐ Отлично!', `rate_service_5_${orderId}`)
+                        .text('⭐⭐⭐⭐ Хорошо', `rate_service_4_${orderId}`)
+                        .row()
+                        .text('⭐⭐⭐ Нормально', `rate_service_3_${orderId}`)
+                        .text('⭐⭐ Плохо', `rate_service_2_${orderId}`)
+                        .row()
+                        .text('📞 Поддержка', 'support')
+                        .text('🏠 Главное меню', 'back_to_main')
+                }
+            );
+            
+            // Уведомляем оператора
+            if (order.operator_id) {
+                await bot.api.sendMessage(order.operator_id,
+                    `🎉 <b>ЗАКАЗ ЗАВЕРШЕН!</b>\n\n` +
+                    `🎫 Заказ #${orderId}\n` +
+                    `👤 Клиент: ${clientName}\n` +
+                    `✅ Клиент подтвердил получение средств\n` +
+                    `💰 ${order.to_amount} ${order.to_currency}\n\n` +
+                    `🏆 Отличная работа!`,
+                    { 
+                        parse_mode: 'HTML',
+                        reply_markup: new InlineKeyboard()
+                            .text('📊 Статистика дня', 'daily_stats')
+                            .text('👨‍💼 Панель оператора', 'open_operator_panel')
+                    }
+                );
+            }
+            
+            console.log(`✅ Клиент ${userId} подтвердил получение средств по заявке ${orderId}`);
+            
+        } catch (error) {
+            console.error(`❌ Ошибка подтверждения получения:`, error);
+            await ctx.reply('❌ Ошибка обработки. Попробуйте позже.');
+        }
+    }
+    
+    // Клиент не получил средства
+    if (data.startsWith('client_not_received_')) {
+        const orderId = parseInt(data.replace('client_not_received_', ''));
+        const clientName = ctx.from.first_name || ctx.from.username || `ID: ${userId}`;
+        
+        await ctx.answerCallbackQuery('📞 Оператор уведомлен');
+        
+        try {
+            const order = await db.getOrderWithClient(orderId);
+            
+            // Уведомляем клиента
+            await ctx.reply(
+                `⚠️ <b>ПРОБЛЕМА С ПОЛУЧЕНИЕМ</b>\n\n` +
+                `🎫 Заказ #${orderId}\n` +
+                `❗ Вы не получили средства\n\n` +
+                `🔄 Мы проверим операцию и свяжемся с вами\n` +
+                `⏰ Время решения: до 30 минут\n\n` +
+                `📞 Оператор автоматически уведомлен о проблеме`,
+                { 
+                    parse_mode: 'HTML',
+                    reply_markup: new InlineKeyboard()
+                        .text('💬 Связаться с оператором', `client_chat_${orderId}`)
+                        .text('📞 Поддержка', 'support')
+                        .row()
+                        .text('🔄 Проверить еще раз', `check_again_${orderId}`)
+                }
+            );
+            
+            // Уведомляем оператора о проблеме
+            if (order.operator_id) {
+                await bot.api.sendMessage(order.operator_id,
+                    `🚨 <b>КЛИЕНТ НЕ ПОЛУЧИЛ СРЕДСТВА!</b>\n\n` +
+                    `🎫 Заказ #${orderId}\n` +
+                    `👤 Клиент: ${clientName}\n` +
+                    `❗ Клиент сообщил что не получил средства\n` +
+                    `💰 Должен получить: ${order.to_amount} ${order.to_currency}\n\n` +
+                    `🔍 <b>Срочно проверьте:</b>\n` +
+                    `• Правильность адреса/реквизитов\n` +
+                    `• Статус транзакции\n` +
+                    `• Сумму перевода\n\n` +
+                    `⚡ Свяжитесь с клиентом немедленно!`,
+                    { 
+                        parse_mode: 'HTML',
+                        reply_markup: new InlineKeyboard()
+                            .text('💬 Написать клиенту', `operator_chat_${orderId}`)
+                            .text('🔍 Проверить операцию', `check_transaction_${orderId}`)
+                            .row()
+                            .text('✅ Средства отправлены повторно', `funds_sent_again_${orderId}`)
+                            .text('❌ Проблема с операцией', `transaction_problem_${orderId}`)
+                    }
+                );
+            }
+            
+            // Уведомляем администраторов о проблеме
+            const staff = await db.getStaffList();
+            const admins = staff.filter(s => s.role === 'admin');
+            
+            for (const admin of admins) {
+                try {
+                    await bot.api.sendMessage(admin.telegram_id,
+                        `🚨 <b>ПРОБЛЕМА С ЗАКАЗОМ!</b>\n\n` +
+                        `🎫 Заказ #${orderId}\n` +
+                        `👤 Клиент: ${clientName} (${userId})\n` +
+                        `👨‍💼 Оператор: ${order.operator_name || 'Не назначен'}\n` +
+                        `❗ Клиент не получил средства\n` +
+                        `💰 ${order.to_amount} ${order.to_currency}\n\n` +
+                        `⚡ Требуется вмешательство!`,
+                        { 
+                            parse_mode: 'HTML',
+                            reply_markup: new InlineKeyboard()
+                                .text('🔍 Подробности', `admin_manage_order_${orderId}`)
+                                .text('📞 Связаться с клиентом', `admin_contact_client_${orderId}`)
+                        }
+                    );
+                } catch (error) {
+                    console.log(`Не удалось уведомить админа ${admin.telegram_id} о проблеме с заказом`);
+                }
+            }
+            
+            console.log(`❌ Клиент ${userId} сообщил о неполучении средств по заявке ${orderId}`);
+            
+        } catch (error) {
+            console.error(`❌ Ошибка обработки неполучения средств:`, error);
+            await ctx.reply('❌ Ошибка обработки. Попробуйте позже.');
+        }
+    }
+
     // Чат оператора с клиентом
     if (data.startsWith('operator_chat_')) {
         const orderId = data.replace('operator_chat_', '');
