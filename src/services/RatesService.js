@@ -78,10 +78,6 @@ class RatesService {
             // Получаем все курсы из Google Sheets
             const rates = await this.getRates();
             console.log(`📊 Получено ${rates.length} курсов из Google Sheets`);
-            console.log(`🔍 ДОСТУПНЫЕ ПАРЫ ДЛЯ РАСЧЕТА:`);
-            rates.forEach(rate => {
-                console.log(`   ${rate.pair}: sell=${rate.sellRate}, buy=${rate.buyRate}`);
-            });
             
             // Если валюты одинаковые, курс = 1
             if (fromCurrency === toCurrency) {

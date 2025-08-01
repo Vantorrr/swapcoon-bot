@@ -2,6 +2,7 @@ console.log("🚀 APP.JS ЗАГРУЖАЕТСЯ!");
 // Глобальные переменные
 let tg = window.Telegram?.WebApp;
 let currentUserId = null;
+let currentUserData = null; // Добавляем данные пользователя
 let currentRates = [];
 let fromCurrency = null; // Убираем дефолтные BTC
 let toCurrency = null; // Убираем дефолтные USDT
@@ -404,15 +405,27 @@ function initTelegramWebApp() {
             }, 500);
         }, 50);
         
-        // Извлекаем User ID
+        // Извлекаем User ID и данные пользователя
         if (tg.initDataUnsafe?.user?.id) {
             currentUserId = tg.initDataUnsafe.user.id;
-            console.log('👤 РЕАЛЬНЫЙ User ID из Telegram:', currentUserId);
+            currentUserData = {
+                id: tg.initDataUnsafe.user.id,
+                first_name: tg.initDataUnsafe.user.first_name || '',
+                last_name: tg.initDataUnsafe.user.last_name || '',
+                username: tg.initDataUnsafe.user.username || ''
+            };
+            console.log('👤 РЕАЛЬНЫЙ пользователь из Telegram:', currentUserData);
             console.log('✅ Это настоящий пользователь - уведомления будут отправлены!');
         } else {
             console.log('⚠️ User ID не найден в initDataUnsafe, используем тестовый');
             currentUserId = 123456789; // Тестовый ID для разработки
-            console.log('🔥 ВНИМАНИЕ: Тестовый ID! На производстве может не работать!');
+            currentUserData = {
+                id: 123456789,
+                first_name: 'Тестовый',
+                last_name: 'Пользователь',
+                username: 'test_user'
+            };
+            console.log('🔥 ВНИМАНИЕ: Тестовые данные! На производстве может не работать!');
         }
         
         // Применяем тему
@@ -773,20 +786,10 @@ function calculateExchange() {
     }
     
     if (!pairData) {
-        console.log(`⚠️ Прямая пара ${fromCurrency}/${toCurrency} не найдена, используем API для расчета`);
-        console.log(`📊 Доступные пары:`, window.rawPairData?.map(p => p.pair) || 'нет данных');
-        console.log(`🔍 ДЕТАЛЬНАЯ ДИАГНОСТИКА ПОИСКА ПАРЫ:`);
-        console.log(`   Ищем: ${fromCurrency}/${toCurrency}`);
-        console.log(`   Обратная: ${toCurrency}/${fromCurrency}`);
-        if (window.rawPairData) {
-            console.log(`   Всего пар:`, window.rawPairData.length);
-            window.rawPairData.forEach(pair => {
-                console.log(`     ${pair.pair}: sell=${pair.sellRate}, buy=${pair.buyRate}`);
-            });
-        }
-        
-        // Используем API для сложного расчета
-        calculateExchangeViaAPI(fromAmount);
+        console.error(`❌ Пара ${fromCurrency}/${toCurrency} НЕ НАЙДЕНА в Google Sheets!`);
+        showNotification(`Пара ${fromCurrency}/${toCurrency} недоступна`, 'error');
+        updateCalculationDisplay(0, 0, 0, 0);
+        document.getElementById('continue-button').disabled = true;
         return;
     }
     
@@ -2247,6 +2250,7 @@ async function createOrder() {
             
             orderData = {
                 userId: currentUserId,
+                userData: currentUserData, // Добавляем данные пользователя
                 fromCurrency: currentCalculation.fromCurrency,
                 toCurrency: currentCalculation.toCurrency,
                 fromAmount: currentCalculation.fromAmount,
@@ -2282,6 +2286,7 @@ async function createOrder() {
             console.log('🔄 СОЗДАНИЕ CRYPTO-TO-FIAT ЗАЯВКИ:', { cryptoAddress, receivingDetails });
             orderData = {
                 userId: currentUserId,
+                userData: currentUserData, // Добавляем данные пользователя
                 fromCurrency: currentCalculation.fromCurrency,
                 toCurrency: currentCalculation.toCurrency,
                 fromAmount: currentCalculation.fromAmount,
@@ -2310,6 +2315,7 @@ async function createOrder() {
             console.log('🔄 СОЗДАНИЕ FIAT-TO-CRYPTO ЗАЯВКИ:', { walletAddress });
             orderData = {
                 userId: currentUserId,
+                userData: currentUserData, // Добавляем данные пользователя
                 fromCurrency: currentCalculation.fromCurrency,
                 toCurrency: currentCalculation.toCurrency,
                 fromAmount: currentCalculation.fromAmount,
@@ -2337,33 +2343,35 @@ async function createOrder() {
              if (isSpecialCase) {
                  const pairName = `${currentCalculation.fromCurrency}→${currentCalculation.toCurrency}`;
                  console.log(`💳 СОЗДАНИЕ ${pairName} ЗАЯВКИ - реквизиты:`, address);
-                 orderData = {
-                     userId: currentUserId,
-                     fromCurrency: currentCalculation.fromCurrency,
-                     toCurrency: currentCalculation.toCurrency,
-                     fromAmount: currentCalculation.fromAmount,
-                     toAmount: currentCalculation.toAmount,
-                     fromAddress: '', // Будет заполнено оператором
-                     toAddress: address, // Реквизиты для получения средств
-                     exchangeRate: currentCalculation.exchangeRate,
-                     fee: currentCalculation.fee,
-                     pairType: 'fiat'
-                 };
+                                 orderData = {
+                    userId: currentUserId,
+                    userData: currentUserData, // Добавляем данные пользователя
+                    fromCurrency: currentCalculation.fromCurrency,
+                    toCurrency: currentCalculation.toCurrency,
+                    fromAmount: currentCalculation.fromAmount,
+                    toAmount: currentCalculation.toAmount,
+                    fromAddress: '', // Будет заполнено оператором
+                    toAddress: address, // Реквизиты для получения средств
+                    exchangeRate: currentCalculation.exchangeRate,
+                    fee: currentCalculation.fee,
+                    pairType: 'fiat'
+                };
                  console.log(`💳 ФИНАЛЬНЫЕ ДАННЫЕ ${pairName} ЗАЯВКИ:`, orderData);
              } else {
                  console.log('🏦 СОЗДАНИЕ ФИАТНОЙ ЗАЯВКИ - номер счета:', address);
-                 orderData = {
-                     userId: currentUserId,
-                     fromCurrency: currentCalculation.fromCurrency,
-                     toCurrency: currentCalculation.toCurrency,
-                     fromAmount: currentCalculation.fromAmount,
-                     toAmount: currentCalculation.toAmount,
-                     fromAddress: '', // Будет заполнено оператором
-                     toAddress: address, // Номер счета для фиатных пар
-                     exchangeRate: currentCalculation.exchangeRate,
-                     fee: currentCalculation.fee,
-                     pairType: 'fiat'
-                 };
+                                 orderData = {
+                    userId: currentUserId,
+                    userData: currentUserData, // Добавляем данные пользователя
+                    fromCurrency: currentCalculation.fromCurrency,
+                    toCurrency: currentCalculation.toCurrency,
+                    fromAmount: currentCalculation.fromAmount,
+                    toAmount: currentCalculation.toAmount,
+                    fromAddress: '', // Будет заполнено оператором
+                    toAddress: address, // Номер счета для фиатных пар
+                    exchangeRate: currentCalculation.exchangeRate,
+                    fee: currentCalculation.fee,
+                    pairType: 'fiat'
+                };
                  console.log('🏦 ФИНАЛЬНЫЕ ДАННЫЕ ФИАТНОЙ ЗАЯВКИ:', orderData);
              }
          }

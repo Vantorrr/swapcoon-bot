@@ -627,71 +627,24 @@ app.get('/api/rates', async (req, res) => {
         const pairRates = await global.ratesService.getRates();
         console.log(`📊 Получено ${pairRates.length} пар из global.ratesService`);
         
-        // 🔥 ПРЕОБРАЗУЕМ ПАРЫ В ОТДЕЛЬНЫЕ ВАЛЮТЫ ДЛЯ ФРОНТЕНДА
-        console.log('🔥 Преобразуем пары в валюты для API...');
+        // Простой список валют без дебильных курсов
         const currencySet = new Set();
-        const currencyRates = [];
         
-        // Собираем все валюты из пар
         pairRates.forEach(pairData => {
             const [from, to] = pairData.pair.split('/');
             currencySet.add(from);
             currencySet.add(to);
         });
         
-        // Создаем объекты валют для API
-        Array.from(currencySet).forEach(currency => {
-            // 🔥 УМНЫЙ ПОИСК: ИЩЕМ ЛУЧШУЮ ПАРУ ДЛЯ ВАЛЮТЫ
-            let sell = 1;
-            let buy = 1;
-            
-            // Ищем пару где эта валюта первая (продаем эту валюту)
-            const directPair = pairRates.find(p => p.pair.startsWith(currency + '/'));
-            if (directPair) {
-                sell = directPair.sellRate;
-                buy = directPair.buyRate;
-                console.log(`💰 ${currency}: Прямая пара ${directPair.pair} → sell=${sell}, buy=${buy}`);
-            } else {
-                // Ищем пару где эта валюта вторая (покупаем эту валюту)
-                const reversePair = pairRates.find(p => p.pair.endsWith('/' + currency));
-                if (reversePair) {
-                    // Инвертируем курсы: если X/CURRENCY = sell/buy, то CURRENCY/X = buy/sell
-                    sell = 1 / reversePair.buyRate;
-                    buy = 1 / reversePair.sellRate;
-                    console.log(`💰 ${currency}: Обратная пара ${reversePair.pair} → sell=${sell}, buy=${buy}`);
-                } else {
-                    console.log(`💰 ${currency}: Пара не найдена, используем 1/1`);
-                }
-            }
-            
-            currencyRates.push({
-                currency: currency,
-                price: sell,
-                sell: sell, 
-                buy: buy,
-                type: ['USD', 'EUR', 'RUB', 'ARS', 'BRL'].includes(currency) ? 'fiat' : 'crypto',
-                change24h: 0,
-                source: 'GOOGLE_SHEETS',
-                lastUpdate: new Date().toISOString()
-            });
-        });
-        
-        console.log(`📊 Создано ${currencyRates.length} валют для API`);
-        
-        console.log('🔥🔥🔥 ПОЛНАЯ ДИАГНОСТИКА ВАЛЮТ ДЛЯ API:');
-        currencyRates.forEach(rate => {
-            console.log(`📊 API: ${rate.currency} = sell:${rate.sell}, buy:${rate.buy}, price:${rate.price}, source:"${rate.source}"`);
-        });
-        
-        // НАЙДЕМ BTC КУРС СПЕЦИАЛЬНО
-        const btcRate = currencyRates.find(r => r.currency === 'BTC');
-        if (btcRate) {
-            console.log(`🔥🔥🔥 BTC КУРС НАЙДЕН: sell=${btcRate.sell}, source="${btcRate.source}"`);
-        } else {
-            console.log(`❌❌❌ BTC КУРС НЕ НАЙДЕН В ВАЛЮТАХ!`);
-        }
-        
-        const rates = currencyRates;
+        const rates = Array.from(currencySet).map(currency => ({
+            currency: currency,
+            price: 1,
+            sell: 1, 
+            buy: 1,
+            type: ['RUB', 'ARS', 'UAH', 'KZT'].includes(currency) ? 'fiat' : 'crypto',
+            source: 'GOOGLE_SHEETS',
+            lastUpdate: new Date().toISOString()
+        }));
         
         res.json({ 
             success: true, 
@@ -898,6 +851,7 @@ app.post('/api/create-order', async (req, res) => {
         
         const {
             userId,
+            userData, // Добавляем извлечение данных пользователя
             fromCurrency,
             toCurrency,
             fromAmount,
@@ -991,7 +945,9 @@ app.post('/api/create-order', async (req, res) => {
                         const result = await global.googleSheetsManager.logOrder({
                             id: order.id,
                             user_id: userId,
-                            userName: `User_${userId}`, // Временно простое имя
+                            userName: user.first_name ? 
+                                `${user.first_name}${user.last_name ? ' ' + user.last_name : ''}${user.username ? ' (@' + user.username + ')' : ''}` :
+                                user.username || `User_${userId}`,
                             fromCurrency: fromCurrency,
                             toCurrency: toCurrency,
                             fromAmount: fromAmount,
@@ -1020,20 +976,12 @@ app.post('/api/create-order', async (req, res) => {
             }
         }
 
-        // Получаем информацию о пользователе
-        let user = null;
-        if (db && db.getUser) {
-            try {
-                user = await db.getUser(userId);
-            } catch (userError) {
-                console.error('❌ Ошибка получения пользователя:', userError);
-            }
-        }
-        
-        user = user || {
+        // Используем данные пользователя из запроса
+        const user = userData || {
             first_name: 'Пользователь',
             username: `user${userId}`
         };
+        console.log('👤 Данные пользователя для уведомления:', user);
 
         console.log('📋 Данные для уведомления:', {
             realOrderId,
@@ -1049,13 +997,13 @@ app.post('/api/create-order', async (req, res) => {
         if (db && db.upsertUser) {
             try {
                 await db.upsertUser({
-                    telegramId: userId,           // ← ИСПРАВЛЕНО!
-                    firstName: 'Пользователь',   // ← ИСПРАВЛЕНО!
-                    lastName: '',                // ← ИСПРАВЛЕНО!
-                    username: `user${userId}`,
+                    telegramId: userId,
+                    firstName: user.first_name || 'Пользователь',
+                    lastName: user.last_name || '',
+                    username: user.username || `user${userId}`,
                     referredBy: null
                 });
-                console.log('🆘 ЭКСТРЕННО ЗАРЕГИСТРИРОВАН:', userId);
+                console.log('🆘 ЭКСТРЕННО ЗАРЕГИСТРИРОВАН:', userId, 'как', user.first_name || user.username);
             } catch (err) {
                 console.error('🆘 Ошибка экстренной регистрации:', err.message);
             }
@@ -1066,7 +1014,9 @@ app.post('/api/create-order', async (req, res) => {
             try {
                 await notifyOperators({
                     id: realOrderId,                          // ← ИСПРАВЛЕНО: используем РЕАЛЬНЫЙ ID из базы!
-                    userName: user.first_name || user.username || `User_${userId}`,
+                    userName: user.first_name ? 
+                        `${user.first_name}${user.last_name ? ' ' + user.last_name : ''}${user.username ? ' (@' + user.username + ')' : ''}` :
+                        user.username || `User_${userId}`,
                     fromAmount: fromAmount,
                     fromCurrency: fromCurrency,
                     toCurrency: toCurrency,

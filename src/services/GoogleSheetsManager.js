@@ -212,52 +212,53 @@ class GoogleSheetsManager {
         }
     }
 
-    // Логирование нового заказа в реальном времени
+    // ПРОСТОЕ логирование заказа - без создания листов, прямо в существующий
     async logOrder(orderData) {
+        console.log('📊 ПРОСТОЕ ЛОГИРОВАНИЕ ЗАКАЗА В GOOGLE SHEETS...');
+        
         if (!this.isConnected) {
-            console.log('⚠️ Google Sheets не подключен, пропускаем логирование заказа');
+            console.log('❌ Google Sheets не подключен');
             return false;
         }
 
         try {
-            // Проверяем, существует ли лист Orders
-            const ordersSheetId = await this.getSheetId('Orders');
-            if (!ordersSheetId) {
-                console.log('📝 Лист Orders не найден, создаем...');
-                await this.createSheet('Orders', [
-                    'ID', 'Дата создания', 'User ID', 'Пользователь', 'Из валюты', 
-                    'Сумма отправки', 'В валюту', 'Сумма получения', 'Курс', 
-                    'Комиссия', 'Статус', 'Оператор ID', 'Оператор', 
-                    'Время обработки', 'AML статус', 'Прибыль', 'Приоритет'
-                ]);
-            }
-
-            // Добавляем строку с данными заказа
+            // Простые данные заказа
             const rowData = [
-                orderData.id,
+                orderData.id || 'unknown',
                 new Date().toLocaleString('ru'),
-                orderData.user_id || orderData.userId,
-                orderData.userName || orderData.username || '',
-                orderData.from_currency || orderData.fromCurrency,
-                parseFloat(orderData.from_amount || orderData.fromAmount),
-                orderData.to_currency || orderData.toCurrency,
-                parseFloat(orderData.to_amount || orderData.toAmount || 0),
-                parseFloat(orderData.exchange_rate || orderData.exchangeRate || 0),
-                parseFloat(orderData.fee || 0),
+                orderData.user_id || orderData.userId || 'unknown',
+                orderData.userName || 'User',
+                orderData.from_currency || orderData.fromCurrency || '',
+                orderData.from_amount || orderData.fromAmount || 0,
+                orderData.to_currency || orderData.toCurrency || '',
+                orderData.to_amount || orderData.toAmount || 0,
+                orderData.exchange_rate || orderData.exchangeRate || 0,
+                orderData.fee || 0,
                 orderData.status || 'pending',
-                '', // operator_id - пока пустой
-                '', // operator_name - пока пустой
-                0, // время обработки
-                orderData.aml_status || 'unknown',
-                0, // прибыль - пока 0
-                '' // приоритет убрали
+                '', // operator
+                '', // operator name
+                0,  // processing time
+                '', // aml
+                0,  // profit
+                ''  // priority (removed)
             ];
 
-            await this.appendSheet('Orders', [rowData]);
-            console.log(`✅ Заказ #${orderData.id} записан в Google Sheets`);
+            // ПРЯМАЯ запись в лист Orders через API
+            const response = await this.sheets.spreadsheets.values.append({
+                spreadsheetId: this.spreadsheetId,
+                range: 'Orders!A:Q',
+                valueInputOption: 'USER_ENTERED',
+                insertDataOption: 'INSERT_ROWS',
+                resource: {
+                    values: [rowData]
+                }
+            });
+
+            console.log(`✅ ЗАКАЗ #${orderData.id} ЗАПИСАН В GOOGLE SHEETS!`);
             return true;
         } catch (error) {
-            console.error('❌ Ошибка записи заказа в Google Sheets:', error.message);
+            console.error('❌ ОШИБКА ЗАПИСИ В GOOGLE SHEETS:', error.message);
+            console.error('   Stack:', error.stack);
             return false;
         }
     }
