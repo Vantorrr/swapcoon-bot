@@ -2848,6 +2848,7 @@ bot.on('callback_query:data', async (ctx) => {
         try {
             const stats = await db.getDailyStats();
             const webStats = await db.getTodayWebStats();
+            const ratingStats = await db.getRatingStats();
             
             // Текущее время для отчета
             const now = new Date();
@@ -2877,10 +2878,23 @@ bot.on('callback_query:data', async (ctx) => {
                 dailyText += `👨‍💼 <b>Работа операторов:</b>\n`;
                 dailyText += `✅ Обработано: ${stats.processedToday || 0}\n`;
                 dailyText += `⏳ В ожидании: ${stats.pendingOrders || 0}\n`;
-                dailyText += `🔄 В работе: ${stats.processingOrders || 0}\n`;
+                dailyText += `🔄 В работе: ${stats.processingOrders || 0}\n\n`;
             }
             
-            dailyText += `\n🕐 Обновлено: ${now.toLocaleTimeString('ru')}`;
+            // Статистика оценок
+            if (ratingStats && ratingStats.total_ratings > 0) {
+                dailyText += `⭐ <b>Оценки качества:</b>\n`;
+                dailyText += `📊 Всего оценок: ${ratingStats.total_ratings}\n`;
+                dailyText += `🎯 Средняя оценка: ${ratingStats.average_rating ? ratingStats.average_rating.toFixed(1) : 0}/5\n`;
+                dailyText += `⭐⭐⭐⭐⭐ ${ratingStats.rating_5 || 0} | `;
+                dailyText += `⭐⭐⭐⭐ ${ratingStats.rating_4 || 0} | `;
+                dailyText += `⭐⭐⭐ ${ratingStats.rating_3 || 0} | `;
+                dailyText += `⭐⭐ ${ratingStats.rating_2 || 0}\n\n`;
+            } else {
+                dailyText += `⭐ <b>Оценки качества:</b> Пока нет оценок\n\n`;
+            }
+            
+            dailyText += `🕐 Обновлено: ${now.toLocaleTimeString('ru')}`;
             
             const statsKeyboard = new InlineKeyboard()
                 .text('🔄 Обновить', 'admin_daily_stats');

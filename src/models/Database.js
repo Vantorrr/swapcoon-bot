@@ -1666,6 +1666,33 @@ class Database {
         });
     }
 
+    // Получение статистики оценок
+    async getRatingStats() {
+        return new Promise((resolve, reject) => {
+            const sql = `
+                SELECT 
+                    COUNT(*) as total_ratings,
+                    AVG(rating) as average_rating,
+                    COUNT(CASE WHEN rating = 5 THEN 1 END) as rating_5,
+                    COUNT(CASE WHEN rating = 4 THEN 1 END) as rating_4,
+                    COUNT(CASE WHEN rating = 3 THEN 1 END) as rating_3,
+                    COUNT(CASE WHEN rating = 2 THEN 1 END) as rating_2,
+                    COUNT(CASE WHEN rating = 1 THEN 1 END) as rating_1
+                FROM orders 
+                WHERE rating IS NOT NULL
+            `;
+            
+            this.db.get(sql, [], (err, row) => {
+                if (err) {
+                    console.error('❌ Ошибка получения статистики оценок:', err.message);
+                    reject(err);
+                } else {
+                    resolve(row);
+                }
+            });
+        });
+    }
+
     // Закрытие подключения к базе данных
     close() {
         this.db.close((err) => {
