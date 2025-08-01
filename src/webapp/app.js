@@ -1215,7 +1215,9 @@ function closeBankModal() {
 }
 
 function selectBank(bank) {
+    console.log('🏦 ВЫБОР БАНКА:', bank);
     currentBank = bank;
+    console.log('🏦 currentBank установлен в:', currentBank);
     finalizeCurrencySelection('RUB', bank);
     closeBankModal();
 }
@@ -2342,8 +2344,9 @@ async function createOrder() {
                                  
              if (isSpecialCase) {
                  const pairName = `${currentCalculation.fromCurrency}→${currentCalculation.toCurrency}`;
-                 console.log(`💳 СОЗДАНИЕ ${pairName} ЗАЯВКИ - реквизиты:`, address);
-                                 orderData = {
+                                 console.log(`💳 СОЗДАНИЕ ${pairName} ЗАЯВКИ - реквизиты:`, address);
+                console.log('🏦 currentBank при создании заявки:', currentBank);
+                                orderData = {
                     userId: currentUserId,
                     userData: currentUserData, // Добавляем данные пользователя
                     fromCurrency: currentCalculation.fromCurrency,
@@ -2359,8 +2362,9 @@ async function createOrder() {
                 };
                  console.log(`💳 ФИНАЛЬНЫЕ ДАННЫЕ ${pairName} ЗАЯВКИ:`, orderData);
              } else {
-                 console.log('🏦 СОЗДАНИЕ ФИАТНОЙ ЗАЯВКИ - номер счета:', address);
-                                 orderData = {
+                                 console.log('🏦 СОЗДАНИЕ ФИАТНОЙ ЗАЯВКИ - номер счета:', address);
+                console.log('🏦 currentBank при создании фиатной заявки:', currentBank);
+                                orderData = {
                     userId: currentUserId,
                     userData: currentUserData, // Добавляем данные пользователя
                     fromCurrency: currentCalculation.fromCurrency,
