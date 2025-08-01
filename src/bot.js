@@ -1929,7 +1929,6 @@ bot.on('callback_query:data', async (ctx) => {
             .text('👤 Добавить оператора', 'admin_add_operator')
             .text('⚙️ Настройки', 'admin_settings')
             .row()
-            .text('💱 Управление курсами', 'admin_rates_control')
             .text('🏠 Назад к боту', 'back_to_main');
         
         await ctx.reply(
@@ -1956,8 +1955,7 @@ bot.on('callback_query:data', async (ctx) => {
         );
     }
 
-    // 💱 УПРАВЛЕНИЕ КУРСАМИ 
-    if (data === 'admin_rates_control') {
+    // 💱 УПРАВЛЕНИЕ КУРСАМИ (ОТКЛЮЧЕНО ПО ЗАПРОСУ ПОЛЬЗОВАТЕЛЯ)
         if (!(await isAdmin(userId))) return ctx.answerCallbackQuery('❌ Нет прав');
         
         await ctx.answerCallbackQuery('💱 Открываю управление курсами...');
@@ -2032,7 +2030,6 @@ bot.on('callback_query:data', async (ctx) => {
              `💡 Для отмены используйте "Принудительно обновить"`,
              { 
                  parse_mode: 'HTML',
-                 reply_markup: new InlineKeyboard().text('🔙 Назад к управлению', 'admin_rates_control')
              }
          );
      }
@@ -2060,7 +2057,6 @@ bot.on('callback_query:data', async (ctx) => {
                  `🔔 Операторы уведомлены`,
                  { 
                      parse_mode: 'HTML',
-                     reply_markup: new InlineKeyboard().text('🔙 Назад к управлению', 'admin_rates_control')
                  }
              );
          } catch (error) {
@@ -2070,7 +2066,6 @@ bot.on('callback_query:data', async (ctx) => {
                  `Причина: ${error.message}`,
                  { 
                      parse_mode: 'HTML',
-                     reply_markup: new InlineKeyboard().text('🔙 Назад к управлению', 'admin_rates_control')
                  }
              );
          }
@@ -2091,7 +2086,6 @@ bot.on('callback_query:data', async (ctx) => {
              .text('📈 +2% (1.02x)', 'rates_mult_1.02')
              .text('📈 +5% (1.05x)', 'rates_mult_1.05')
              .row()
-             .text('🔙 Назад', 'admin_rates_control');
              
          await ctx.reply(
              `⚡ <b>МНОЖИТЕЛЬ КУРСОВ</b>\n\n` +
@@ -2132,7 +2126,6 @@ bot.on('callback_query:data', async (ctx) => {
              `💡 Все курсы изменены немедленно`,
              { 
                  parse_mode: 'HTML',
-                 reply_markup: new InlineKeyboard().text('🔙 Назад к управлению', 'admin_rates_control')
              }
          );
      }
@@ -2153,7 +2146,6 @@ bot.on('callback_query:data', async (ctx) => {
          
          if (!currentRate) {
              return await ctx.reply('❌ Валюта не найдена', {
-                 reply_markup: new InlineKeyboard().text('🔙 Назад', 'admin_rates_control')
              });
          }
          
@@ -2171,7 +2163,6 @@ bot.on('callback_query:data', async (ctx) => {
              .row()
              .text('📉 -10%', `rates_change_${currency}_0.9`)
              .row()
-             .text('🔙 Назад', 'admin_rates_control');
              
          await ctx.reply(
              `💱 <b>ИЗМЕНЕНИЕ ${currency}</b>\n\n` +
@@ -2217,7 +2208,6 @@ bot.on('callback_query:data', async (ctx) => {
              `💡 Изменения применены немедленно`,
              { 
                  parse_mode: 'HTML',
-                 reply_markup: new InlineKeyboard().text('🔙 Назад к управлению', 'admin_rates_control')
              }
          );
      }
@@ -2237,7 +2227,6 @@ bot.on('callback_query:data', async (ctx) => {
              .row()
              .text('⏸️ До ручного включения', 'rates_pause_manual')
              .row()
-             .text('🔙 Назад', 'admin_rates_control');
              
          await ctx.reply(
              `⏸️ <b>ОСТАНОВКА АВТООБНОВЛЕНИЯ</b>\n\n` +
@@ -2286,7 +2275,6 @@ bot.on('callback_query:data', async (ctx) => {
              `💡 Возобновить можно в любой момент через "Принудительно обновить"`,
              { 
                  parse_mode: 'HTML',
-                 reply_markup: new InlineKeyboard().text('🔙 Назад к управлению', 'admin_rates_control')
              }
          );
      }
@@ -2322,7 +2310,6 @@ bot.on('callback_query:data', async (ctx) => {
              `❌ Для отмены напишите: <code>отмена</code>`,
              { 
                  parse_mode: 'HTML',
-                 reply_markup: new InlineKeyboard().text('❌ Отмена', 'admin_rates_control')
              }
          );
          
@@ -2366,7 +2353,6 @@ bot.on('callback_query:data', async (ctx) => {
             .row()
             .text('📈 Статистика дня', 'admin_daily_stats')
             .row()
-            .text('💱 Управление курсами', 'admin_rates_control')
             .text('🏠 Назад к боту', 'back_to_main');
         
         await ctx.reply(
@@ -2512,7 +2498,6 @@ bot.on('callback_query:data', async (ctx) => {
             .text('👤 Добавить оператора', 'admin_add_operator')
             .text('⚙️ Настройки', 'admin_settings')
             .row()
-            .text('💱 Управление курсами', 'admin_rates_control')
             .text('🏠 Назад к боту', 'back_to_main');
         
         await ctx.reply(
@@ -2735,7 +2720,6 @@ bot.on('callback_query:data', async (ctx) => {
             .row()
             .text('📈 Статистика дня', 'admin_daily_stats')
             .row()
-            .text('💱 Управление курсами', 'admin_rates_control')
             .text('🏠 Назад к боту', 'back_to_main');
         
         await ctx.reply(
@@ -4754,7 +4738,6 @@ bot.command('admin', async (ctx) => {
         .text('👤 Добавить оператора', 'admin_add_operator')
         .text('⚙️ Настройки', 'admin_settings')
         .row()
-        .text('💱 Управление курсами', 'admin_rates_control')
             .text('🏠 Назад к боту', 'back_to_main');
     
     await ctx.reply(
@@ -5170,7 +5153,6 @@ bot.on('message', async (ctx) => {
             global.manualRateInput.delete(userId);
             return await ctx.reply(
                 '❌ Ввод курса отменен',
-                { reply_markup: new InlineKeyboard().text('🔙 Назад к управлению', 'admin_rates_control') }
             );
         }
         
@@ -5217,7 +5199,6 @@ bot.on('message', async (ctx) => {
                 `💡 Изменения применены немедленно`,
                 { 
                     parse_mode: 'HTML',
-                    reply_markup: new InlineKeyboard().text('🔙 Назад к управлению', 'admin_rates_control')
                 }
             );
             
@@ -5232,7 +5213,6 @@ bot.on('message', async (ctx) => {
                 `Причина: ${error.message}`,
                 { 
                     parse_mode: 'HTML',
-                    reply_markup: new InlineKeyboard().text('🔙 Назад к управлению', 'admin_rates_control')
                 }
             );
             return;
