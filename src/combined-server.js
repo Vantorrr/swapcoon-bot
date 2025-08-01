@@ -928,7 +928,9 @@ app.post('/api/create-order', async (req, res) => {
                     fee: fee || 0,
                     amlStatus: JSON.stringify({ from: amlFromResult, to: amlToResult }),  // ← ИСПРАВЛЕНО: camelCase
                     status: 'pending',
-                    source: 'web'
+                    source: 'web',
+                    bank: bank || null,               // ← ДОБАВЛЯЕМ БАНК
+                    network: network || null          // ← ДОБАВЛЯЕМ СЕТЬ
                 });
                 console.log('✅ Заявка создана в базе:', order.id);
                 realOrderId = order.id; // ← СОХРАНЯЕМ РЕАЛЬНЫЙ ID ИЗ БАЗЫ!

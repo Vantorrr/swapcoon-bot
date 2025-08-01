@@ -4007,14 +4007,20 @@ bot.on('callback_query:data', async (ctx) => {
                 `👨‍💼 ${order.operator_name} (ID: ${order.operator_id})` : 
                 '❌ Не назначен';
             
+            // Добавляем информацию о банке и сети если есть
+            const bankInfo = order.bank ? `🏦 <b>Банк:</b> ${order.bank}\n` : '';
+            const networkInfo = order.network ? `🔗 <b>Сеть:</b> ${order.network}\n` : '';
+            
             const detailsText = 
                 `👁️ <b>ПОДРОБНОСТИ ЗАКАЗА #${orderId}</b>\n\n` +
                 `📊 <b>Основная информация:</b>\n` +
                 `💱 Обмен: ${order.from_amount} ${order.from_currency} → ${order.to_amount || 'TBD'} ${order.to_currency}\n` +
                 `📌 Статус: ${order.status}\n` +
                 `📅 Создан: ${new Date(order.created_at).toLocaleString('ru')}\n` +
-                `📝 Обновлен: ${new Date(order.updated_at).toLocaleString('ru')}\n\n` +
-                `👤 <b>Клиент:</b>\n` +
+                `📝 Обновлен: ${new Date(order.updated_at).toLocaleString('ru')}\n` +
+                bankInfo +
+                networkInfo +
+                `\n👤 <b>Клиент:</b>\n` +
                 `🆔 ID: ${order.user_id}\n` +
                 `📝 Имя: ${order.user_first_name || 'Не указано'}\n` +
                 `🔗 Username: @${order.username || 'нет'}\n\n` +

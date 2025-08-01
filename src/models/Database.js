@@ -256,6 +256,31 @@ class Database {
             });
         });
         
+        // Добавляем поля bank и network в таблицу orders
+        this.db.run(`ALTER TABLE orders ADD COLUMN bank TEXT`, (err) => {
+            if (err) {
+                if (err.message.includes('duplicate column')) {
+                    console.log('✅ Колонка bank уже существует');
+                } else {
+                    console.error('❌ Ошибка добавления колонки bank:', err.message);
+                }
+            } else {
+                console.log('✅ Добавлена колонка bank в таблицу orders');
+            }
+        });
+
+        this.db.run(`ALTER TABLE orders ADD COLUMN network TEXT`, (err) => {
+            if (err) {
+                if (err.message.includes('duplicate column')) {
+                    console.log('✅ Колонка network уже существует');
+                } else {
+                    console.error('❌ Ошибка добавления колонки network:', err.message);
+                }
+            } else {
+                console.log('✅ Добавлена колонка network в таблицу orders');
+            }
+        });
+        
         console.log('🎯 Миграции завершены');
     }
 
@@ -308,7 +333,9 @@ class Database {
                 fee,
                 amlStatus,
                 status,
-                source = 'web'
+                source = 'web',
+                bank,
+                network
             } = orderData;
 
             console.log('🔄 Создание заявки в базе данных...');
@@ -318,11 +345,11 @@ class Database {
             const sql = `
                 INSERT INTO orders 
                 (user_id, from_currency, to_currency, from_amount, to_amount, 
-                 from_address, to_address, exchange_rate, fee, aml_status, status)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 from_address, to_address, exchange_rate, fee, aml_status, status, bank, network)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `;
             const params = [userId, fromCurrency, toCurrency, fromAmount, toAmount, 
-                           fromAddress, toAddress, exchangeRate, fee, amlStatus, status];
+                           fromAddress, toAddress, exchangeRate, fee, amlStatus, status, bank, network];
 
             console.log('📝 SQL запрос:', sql);
             console.log('📋 Параметры:', params);
