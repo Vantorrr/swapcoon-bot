@@ -1032,12 +1032,18 @@ bot.on('callback_query:data', async (ctx) => {
     
     // Быстрая статистика дня
     if (data === 'daily_stats') {
+        console.log('📊 Обработчик daily_stats вызван для пользователя:', userId);
+        
         const userRole = await db.getUserRole(userId);
+        console.log('🔑 Роль пользователя:', userRole);
+        
         if (!userRole || !['admin', 'operator'].includes(userRole)) {
+            console.log('❌ Доступ запрещен для роли:', userRole);
             return ctx.answerCallbackQuery('❌ Нет прав');
         }
         
         await ctx.answerCallbackQuery();
+        console.log('✅ Собираем обычную статистику...');
         const stats = await db.getAdminStats();
         const currentTime = new Date().toLocaleString('ru-RU', {
             timeZone: 'Europe/Moscow',
@@ -2835,12 +2841,18 @@ bot.on('callback_query:data', async (ctx) => {
 
     // Быстрая статистика дня (админы и операторы)
     if (data === 'admin_daily_stats') {
+        console.log('📊 Обработчик admin_daily_stats вызван для пользователя:', userId);
+        
         const userRole = await db.getUserRole(userId);
+        console.log('🔑 Роль пользователя:', userRole);
+        
         if (!userRole || !['admin', 'operator'].includes(userRole)) {
+            console.log('❌ Доступ запрещен для роли:', userRole);
             return ctx.answerCallbackQuery('❌ Нет прав');
         }
         
         await ctx.answerCallbackQuery('📊 Собираю статистику...');
+        console.log('✅ Начинаем сбор статистики...');
         
         try {
             const stats = await db.getDailyStats();
@@ -2880,15 +2892,14 @@ bot.on('callback_query:data', async (ctx) => {
             dailyText += `\n🕐 Обновлено: ${now.toLocaleTimeString('ru')}`;
             
             const statsKeyboard = new InlineKeyboard()
-                .text('🔄 Обновить', 'admin_daily_stats')
-                .text('🌐 Логи сайта', userRole === 'admin' ? 'admin_weblogs' : null)
-                .row()
-                .text('🔙 Назад', userRole === 'admin' ? 'admin_back' : 'op_back');
+                .text('🔄 Обновить', 'admin_daily_stats');
             
-            // Удаляем null кнопки
-            if (userRole !== 'admin') {
-                statsKeyboard.inline_keyboard[0] = statsKeyboard.inline_keyboard[0].filter(btn => btn.callback_data !== null);
+            if (userRole === 'admin') {
+                statsKeyboard.text('🌐 Логи сайта', 'admin_weblogs');
             }
+            
+            statsKeyboard.row()
+                .text('🔙 Назад', userRole === 'admin' ? 'admin_back' : 'op_back');
             
             await ctx.reply(dailyText, { 
                 parse_mode: 'HTML',
