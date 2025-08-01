@@ -5276,6 +5276,253 @@ bot.on('message', async (ctx) => {
                 return;
             }
         }
+
+        // Обработка ручного ввода криптоадреса из панели оператора
+        if (context.action === 'input_manual_crypto') {
+            try {
+                const customDetailsText = messageText.trim();
+                
+                // Парсим введенные данные адреса
+                const lines = customDetailsText.split('\n').map(line => line.trim()).filter(line => line);
+                
+                if (lines.length < 3) {
+                    await ctx.reply(
+                        `❌ <b>Недостаточно данных!</b>\n\n` +
+                        `Введите минимум:\n` +
+                        `• Название сети\n` +
+                        `• Адрес\n` +
+                        `• Описание сети\n\n` +
+                        `Попробуйте еще раз:`,
+                        { 
+                            parse_mode: 'HTML',
+                            reply_markup: new InlineKeyboard()
+                                .text('❌ Отмена', 'details_crypto')
+                        }
+                    );
+                    return;
+                }
+                
+                const networkName = lines[0];
+                const address = lines[1];
+                const networkDescription = lines[2];
+                const currency = lines[3] || 'USDT';
+                
+                // Запрашиваем ID клиента
+                chatContexts.set(userId, { 
+                    action: 'input_client_id_crypto',
+                    cryptoData: { networkName, address, networkDescription, currency }
+                });
+                
+                await ctx.reply(
+                    `✅ <b>Криптоадрес принят!</b>\n\n` +
+                    `🏦 Сеть: ${networkName}\n` +
+                    `📍 Адрес: ${address}\n` +
+                    `💎 Валюта: ${currency}\n\n` +
+                    `👤 Теперь введите <b>ID клиента</b>, которому отправить адрес:`,
+                    { 
+                        parse_mode: 'HTML',
+                        reply_markup: new InlineKeyboard()
+                            .text('❌ Отмена', 'details_crypto')
+                    }
+                );
+                return;
+                
+            } catch (error) {
+                console.error('Ошибка обработки криптоадреса:', error);
+                await ctx.reply('❌ Ошибка обработки адреса');
+                chatContexts.delete(userId);
+                return;
+            }
+        }
+
+        // Обработка ручного ввода банковских реквизитов из панели оператора
+        if (context.action === 'input_manual_bank') {
+            try {
+                const customDetailsText = messageText.trim();
+                
+                // Парсим введенные данные карты
+                const lines = customDetailsText.split('\n').map(line => line.trim()).filter(line => line);
+                
+                if (lines.length < 3) {
+                    await ctx.reply(
+                        `❌ <b>Недостаточно данных!</b>\n\n` +
+                        `Введите минимум:\n` +
+                        `• Название банка\n` +
+                        `• Номер карты\n` +
+                        `• Имя владельца\n\n` +
+                        `Попробуйте еще раз:`,
+                        { 
+                            parse_mode: 'HTML',
+                            reply_markup: new InlineKeyboard()
+                                .text('❌ Отмена', 'details_banks')
+                        }
+                    );
+                    return;
+                }
+                
+                const bankName = lines[0];
+                const cardNumber = lines[1];
+                const holderName = lines[2];
+                const bankDescription = lines[3] || '';
+                
+                // Запрашиваем ID клиента
+                chatContexts.set(userId, { 
+                    action: 'input_client_id_bank',
+                    bankData: { bankName, cardNumber, holderName, bankDescription }
+                });
+                
+                await ctx.reply(
+                    `✅ <b>Банковские реквизиты приняты!</b>\n\n` +
+                    `🏦 Банк: ${bankName}\n` +
+                    `💳 Карта: ${cardNumber}\n` +
+                    `👤 Владелец: ${holderName}\n\n` +
+                    `👤 Теперь введите <b>ID клиента</b>, которому отправить реквизиты:`,
+                    { 
+                        parse_mode: 'HTML',
+                        reply_markup: new InlineKeyboard()
+                            .text('❌ Отмена', 'details_banks')
+                    }
+                );
+                return;
+                
+            } catch (error) {
+                console.error('Ошибка обработки банковских реквизитов:', error);
+                await ctx.reply('❌ Ошибка обработки реквизитов');
+                chatContexts.delete(userId);
+                return;
+            }
+        }
+
+        // Отправка криптоадреса клиенту после ввода ID
+        if (context.action === 'input_client_id_crypto') {
+            try {
+                const clientId = parseInt(messageText.trim());
+                
+                if (isNaN(clientId)) {
+                    await ctx.reply(
+                        `❌ <b>Неверный формат ID!</b>\n\n` +
+                        `Введите числовой ID клиента:`,
+                        { parse_mode: 'HTML' }
+                    );
+                    return;
+                }
+                
+                const { networkName, address, networkDescription, currency } = context.cryptoData;
+                
+                // Отправляем адрес клиенту
+                await ctx.api.sendMessage(clientId,
+                    `💳 <b>АДРЕС ДЛЯ ПЕРЕВОДА</b>\n\n` +
+                    `🏦 <b>${networkName}</b>\n` +
+                    `📍 Адрес: <code>${address}</code>\n` +
+                    `🏛️ Сеть: ${networkDescription}\n` +
+                    `💎 Валюта: ${currency}\n\n` +
+                    `⚠️ <b>ВАЖНО:</b>\n` +
+                    `• Переводите ТОЧНУЮ сумму\n` +
+                    `• Проверьте сеть перевода!\n` +
+                    `• После перевода уведомите оператора\n` +
+                    `• Время зачисления: 5-30 минут\n\n` +
+                    `📞 Вопросы? Напишите оператору!`,
+                    { 
+                        parse_mode: 'HTML',
+                        reply_markup: new InlineKeyboard()
+                            .text('✅ Я отправил', `client_paid_notification`)
+                            .text('💬 Связаться с оператором', `support_contact`)
+                            .row()
+                            .text('📋 Копировать адрес', `copy_address_${address}`)
+                    }
+                );
+                
+                // Подтверждаем отправку оператору
+                await ctx.reply(
+                    `✅ <b>Криптоадрес отправлен!</b>\n\n` +
+                    `🏦 Сеть: ${networkName}\n` +
+                    `📍 Адрес: ${address}\n` +
+                    `💎 Валюта: ${currency}\n` +
+                    `👤 Клиент: ${clientId}\n\n` +
+                    `Адрес успешно отправлен клиенту!`,
+                    { 
+                        parse_mode: 'HTML',
+                        reply_markup: new InlineKeyboard()
+                            .text('🔙 Назад к криптовалютам', 'details_crypto')
+                    }
+                );
+                
+                // Удаляем контекст
+                chatContexts.delete(userId);
+                return;
+                
+            } catch (error) {
+                console.error('Ошибка отправки криптоадреса клиенту:', error);
+                await ctx.reply(`❌ Ошибка отправки адреса клиенту ${messageText}. Возможно, он заблокировал бота.`);
+                chatContexts.delete(userId);
+                return;
+            }
+        }
+
+        // Отправка банковских реквизитов клиенту после ввода ID
+        if (context.action === 'input_client_id_bank') {
+            try {
+                const clientId = parseInt(messageText.trim());
+                
+                if (isNaN(clientId)) {
+                    await ctx.reply(
+                        `❌ <b>Неверный формат ID!</b>\n\n` +
+                        `Введите числовой ID клиента:`,
+                        { parse_mode: 'HTML' }
+                    );
+                    return;
+                }
+                
+                const { bankName, cardNumber, holderName, bankDescription } = context.bankData;
+                
+                // Отправляем реквизиты клиенту
+                await ctx.api.sendMessage(clientId,
+                    `💳 <b>БАНКОВСКИЕ РЕКВИЗИТЫ</b>\n\n` +
+                    `🏦 <b>${bankName}</b>\n` +
+                    `💳 Номер карты: <code>${cardNumber}</code>\n` +
+                    `👤 Владелец: ${holderName}\n` +
+                    (bankDescription ? `📝 Информация: ${bankDescription}\n` : '') +
+                    `\n⚠️ <b>ИНСТРУКЦИЯ:</b>\n` +
+                    `• Переводите точную сумму\n` +
+                    `• Сохраните чек об оплате\n` +
+                    `• Уведомите оператора после перевода\n\n` +
+                    `📞 Связь: Напишите оператору после оплаты`,
+                    { 
+                        parse_mode: 'HTML',
+                        reply_markup: new InlineKeyboard()
+                            .text('✅ Я оплатил', `client_paid_notification`)
+                            .text('💬 Связаться с оператором', `support_contact`)
+                            .row()
+                            .text('📋 Копировать номер карты', `copy_card_${cardNumber}`)
+                    }
+                );
+                
+                // Подтверждаем отправку оператору
+                await ctx.reply(
+                    `✅ <b>Банковские реквизиты отправлены!</b>\n\n` +
+                    `🏦 Банк: ${bankName}\n` +
+                    `💳 Карта: ${cardNumber}\n` +
+                    `👤 Владелец: ${holderName}\n` +
+                    `👤 Клиент: ${clientId}\n\n` +
+                    `Реквизиты успешно отправлены клиенту!`,
+                    { 
+                        parse_mode: 'HTML',
+                        reply_markup: new InlineKeyboard()
+                            .text('🔙 Назад к банковским картам', 'details_banks')
+                    }
+                );
+                
+                // Удаляем контекст
+                chatContexts.delete(userId);
+                return;
+                
+            } catch (error) {
+                console.error('Ошибка отправки банковских реквизитов клиенту:', error);
+                await ctx.reply(`❌ Ошибка отправки реквизитов клиенту ${messageText}. Возможно, он заблокировал бота.`);
+                chatContexts.delete(userId);
+                return;
+            }
+        }
     }
     
     // Обработка команды добавления оператора через пересылку
@@ -5759,6 +6006,8 @@ bot.callbackQuery('details_crypto', async (ctx) => {
         keyboard.text(`${detail.icon} ${detail.name}`, `send_crypto_${key}`).row();
     });
     
+    // Добавляем кнопку для ввода вручную
+    keyboard.text('✍️ Ввести криптоадрес вручную', 'input_custom_crypto').row();
     keyboard.text('🔙 Назад', 'send_payment_details');
     
     await ctx.editMessageText(
@@ -5789,6 +6038,8 @@ bot.callbackQuery('details_banks', async (ctx) => {
         keyboard.text(`${detail.icon} ${detail.name}`, `send_bank_${key}`).row();
     });
     
+    // Добавляем кнопку для ввода вручную
+    keyboard.text('✍️ Ввести банковские реквизиты вручную', 'input_custom_bank').row();
     keyboard.text('🔙 Назад', 'send_payment_details');
     
     await ctx.editMessageText(
@@ -5841,6 +6092,79 @@ bot.callbackQuery('back_to_main', async (ctx) => {
 
 // Импорт системы реквизитов
 const paymentSystem = require('./payment-details-system');
+
+// Обработчики для ручного ввода реквизитов из панели оператора
+bot.callbackQuery('input_custom_crypto', async (ctx) => {
+    const userId = ctx.from.id;
+    const userRole = await db.getUserRole(userId);
+    
+    if (userRole !== 'operator' && userRole !== 'admin') {
+        return ctx.answerCallbackQuery('❌ У вас нет доступа');
+    }
+    
+    await ctx.answerCallbackQuery('✍️ Введите криптоадрес...');
+    
+    // Сохраняем контекст для следующего сообщения
+    chatContexts.set(userId, { 
+        action: 'input_manual_crypto',
+        source: 'operator_panel'
+    });
+    
+    await ctx.editMessageText(
+        `✍️ <b>ВВОД КРИПТОАДРЕСА ВРУЧНУЮ</b>\n\n` +
+        `📝 Введите данные в формате:\n\n` +
+        `<b>Название сети</b>\n` +
+        `📍 Адрес\n` +
+        `🏦 Описание сети\n` +
+        `💎 Валюта\n\n` +
+        `<b>Пример:</b>\n` +
+        `TRC-20 USDT\n` +
+        `THcSDj69NjoD9Ev53mK9cx3jF7AswMDtcW\n` +
+        `TRON (TRC-20)\n` +
+        `USDT`,
+        { 
+            parse_mode: 'HTML',
+            reply_markup: new InlineKeyboard()
+                .text('❌ Отмена', 'details_crypto')
+        }
+    );
+});
+
+bot.callbackQuery('input_custom_bank', async (ctx) => {
+    const userId = ctx.from.id;
+    const userRole = await db.getUserRole(userId);
+    
+    if (userRole !== 'operator' && userRole !== 'admin') {
+        return ctx.answerCallbackQuery('❌ У вас нет доступа');
+    }
+    
+    await ctx.answerCallbackQuery('✍️ Введите реквизиты...');
+    
+    // Сохраняем контекст для следующего сообщения
+    chatContexts.set(userId, { 
+        action: 'input_manual_bank',
+        source: 'operator_panel'
+    });
+    
+    await ctx.editMessageText(
+        `✍️ <b>ВВОД БАНКОВСКИХ РЕКВИЗИТОВ ВРУЧНУЮ</b>\n\n` +
+        `📝 Введите данные в формате:\n\n` +
+        `<b>Название банка</b>\n` +
+        `💳 Номер карты\n` +
+        `👤 Имя владельца\n` +
+        `🏦 Дополнительная информация (опционально)\n\n` +
+        `<b>Пример:</b>\n` +
+        `Сбербанк\n` +
+        `5555 4444 3333 2222\n` +
+        `Иван Петров\n` +
+        `Переводы до 100,000₽`,
+        { 
+            parse_mode: 'HTML',
+            reply_markup: new InlineKeyboard()
+                .text('❌ Отмена', 'details_banks')
+        }
+    );
+});
 
 // Инициализация динамических обработчиков
 paymentSystem.setupCryptoHandlers(bot, paymentDetails, chatContexts);
