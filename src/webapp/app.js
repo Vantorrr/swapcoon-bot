@@ -1,4 +1,37 @@
 console.log("🚀 APP.JS ЗАГРУЖАЕТСЯ!");
+
+// ⚡ СВЕРХБЫСТРАЯ ЗАГРУЗКА КУРСОВ (ДО DOM!)
+console.log("⚡ Запускаем загрузку курсов сразу при загрузке скрипта!");
+
+// Функция ранней загрузки из кеша
+function loadCachedRatesEarly() {
+    try {
+        const cachedRates = localStorage.getItem('cachedRates');
+        const cacheTime = localStorage.getItem('ratesCacheTime');
+        
+        if (cachedRates && cacheTime) {
+            const cacheAge = Date.now() - parseInt(cacheTime);
+            // Используем кеш если он свежее 2 минут
+            if (cacheAge < 120000) {
+                console.log('⚡ МГНОВЕННО загружаем курсы из кеша!');
+                const cached = JSON.parse(cachedRates);
+                currentRates = cached.rates || [];
+                window.rawPairData = cached.rawPairs || [];
+                console.log('✅ Курсы из кеша загружены до DOM!', currentRates.length, 'валют');
+                return true;
+            }
+        }
+    } catch (error) {
+        console.log('⚠️ Ошибка раннего кеша:', error.message);
+    }
+    return false;
+}
+
+// Запускаем раннюю загрузку сразу!
+loadCachedRatesEarly();
+
+let earlyRatesPromise = null;
+
 // Глобальные переменные
 let tg = window.Telegram?.WebApp;
 let currentUserId = null;
@@ -349,6 +382,16 @@ document.addEventListener('DOMContentLoaded', function() {
 function initTelegramWebApp() {
     console.log('🔌 Инициализация Telegram WebApp...');
     
+    // ⚡ УМНАЯ ЗАГРУЗКА КУРСОВ (ТОЛЬКО ЕСЛИ НЕ ЗАГРУЖЕНЫ)
+    if (currentRates.length === 0) {
+        console.log('⚡ Курсы не загружены, запускаем загрузку...');
+        earlyRatesPromise = loadExchangeRates().catch(error => {
+            console.log('⚠️ Предварительная загрузка курсов неудачна:', error.message);
+        });
+    } else {
+        console.log('✅ Курсы уже загружены из кеша!');
+    }
+    
     // 🚀 БОМБОВАЯ ЗАСТАВКА УПРАВЛЯЕТСЯ АВТОМАТИЧЕСКИ
     
     if (window.Telegram?.WebApp) {
@@ -654,10 +697,23 @@ async function loadInitialData() {
         console.error('❌ Ошибка обновления иконок:', error);
     }
     
-    // 🚀 МГНОВЕННАЯ ПАРАЛЛЕЛЬНАЯ ЗАГРУЗКА КУРСОВ
-    loadExchangeRates().catch(error => {
+    // 🚀 УМНОЕ ОЖИДАНИЕ КУРСОВ
+    try {
+        console.log('⚡ Проверяем статус курсов...');
+        if (currentRates.length === 0) {
+            if (earlyRatesPromise) {
+                console.log('⚡ Ждем завершения уже запущенной загрузки...');
+                await earlyRatesPromise;
+            } else {
+                console.log('⚡ Запускаем загрузку курсов...');
+                await loadExchangeRates();
+            }
+        } else {
+            console.log('✅ Курсы уже загружены!');
+        }
+    } catch (error) {
         console.error('❌ Ошибка загрузки курсов:', error);
-    });
+    }
     
     // 🚀 МГНОВЕННАЯ ПАРАЛЛЕЛЬНАЯ ЗАГРУЗКА ПРОФИЛЯ
     if (currentUserId && currentUserId !== 123456789) {
@@ -667,9 +723,34 @@ async function loadInitialData() {
     }
 }
 
-// 🚀 БЫСТРАЯ ЗАГРУЗКА КУРСОВ С TIMEOUT И FALLBACK
+// 🚀 БЫСТРАЯ ЗАГРУЗКА КУРСОВ С КЕШИРОВАНИЕМ
 async function loadExchangeRates() {
     console.log('📡 Загружаем курсы валют...');
+    
+    // ⚡ МГНОВЕННАЯ ЗАГРУЗКА ИЗ КЕША
+    try {
+        const cachedRates = localStorage.getItem('cachedRates');
+        const cacheTime = localStorage.getItem('ratesCacheTime');
+        
+        if (cachedRates && cacheTime) {
+            const cacheAge = Date.now() - parseInt(cacheTime);
+            // Используем кеш если он свежее 30 секунд
+            if (cacheAge < 30000) {
+                console.log('⚡ Используем СВЕЖИЙ кеш курсов!');
+                const cached = JSON.parse(cachedRates);
+                currentRates = cached.rates || [];
+                window.rawPairData = cached.rawPairs || [];
+                updateCurrencyList();
+                updateRatesTime();
+                console.log('✅ Курсы загружены из кеша мгновенно!');
+                // Продолжаем загрузку свежих данных в фоне
+            } else {
+                console.log('⚠️ Кеш устарел, загружаем свежие данные...');
+            }
+        }
+    } catch (cacheError) {
+        console.log('⚠️ Ошибка чтения кеша:', cacheError.message);
+    }
     
     try {
         // 🔥 ПРИНУДИТЕЛЬНАЯ СИНХРОНИЗАЦИЯ ПЕРЕД ЗАПРОСОМ!
@@ -677,8 +758,7 @@ async function loadExchangeRates() {
         try {
             await fetch('/api/force-sync', { method: 'POST' });
             console.log('✅ Принудительная синхронизация запрошена');
-            // Небольшая задержка для завершения синхронизации
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            // УБРАЛИ ЗАДЕРЖКУ 2 СЕКУНДЫ ДЛЯ УСКОРЕНИЯ!
         } catch (syncError) {
             console.log('⚠️ Ошибка принудительной синхронизации:', syncError.message);
         }
@@ -708,6 +788,19 @@ async function loadExchangeRates() {
                 });
             } else {
                 console.log('⚠️ Нет сырых данных пар от API');
+            }
+            
+            // ⚡ СОХРАНЯЕМ В КЕШ ДЛЯ БЫСТРОЙ ЗАГРУЗКИ
+            try {
+                const cacheData = {
+                    rates: currentRates,
+                    rawPairs: window.rawPairData || []
+                };
+                localStorage.setItem('cachedRates', JSON.stringify(cacheData));
+                localStorage.setItem('ratesCacheTime', Date.now().toString());
+                console.log('⚡ Курсы сохранены в кеш!');
+            } catch (cacheError) {
+                console.log('⚠️ Ошибка сохранения в кеш:', cacheError.message);
             }
             
             updateCurrencyList();
