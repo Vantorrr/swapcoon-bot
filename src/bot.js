@@ -1582,6 +1582,9 @@ bot.on('callback_query:data', async (ctx) => {
             action: 'input_custom_details',
             orderId: orderId
         });
+        console.log('🔧 КОНТЕКСТ УСТАНОВЛЕН для пользователя:', userId);
+        console.log('🔧 chatContexts.size:', chatContexts.size);
+        console.log('🔧 Проверяем сразу chatContexts.has(userId):', chatContexts.has(userId));
         
         await ctx.reply(
             `✍️ <b>ВВОД НОВОГО АДРЕСА</b>\n\n` +
@@ -4941,10 +4944,14 @@ bot.on('message', async (ctx) => {
     console.log('🟢 userId:', userId);
     console.log('🟢 messageText:', messageText);
     console.log('🟢 userRole:', userRole);
+    console.log('🔧 chatContexts.size в начале обработки:', chatContexts.size);
+    console.log('🔧 chatContexts.has(userId) в начале:', chatContexts.has(userId));
     
     // 🚨 ПРИОРИТЕТНАЯ ДИАГНОСТИКА ТЕКСТОВЫХ СООБЩЕНИЙ
     if (chatContexts.has(userId)) {
         const context = chatContexts.get(userId);
+        console.log('🔧 КОНТЕКСТ НАЙДЕН:', context);
+        console.log('🔧 context.action:', context.action);
         if (context.action === 'send_message_to_client') {
             console.log('📨 🔥 ОБНАРУЖЕНА ОТПРАВКА СООБЩЕНИЯ КЛИЕНТУ!');
             console.log('📨 🔥 orderId:', context.orderId);
