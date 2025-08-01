@@ -4081,7 +4081,7 @@ bot.on('callback_query:data', async (ctx) => {
                 `💱 Обмен: ${order.from_amount} ${order.from_currency} → ${order.to_amount || 'TBD'} ${order.to_currency}\n` +
                 `📌 Статус: ${order.status}\n` +
                 `📅 Создан: ${new Date(order.created_at).toLocaleString('ru')}\n` +
-                `📝 Обновлен: ${new Date(order.updated_at).toLocaleString('ru')}\n` +
+                `📝 Обновлен: ${new Date(order.updated_at || order.completed_at || order.created_at).toLocaleString('ru')}\n` +
                 bankInfo +
                 networkInfo +
                 `\n👤 <b>Клиент:</b>\n` +

@@ -306,6 +306,18 @@ class Database {
                 console.log('✅ Добавлена колонка rating_date в таблицу orders');
             }
         });
+
+        this.db.run(`ALTER TABLE orders ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP`, (err) => {
+            if (err) {
+                if (err.message.includes('duplicate column')) {
+                    console.log('✅ Колонка updated_at уже существует');
+                } else {
+                    console.error('❌ Ошибка добавления колонки updated_at:', err.message);
+                }
+            } else {
+                console.log('✅ Добавлена колонка updated_at в таблицу orders');
+            }
+        });
         
         console.log('🎯 Миграции завершены');
     }
@@ -1086,7 +1098,7 @@ class Database {
                 
                 // Обновляем статус заказа
                 this.db.run(`
-                    UPDATE orders SET status = ? 
+                    UPDATE orders SET status = ?, updated_at = CURRENT_TIMESTAMP 
                     WHERE id = ?
                 `, [newStatus, orderId], (err) => {
                     if (err) {
@@ -1672,7 +1684,7 @@ class Database {
         return new Promise((resolve, reject) => {
             const sql = `
                 UPDATE orders 
-                SET rating = ?, rating_date = CURRENT_TIMESTAMP 
+                SET rating = ?, rating_date = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP 
                 WHERE id = ? AND user_id = ?
             `;
             
