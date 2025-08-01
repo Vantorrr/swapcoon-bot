@@ -280,6 +280,31 @@ class Database {
                 console.log('✅ Добавлена колонка network в таблицу orders');
             }
         });
+
+        // Добавляем поля rating и rating_date для оценок
+        this.db.run(`ALTER TABLE orders ADD COLUMN rating INTEGER`, (err) => {
+            if (err) {
+                if (err.message.includes('duplicate column')) {
+                    console.log('✅ Колонка rating уже существует');
+                } else {
+                    console.error('❌ Ошибка добавления колонки rating:', err.message);
+                }
+            } else {
+                console.log('✅ Добавлена колонка rating в таблицу orders');
+            }
+        });
+
+        this.db.run(`ALTER TABLE orders ADD COLUMN rating_date DATETIME`, (err) => {
+            if (err) {
+                if (err.message.includes('duplicate column')) {
+                    console.log('✅ Колонка rating_date уже существует');
+                } else {
+                    console.error('❌ Ошибка добавления колонки rating_date:', err.message);
+                }
+            } else {
+                console.log('✅ Добавлена колонка rating_date в таблицу orders');
+            }
+        });
         
         console.log('🎯 Миграции завершены');
     }
@@ -1615,6 +1640,27 @@ class Database {
                     reject(err);
                 } else {
                     resolve(rows);
+                }
+            });
+        });
+    }
+
+    // Сохранение оценки заказа
+    async saveOrderRating(orderId, userId, rating) {
+        return new Promise((resolve, reject) => {
+            const sql = `
+                UPDATE orders 
+                SET rating = ?, rating_date = CURRENT_TIMESTAMP 
+                WHERE id = ? AND user_id = ?
+            `;
+            
+            this.db.run(sql, [rating, orderId, userId], function(err) {
+                if (err) {
+                    console.error('❌ Ошибка сохранения оценки:', err.message);
+                    reject(err);
+                } else {
+                    console.log(`✅ Оценка ${rating} сохранена для заказа ${orderId}`);
+                    resolve({ changes: this.changes });
                 }
             });
         });

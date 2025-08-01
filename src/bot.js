@@ -6337,6 +6337,72 @@ bot.callbackQuery('details_all', async (ctx) => {
     await ctx.answerCallbackQuery('Укажите ID клиента для отправки всех реквизитов');
 });
 
+// Обработчик оценки качества обслуживания
+bot.callbackQuery(/rate_service_(\d+)_(\d+)/, async (ctx) => {
+    const rating = parseInt(ctx.match[1]);
+    const orderId = parseInt(ctx.match[2]);
+    const userId = ctx.from.id;
+    
+    await ctx.answerCallbackQuery('✅ Спасибо за оценку!');
+    
+    try {
+        // Сохраняем оценку в базу данных
+        await db.saveOrderRating(orderId, userId, rating);
+        
+        // Получаем данные заказа для уведомления оператора
+        const order = await db.getOrderWithOperator(orderId);
+        
+        // Уведомляем оператора о полученной оценке
+        if (order && order.operator_id) {
+            const ratingText = rating === 5 ? '⭐⭐⭐⭐⭐ Отлично!' :
+                              rating === 4 ? '⭐⭐⭐⭐ Хорошо' :
+                              rating === 3 ? '⭐⭐⭐ Нормально' :
+                              '⭐⭐ Плохо';
+            
+            await bot.api.sendMessage(order.operator_id,
+                `🎯 <b>НОВАЯ ОЦЕНКА</b>\n\n` +
+                `🎫 Заказ #${orderId}\n` +
+                `👤 Клиент: ${ctx.from.first_name || ctx.from.username || `ID: ${userId}`}\n` +
+                `${ratingText}\n\n` +
+                `💡 Продолжайте в том же духе!`,
+                { parse_mode: 'HTML' }
+            );
+        }
+        
+        // Редактируем сообщение клиента
+        await ctx.editMessageText(
+            `🎉 <b>ЗАКАЗ ЗАВЕРШЕН!</b>\n\n` +
+            `🎫 Заказ #${orderId}\n` +
+            `✅ Вы подтвердили получение средств\n` +
+            `💰 ${order ? order.to_amount + ' ' + order.to_currency : ''}\n\n` +
+            `Благодарим за использование нашего сервиса!\n\n` +
+            `⭐ Ваша оценка: ${rating}/5 звезд\n` +
+            `💫 Спасибо за отзыв!`,
+            { 
+                parse_mode: 'HTML',
+                reply_markup: new InlineKeyboard()
+                    .text('🏠 Главное меню', 'back_to_main')
+                    .text('📞 Поддержка', 'support')
+            }
+        );
+        
+        console.log(`⭐ Клиент ${userId} оценил заказ ${orderId} на ${rating} звезд`);
+        
+    } catch (error) {
+        console.error(`❌ Ошибка сохранения оценки:`, error);
+        await ctx.editMessageText(
+            `❌ <b>Ошибка сохранения оценки</b>\n\n` +
+            `Попробуйте позже или обратитесь в поддержку.`,
+            { 
+                parse_mode: 'HTML',
+                reply_markup: new InlineKeyboard()
+                    .text('🏠 Главное меню', 'back_to_main')
+                    .text('📞 Поддержка', 'support')
+            }
+        );
+    }
+});
+
 // Кнопка "Назад в главное меню"
 bot.callbackQuery('back_to_main', async (ctx) => {
     await ctx.answerCallbackQuery();
