@@ -4392,8 +4392,8 @@ bot.on('callback_query:data', async (ctx) => {
                         .text('⭐⭐⭐ Нормально', `rate_service_3_${orderId}`)
                         .text('⭐⭐ Плохо', `rate_service_2_${orderId}`)
                         .row()
-                        .text('📞 Поддержка', 'support')
                         .text('🏠 Главное меню', 'back_to_main')
+                        .text('📞 Поддержка', 'support')
                 }
             );
             
@@ -4445,9 +4445,9 @@ bot.on('callback_query:data', async (ctx) => {
                     parse_mode: 'HTML',
                     reply_markup: new InlineKeyboard()
                         .text('💬 Связаться с оператором', `client_chat_${orderId}`)
-                        .text('📞 Поддержка', 'support')
-                        .row()
                         .text('🔄 Проверить еще раз', `check_again_${orderId}`)
+                        .row()
+                        .text('📞 Поддержка', 'support')
                 }
             );
             
