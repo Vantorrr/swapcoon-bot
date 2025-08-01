@@ -1015,6 +1015,10 @@ app.post('/api/create-order', async (req, res) => {
 
         // Отправляем уведомление операторам
         if (notifyOperators) {
+            console.log('🔍 ДИАГНОСТИКА ПЕРЕД notifyOperators:');
+            console.log('🔍 bank:', bank);
+            console.log('🔍 network:', network);
+            
             try {
                 await notifyOperators({
                     id: realOrderId,                          // ← ИСПРАВЛЕНО: используем РЕАЛЬНЫЙ ID из базы!

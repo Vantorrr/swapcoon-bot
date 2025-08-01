@@ -5344,14 +5344,22 @@ bot.on('message', async (ctx) => {
         }
 
         if (context.action === 'input_custom_details') {
+            console.log('🔍 ВХОДИМ В ОБРАБОТЧИК input_custom_details');
+            console.log('🔍 messageText:', messageText);
+            console.log('🔍 orderId:', context.orderId);
+            
             try {
                 const orderId = context.orderId;
                 const customDetailsText = messageText.trim();
                 
                 // Парсим введенные данные адреса
                 const lines = customDetailsText.split('\n').map(line => line.trim()).filter(line => line);
+                console.log('🔍 Парсинг данных input_custom_details:');
+                console.log('🔍 lines:', lines);
+                console.log('🔍 lines.length:', lines.length);
                 
                 if (lines.length < 3) {
+                    console.log('❌ НЕДОСТАТОЧНО ДАННЫХ! Отправляем сообщение об ошибке');
                     await ctx.reply(
                         `❌ <b>Недостаточно данных!</b>\n\n` +
                         `Введите минимум:\n` +
