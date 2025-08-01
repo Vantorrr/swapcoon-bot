@@ -4948,6 +4948,7 @@ bot.on('message', async (ctx) => {
     if (chatContexts.has(userId)) {
         const context = chatContexts.get(userId);
         console.log('📨 НАЙДЕН КОНТЕКСТ:', context);
+        console.log('📨 context.action:', context.action);
         if (context.action === 'send_message_to_client') {
             console.log('📨 🔥 ОБНАРУЖЕНА ОТПРАВКА СООБЩЕНИЯ КЛИЕНТУ!');
             console.log('📨 🔥 orderId:', context.orderId);
@@ -5432,6 +5433,11 @@ bot.on('message', async (ctx) => {
 
         // Обработка ручного ввода криптоадреса из панели оператора
         if (context.action === 'input_manual_crypto') {
+            console.log('🔍 ВХОДИМ В ОБРАБОТЧИК input_manual_crypto');
+            console.log('🔍 messageText:', messageText);
+            console.log('🔍 userId:', userId);
+            console.log('🔍 context:', context);
+            
             try {
                 const customDetailsText = messageText.trim();
                 
@@ -5831,7 +5837,10 @@ async function notifyOperators(orderData) {
         const networkSection = orderData.network ? `🔗 <b>Сеть:</b> ${orderData.network}\n` : '';
         
         // Добавляем информацию о банке если указан
+        console.log('🏦 ДИАГНОСТИКА БАНКА В notifyOperators:');
+        console.log('🏦 orderData.bank:', orderData.bank);
         const bankSection = orderData.bank ? `🏦 <b>Банк:</b> ${orderData.bank}\n` : '';
+        console.log('🏦 bankSection:', bankSection);
         
         const message = 
             `🚨 <b>НОВАЯ ЗАЯВКА С САЙТА #${orderData.id}</b>\n\n` +

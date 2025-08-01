@@ -878,7 +878,8 @@ app.post('/api/create-order', async (req, res) => {
         console.log('  toAddress:', toAddress);
         console.log('  exchangeRate:', exchangeRate);
         console.log('  pairType:', pairType);
-        console.log('  network:', network);  // ← ДОБАВЛЯЕМ В ДИАГНОСТИКУ!
+        console.log('  network:', network);        // ← ДИАГНОСТИКА СЕТИ!
+        console.log('  bank:', bank);              // ← ДИАГНОСТИКА БАНКА!
 
         // Генерируем уникальный ID заявки
         const orderId = `EM${Date.now()}${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
