@@ -307,7 +307,7 @@ class Database {
             }
         });
 
-        this.db.run(`ALTER TABLE orders ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP`, (err) => {
+        this.db.run(`ALTER TABLE orders ADD COLUMN updated_at DATETIME`, (err) => {
             if (err) {
                 if (err.message.includes('duplicate column')) {
                     console.log('✅ Колонка updated_at уже существует');
@@ -316,6 +316,15 @@ class Database {
                 }
             } else {
                 console.log('✅ Добавлена колонка updated_at в таблицу orders');
+                
+                // Инициализируем updated_at для существующих записей
+                this.db.run(`UPDATE orders SET updated_at = created_at WHERE updated_at IS NULL`, (updateErr) => {
+                    if (updateErr) {
+                        console.error('❌ Ошибка инициализации updated_at:', updateErr.message);
+                    } else {
+                        console.log('✅ Инициализированы значения updated_at для существующих заказов');
+                    }
+                });
             }
         });
         
