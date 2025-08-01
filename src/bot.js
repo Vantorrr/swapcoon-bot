@@ -5826,11 +5826,15 @@ async function notifyOperators(orderData) {
         // Добавляем информацию о сети если указана
         const networkSection = orderData.network ? `🔗 <b>Сеть:</b> ${orderData.network}\n` : '';
         
+        // Добавляем информацию о банке если указан
+        const bankSection = orderData.bank ? `🏦 <b>Банк:</b> ${orderData.bank}\n` : '';
+        
         const message = 
             `🚨 <b>НОВАЯ ЗАЯВКА С САЙТА #${orderData.id}</b>\n\n` +
             `👤 <b>Пользователь:</b> ${orderData.userName || 'Неизвестен'}\n` +
             `💱 <b>Обмен:</b> ${orderData.fromAmount} ${orderData.fromCurrency} → ${orderData.toCurrency}\n` +
             networkSection +  // ← ДОБАВЛЯЕМ ИНФОРМАЦИЮ О СЕТИ!
+            bankSection +     // ← ДОБАВЛЯЕМ ИНФОРМАЦИЮ О БАНКЕ!
             `${pairTypeIcon} <b>Тип пары:</b> ${pairTypeText}\n` +
             `💰 <b>Ожидаемая прибыль:</b> не настроено\n\n` +
             addressSection +

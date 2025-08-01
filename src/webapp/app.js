@@ -2354,7 +2354,8 @@ async function createOrder() {
                     toAddress: address, // Реквизиты для получения средств
                     exchangeRate: currentCalculation.exchangeRate,
                     fee: currentCalculation.fee,
-                    pairType: 'fiat'
+                    pairType: 'fiat',
+                    bank: (currentCalculation.fromCurrency === 'RUB' || currentCalculation.toCurrency === 'RUB') ? currentBank : null
                 };
                  console.log(`💳 ФИНАЛЬНЫЕ ДАННЫЕ ${pairName} ЗАЯВКИ:`, orderData);
              } else {
@@ -2370,7 +2371,8 @@ async function createOrder() {
                     toAddress: address, // Номер счета для фиатных пар
                     exchangeRate: currentCalculation.exchangeRate,
                     fee: currentCalculation.fee,
-                    pairType: 'fiat'
+                    pairType: 'fiat',
+                    bank: (currentCalculation.fromCurrency === 'RUB' || currentCalculation.toCurrency === 'RUB') ? currentBank : null
                 };
                  console.log('🏦 ФИНАЛЬНЫЕ ДАННЫЕ ФИАТНОЙ ЗАЯВКИ:', orderData);
              }

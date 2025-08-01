@@ -863,7 +863,8 @@ app.post('/api/create-order', async (req, res) => {
             amlFromResult,
             amlToResult,
             pairType,
-            network  // ← ДОБАВЛЯЕМ ИЗВЛЕЧЕНИЕ СЕТИ!
+            network,  // ← ДОБАВЛЯЕМ ИЗВЛЕЧЕНИЕ СЕТИ!
+            bank      // ← ДОБАВЛЯЕМ ИЗВЛЕЧЕНИЕ БАНКА!
         } = req.body;
 
         // ДЕТАЛЬНАЯ ДИАГНОСТИКА ИЗВЛЕЧЕННЫХ ДАННЫХ
@@ -1023,7 +1024,8 @@ app.post('/api/create-order', async (req, res) => {
                     fromAddress: fromAddress || '',
                     toAddress: toAddress || '',
                     pairType: pairType || 'fiat',
-                    network: network || null                  // ← ДОБАВЛЯЕМ СЕТЬ ДЛЯ ОПЕРАТОРОВ!
+                    network: network || null,                 // ← ДОБАВЛЯЕМ СЕТЬ ДЛЯ ОПЕРАТОРОВ!
+                    bank: bank || null                        // ← ДОБАВЛЯЕМ БАНК ДЛЯ ОПЕРАТОРОВ!
                 });
                 console.log('✅ ВЫЗОВ notifyOperators ЗАВЕРШЕН');
             } catch (notifyError) {
