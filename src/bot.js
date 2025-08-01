@@ -920,7 +920,7 @@ bot.on('callback_query:data', async (ctx) => {
             'Наши операторы готовы помочь вам 24/7!\n\n' +
                     '✈️ Telegram: @ExMachinaXSupport\n' +
         '📧 Email: support@exmachinax.com\n' +
-        '📱 Канал: https://t.me/ExMachinaX\n' +
+        '📱 Канал: https://t.me/ExchangeMachinaX\n' +
             '⏰ Время ответа: до 15 минут',
             { 
                 parse_mode: 'HTML',
@@ -941,7 +941,7 @@ bot.on('callback_query:data', async (ctx) => {
             '📱 Удобное приложение\n\n' +
             '📞 <b>Контакты:</b>\n' +
             '✈️ Поддержка: @ExMachinaXSupport\n' +
-            '📱 Канал: https://t.me/ExMachinaX\n\n' +
+            '📱 Канал: https://t.me/ExchangeMachinaX\n\n' +
             '💡 Все операции проходят через нашу безопасную систему!',
             { 
                 parse_mode: 'HTML',
