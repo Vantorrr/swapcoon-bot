@@ -4,7 +4,8 @@ const path = require('path');
 
 class Database {
     constructor() {
-        this.dbPath = process.env.DB_PATH || './data/database.sqlite';
+        // Фиксированный путь к базе данных с реальными данными
+        this.dbPath = process.env.DB_PATH || '/Users/pavelgalante/swapcoon/data/database.sqlite';
         this.ensureDirectoryExists();
         this.init();
     }
