@@ -879,11 +879,7 @@ app.post('/api/create-order', async (req, res) => {
         console.log('  exchangeRate:', exchangeRate);
         console.log('  pairType:', pairType);
 
-        // Генерируем уникальный ID заявки
-        const orderId = `EM${Date.now()}${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
-        console.log('📝 Сгенерированный ID заявки:', orderId);
-
-        // 🔄 АВТОМАТИЧЕСКИ РЕГИСТРИРУЕМ ПОЛЬЗОВАТЕЛЯ В БОТЕ
+        console.log('🔄 АВТОМАТИЧЕСКИ РЕГИСТРИРУЕМ ПОЛЬЗОВАТЕЛЯ В БОТЕ');
         console.log('🔄 ПОПЫТКА РЕГИСТРАЦИИ ПОЛЬЗОВАТЕЛЯ:', userId);
         console.log('🔄 db существует?', !!db);
         console.log('🔄 db.upsertUser существует?', !!(db && db.upsertUser));
@@ -912,7 +908,7 @@ app.post('/api/create-order', async (req, res) => {
         }
 
         // Создаем заявку в базе данных
-        let realOrderId = orderId; // fallback к сгенерированному ID
+        let realOrderId = null; // будет установлен после создания в базе
         if (db && db.createOrder) {
             try {
                 const order = await db.createOrder({
@@ -944,12 +940,18 @@ app.post('/api/create-order', async (req, res) => {
                 if (global.googleSheetsManager && global.googleSheetsManager.isReady()) {
                     console.log('📊 ЗАПИСЫВАЕМ ЗАКАЗ В GOOGLE SHEETS (COMBINED)...');
                     try {
+                        // Используем данные пользователя из запроса
+                        const userForSheets = userData || {
+                            first_name: 'Пользователь',
+                            username: `user${userId}`
+                        };
+                        
                         const result = await global.googleSheetsManager.logOrder({
                             id: order.id,
                             user_id: userId,
-                            userName: user.first_name ? 
-                                `${user.first_name}${user.last_name ? ' ' + user.last_name : ''}${user.username ? ' (@' + user.username + ')' : ''}` :
-                                user.username || `User_${userId}`,
+                            userName: userForSheets.first_name ? 
+                                `${userForSheets.first_name}${userForSheets.last_name ? ' ' + userForSheets.last_name : ''}${userForSheets.username ? ' (@' + userForSheets.username + ')' : ''}` :
+                                userForSheets.username || `User_${userId}`,
                             fromCurrency: fromCurrency,
                             toCurrency: toCurrency,
                             fromAmount: fromAmount,
@@ -987,7 +989,6 @@ app.post('/api/create-order', async (req, res) => {
 
         console.log('📋 Данные для уведомления:', {
             realOrderId,
-            orderId,
             userName: user.first_name || user.username,
             fromAmount,
             fromCurrency,
@@ -1036,11 +1037,15 @@ app.post('/api/create-order', async (req, res) => {
             console.error('❌ notifyOperators НЕ ДОСТУПЕН!');
         }
         
+        if (!realOrderId) {
+            throw new Error('Не удалось создать заказ в базе данных');
+        }
+
         res.json({ 
             success: true, 
             data: {
-                id: realOrderId,        // ← ИСПРАВЛЕНО: используем РЕАЛЬНЫЙ ID из базы!
-                orderId: orderId,       // ← оставляем сгенерированный ID для совместимости
+                id: realOrderId,        // ← ID из базы данных
+                orderId: realOrderId,   // ← тот же ID для совместимости
                 status: 'pending',
                 message: 'Заявка создана'
             }
