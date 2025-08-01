@@ -1290,20 +1290,34 @@ class Database {
         });
     }
 
-    // Расширенная статистика дня для админов и операторов
+    // Расширенная статистика для админов и операторов (включает общую + сегодняшнюю)
     async getDailyStats() {
         return new Promise((resolve, reject) => {
             this.db.get(`
                 SELECT 
+                    -- Сегодняшняя статистика
                     (SELECT COUNT(*) FROM users WHERE date(created_at) = date('now')) as newUsersToday,
                     (SELECT COUNT(*) FROM orders WHERE source = 'bot' AND date(created_at) = date('now')) as botOrdersToday,
                     (SELECT COALESCE(SUM(to_amount), 0) FROM orders WHERE source = 'bot' AND date(created_at) = date('now')) as botVolumeToday,
                     (SELECT COUNT(*) FROM orders WHERE date(created_at) = date('now')) as ordersToday,
                     (SELECT COALESCE(SUM(to_amount), 0) FROM orders WHERE date(created_at) = date('now')) as volumeToday,
+                    
+                    -- Общая статистика за все время
                     (SELECT COUNT(*) FROM users) as totalUsers,
+                    (SELECT COUNT(*) FROM orders) as totalOrders,
+                    (SELECT COUNT(*) FROM orders WHERE status = 'completed') as totalCompleted,
+                    (SELECT COALESCE(SUM(to_amount), 0) FROM orders) as totalVolume,
+                    
+                    -- Текущее состояние заказов
                     (SELECT COUNT(*) FROM orders WHERE status = 'completed' AND date(updated_at) = date('now')) as processedToday,
                     (SELECT COUNT(*) FROM orders WHERE status = 'pending') as pendingOrders,
-                    (SELECT COUNT(*) FROM orders WHERE status = 'processing') as processingOrders
+                    (SELECT COUNT(*) FROM orders WHERE status = 'processing') as processingOrders,
+                    
+                    -- Последняя активность
+                    (SELECT COUNT(*) FROM orders WHERE date(created_at) >= date('now', '-7 days')) as ordersWeek,
+                    (SELECT COUNT(*) FROM users WHERE date(created_at) >= date('now', '-7 days')) as usersWeek,
+                    (SELECT MAX(created_at) FROM orders) as lastOrderDate,
+                    (SELECT MAX(created_at) FROM users) as lastUserDate
             `, (err, row) => {
                 if (err) {
                     reject(err);
@@ -1315,9 +1329,16 @@ class Database {
                         ordersToday: 0,
                         volumeToday: 0,
                         totalUsers: 0,
+                        totalOrders: 0,
+                        totalCompleted: 0,
+                        totalVolume: 0,
                         processedToday: 0,
                         pendingOrders: 0,
-                        processingOrders: 0
+                        processingOrders: 0,
+                        ordersWeek: 0,
+                        usersWeek: 0,
+                        lastOrderDate: null,
+                        lastUserDate: null
                     });
                 }
             });
@@ -1688,6 +1709,41 @@ class Database {
                     reject(err);
                 } else {
                     resolve(row);
+                }
+            });
+        });
+    }
+
+    // Получение статистики конкретного оператора
+    async getOperatorStats(operatorId) {
+        return new Promise((resolve, reject) => {
+            this.db.get(`
+                SELECT 
+                    COUNT(*) as totalAssigned,
+                    SUM(CASE WHEN o.status = 'completed' THEN 1 ELSE 0 END) as completed,
+                    SUM(CASE WHEN o.status = 'pending' THEN 1 ELSE 0 END) as pending,
+                    SUM(CASE WHEN o.status = 'processing' THEN 1 ELSE 0 END) as processing,
+                    SUM(CASE WHEN DATE(oa.assigned_at) = DATE('now') THEN 1 ELSE 0 END) as assignedToday,
+                    SUM(CASE WHEN o.status = 'completed' AND DATE(o.updated_at) = DATE('now') THEN 1 ELSE 0 END) as completedToday,
+                    AVG(o.rating) as avgRating,
+                    COUNT(CASE WHEN o.rating IS NOT NULL THEN 1 END) as totalRatings
+                FROM order_assignments oa
+                JOIN orders o ON oa.order_id = o.id
+                WHERE oa.operator_id = ?
+            `, [operatorId], (err, row) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(row || {
+                        totalAssigned: 0,
+                        completed: 0,
+                        pending: 0,
+                        processing: 0,
+                        assignedToday: 0,
+                        completedToday: 0,
+                        avgRating: 0,
+                        totalRatings: 0
+                    });
                 }
             });
         });

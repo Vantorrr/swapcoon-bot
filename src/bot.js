@@ -2672,37 +2672,54 @@ bot.on('callback_query:data', async (ctx) => {
             return ctx.answerCallbackQuery('❌ Нет прав');
         }
         
-        await ctx.answerCallbackQuery();
+        await ctx.answerCallbackQuery('📊 Собираю статистику...');
         
-        const myOrders = await db.getOperatorOrders(userId);
-        const completedOrders = myOrders.filter(o => o.assignment_status === 'completed').length;
-        const inProgressOrders = myOrders.filter(o => o.assignment_status === 'in_progress').length;
-        
-        // Статистика за сегодня
-        const today = new Date().toISOString().split('T')[0];
-        const todayOrders = myOrders.filter(o => o.assigned_at?.includes(today)).length;
-        
-        const statsText = `📊 <b>МОЯ СТАТИСТИКА</b>\n\n` +
-            `👨‍💼 Оператор: ${ctx.from.first_name || 'Вы'}\n\n` +
-            `📈 <b>За сегодня:</b>\n` +
-            `📝 Принято заказов: ${todayOrders}\n\n` +
-            `📊 <b>Общая статистика:</b>\n` +
-            `📋 Всего заказов: ${myOrders.length}\n` +
-            `✅ Завершено: ${completedOrders}\n` +
-            `🔄 В работе: ${inProgressOrders}\n` +
-            `⭐ Рейтинг завершения: ${myOrders.length > 0 ? Math.round((completedOrders / myOrders.length) * 100) : 0}%\n\n` +
-            `🚀 Продолжайте хорошую работу!`;
-        
-        const statsKeyboard = new InlineKeyboard()
-            .text('📋 Мои заказы', 'op_my_orders')
-            .text('🔄 Обновить', 'op_stats')
-            .row()
-            .text('🔙 Назад', 'op_back');
-        
-        await ctx.reply(statsText, { 
-            parse_mode: 'HTML',
-            reply_markup: statsKeyboard
-        });
+        try {
+            const stats = await db.getOperatorStats(userId);
+            const now = new Date();
+            const timeString = now.toLocaleString('ru');
+            
+            let statsText = `📊 <b>МОЯ СТАТИСТИКА</b>\n`;
+            statsText += `👨‍💼 Оператор: ${ctx.from.first_name || 'Вы'}\n`;
+            statsText += `🕐 ${timeString}\n\n`;
+            
+            if (stats.totalAssigned > 0) {
+                statsText += `📈 <b>За сегодня:</b>\n`;
+                statsText += `📝 Принято заказов: ${stats.assignedToday || 0}\n`;
+                statsText += `✅ Завершено: ${stats.completedToday || 0}\n\n`;
+                
+                statsText += `📊 <b>Общая статистика:</b>\n`;
+                statsText += `📋 Всего назначено: ${stats.totalAssigned}\n`;
+                statsText += `✅ Завершено: ${stats.completed}\n`;
+                statsText += `⏳ В ожидании: ${stats.pending}\n`;
+                statsText += `🔄 В работе: ${stats.processing}\n`;
+                statsText += `⭐ Успешность: ${Math.round((stats.completed / stats.totalAssigned) * 100)}%\n`;
+                
+                if (stats.totalRatings > 0) {
+                    statsText += `🎯 Средняя оценка: ${stats.avgRating.toFixed(1)}/5 (${stats.totalRatings} оценок)\n`;
+                }
+                
+                statsText += `\n🚀 Отлично работаете!`;
+            } else {
+                statsText += `📝 <b>Пока нет назначенных заказов</b>\n\n`;
+                statsText += `🚀 Ожидайте новые заказы от клиентов!\n`;
+                statsText += `💡 Используйте "📋 Свободные заказы" для просмотра доступных заявок.`;
+            }
+            
+            const statsKeyboard = new InlineKeyboard()
+                .text('📋 Мои заказы', 'op_my_orders')
+                .text('🔄 Обновить', 'op_stats')
+                .row()
+                .text('🔙 Назад', 'op_back');
+            
+            await ctx.reply(statsText, { 
+                parse_mode: 'HTML',
+                reply_markup: statsKeyboard
+            });
+        } catch (error) {
+            console.error('❌ Ошибка получения статистики оператора:', error);
+            await ctx.reply('❌ Ошибка получения статистики. Попробуйте позже.');
+        }
     }
 
     // Кнопка назад в операторскую панель
@@ -2855,23 +2872,54 @@ bot.on('callback_query:data', async (ctx) => {
             const timeString = now.toLocaleString('ru');
             const weekday = now.toLocaleDateString('ru', { weekday: 'long' });
             
-            let dailyText = `📈 <b>СТАТИСТИКА ДНЯ</b>\n`;
+            // Определяем есть ли активность сегодня
+            const hasToday = (stats.ordersToday || 0) > 0 || (webStats.ordersToday || 0) > 0 || (stats.newUsersToday || 0) > 0;
+            
+            let dailyText = `📈 <b>СТАТИСТИКА ПЛАТФОРМЫ</b>\n`;
             dailyText += `📅 ${weekday}, ${timeString}\n\n`;
             
-            dailyText += `🌐 <b>Активность сайта:</b>\n`;
-            dailyText += `📝 Новых заявок: ${webStats.ordersToday || 0}\n`;
-            dailyText += `👥 Уникальных посетителей: ${webStats.uniqueUsers || 0}\n`;
-            dailyText += `💰 Оборот с сайта: $${(webStats.volumeToday || 0).toFixed(2)}\n\n`;
-            
-            dailyText += `🤖 <b>Активность бота:</b>\n`;
-            dailyText += `👤 Новых пользователей: ${stats.newUsersToday || 0}\n`;
-            dailyText += `📋 Заявок через бота: ${stats.botOrdersToday || 0}\n`;
-            dailyText += `💎 Оборот через бота: $${(stats.botVolumeToday || 0).toFixed(2)}\n\n`;
-            
-            dailyText += `📊 <b>Общие итоги:</b>\n`;
-            dailyText += `🔢 Всего заявок: ${(stats.ordersToday || 0) + (webStats.ordersToday || 0)}\n`;
-            dailyText += `💵 Общий оборот: $${((stats.volumeToday || 0) + (webStats.volumeToday || 0)).toFixed(2)}\n`;
-            dailyText += `⚡ Конверсия: ${stats.totalUsers > 0 ? (((stats.ordersToday || 0) / stats.totalUsers) * 100).toFixed(1) : 0}%\n\n`;
+            if (hasToday) {
+                // Если есть активность сегодня - показываем сегодняшнюю статистику
+                dailyText += `🌐 <b>Активность сайта сегодня:</b>\n`;
+                dailyText += `📝 Новых заявок: ${webStats.ordersToday || 0}\n`;
+                dailyText += `👥 Уникальных посетителей: ${webStats.uniqueUsers || 0}\n`;
+                dailyText += `💰 Оборот с сайта: $${(webStats.volumeToday || 0).toFixed(2)}\n\n`;
+                
+                dailyText += `🤖 <b>Активность бота сегодня:</b>\n`;
+                dailyText += `👤 Новых пользователей: ${stats.newUsersToday || 0}\n`;
+                dailyText += `📋 Заявок через бота: ${stats.botOrdersToday || 0}\n`;
+                dailyText += `💎 Оборот через бота: $${(stats.botVolumeToday || 0).toFixed(2)}\n\n`;
+                
+                dailyText += `📊 <b>Итоги дня:</b>\n`;
+                dailyText += `🔢 Заявок: ${(stats.ordersToday || 0) + (webStats.ordersToday || 0)}\n`;
+                dailyText += `💵 Оборот: $${((stats.volumeToday || 0) + (webStats.volumeToday || 0)).toFixed(2)}\n\n`;
+            } else {
+                // Если активности сегодня нет - показываем общую статистику
+                dailyText += `📊 <b>Общая статистика:</b>\n`;
+                dailyText += `👤 Всего пользователей: ${stats.totalUsers || 0}\n`;
+                dailyText += `📋 Всего заказов: ${stats.totalOrders || 0}\n`;
+                dailyText += `✅ Завершено: ${stats.totalCompleted || 0}\n`;
+                dailyText += `💵 Общий оборот: $${(stats.totalVolume || 0).toFixed(2)}\n\n`;
+                
+                // Активность за неделю
+                if (stats.ordersWeek > 0 || stats.usersWeek > 0) {
+                    dailyText += `📈 <b>За последние 7 дней:</b>\n`;
+                    dailyText += `📝 Заказов: ${stats.ordersWeek || 0}\n`;
+                    dailyText += `👥 Новых пользователей: ${stats.usersWeek || 0}\n\n`;
+                }
+                
+                // Последняя активность
+                if (stats.lastOrderDate) {
+                    const lastOrderDate = new Date(stats.lastOrderDate);
+                    const daysAgo = Math.floor((new Date() - lastOrderDate) / (1000 * 60 * 60 * 24));
+                    dailyText += `🕐 <b>Последний заказ:</b> ${daysAgo === 0 ? 'сегодня' : `${daysAgo} дн. назад`}\n`;
+                }
+                if (stats.lastUserDate) {
+                    const lastUserDate = new Date(stats.lastUserDate);
+                    const daysAgo = Math.floor((new Date() - lastUserDate) / (1000 * 60 * 60 * 24));
+                    dailyText += `👤 <b>Последний пользователь:</b> ${daysAgo === 0 ? 'сегодня' : `${daysAgo} дн. назад`}\n\n`;
+                }
+            }
             
             // Операторская статистика (только для админов)
             if (userRole === 'admin') {
