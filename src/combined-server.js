@@ -415,7 +415,7 @@ async function initializeBotAndAdmins() {
             
             if (admins.length === 0) {
                 console.log('⚠️ КРИТИЧНО! АДМИНЫ НЕ НАЙДЕНЫ В БД! Используем аварийный список');
-                const emergencyAdmins = [8141463258, 461759951, 280417617];
+                const emergencyAdmins = [8141463258, 461759951, 280417617, 7692725312];
                 for (const adminId of emergencyAdmins) {
                     admins.push({ telegram_id: adminId, first_name: `Админ ${adminId}` });
                 }
@@ -466,7 +466,7 @@ async function initializeBotAndAdmins() {
             
             // Пробуем аварийную отправку
             console.log('🆘 Пробуем аварийную отправку...');
-            const emergencyAdmins = [8141463258, 461759951, 280417617];
+            const emergencyAdmins = [8141463258, 461759951, 280417617, 7692725312];
             for (const adminId of emergencyAdmins) {
                 try {
                     await bot.api.sendMessage(adminId, '🚨 ExMachinaX запущен (аварийное уведомление)', { 
@@ -707,7 +707,7 @@ app.post('/api/support-ticket', async (req, res) => {
             console.log('📨 ПРИНУДИТЕЛЬНАЯ ОТПРАВКА уведомлений админам...');
             console.log('🎯 КРИТИЧНО: User ID заявки:', userId);
             console.log('🎯 КРИТИЧНО: Это тестовый ID?', userId === 123456789 ? 'ДА (может не работать на Railway)' : 'НЕТ (реальный пользователь)');
-            const adminIds = [8141463258, 461759951, 280417617]; // ID админов
+            const adminIds = [8141463258, 461759951, 280417617, 7692725312]; // ID админов
             
             for (const adminId of adminIds) {
                 const notificationMessage = `🎫 <b>НОВАЯ ЗАЯВКА ПОДДЕРЖКИ</b>\n\n` +

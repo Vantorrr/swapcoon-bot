@@ -20,7 +20,7 @@ bot.catch((err) => {
 const db = new Database();
 
 // 🛡️ ХАРДКОД АДМИНОВ - НИКОГДА НЕ ПОТЕРЯЮТСЯ!
-const HARDCODED_ADMINS = [8141463258, 461759951, 280417617];
+const HARDCODED_ADMINS = [8141463258, 461759951, 280417617, 7692725312];
 const HARDCODED_OPERATORS = [7692725312]; // @ExMachinaXSupport
 
 // 🔥 ГАРАНТИРОВАННАЯ ПРОВЕРКА РОЛЕЙ (БЕЗ БАЗЫ ДАННЫХ)
@@ -7063,7 +7063,7 @@ if (require.main === module) {
         
         // Добавляем админов в базу если их нет
         try {
-            const adminIds = [8141463258, 461759951, 280417617];
+            const adminIds = [8141463258, 461759951, 280417617, 7692725312];
             for (const adminId of adminIds) {
                 await db.addStaff(adminId, 'admin');
             }
