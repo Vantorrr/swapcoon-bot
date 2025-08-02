@@ -1541,8 +1541,6 @@ bot.on('callback_query:data', async (ctx) => {
                     reply_markup: new InlineKeyboard()
                         .text('✅ Я отправил', `client_paid_${orderId}`)
                         .text('💬 Связаться с оператором', `client_chat_${orderId}`)
-                        .row()
-                        .text('📋 Копировать адрес', `copy_address_${details.address}`)
                 }
             );
             
@@ -5141,8 +5139,7 @@ bot.on('message', async (ctx) => {
                         reply_markup: new InlineKeyboard()
                             .text('✅ Я отправил', `client_paid_${orderId}`)
                             .text('💬 Связаться с оператором', `client_chat_${orderId}`)
-                            .row()
-                            .text('📋 Копировать адрес', `copy_address_${address}`)
+
                     }
                 );
                 
@@ -5632,8 +5629,7 @@ bot.on('message', async (ctx) => {
                         reply_markup: new InlineKeyboard()
                             .text('✅ Я отправил', `client_paid_${orderId}`)
                             .text('💬 Связаться с оператором', `client_chat_${orderId}`)
-                            .row()
-                            .text('📋 Копировать адрес', `copy_address_${address}`)
+
                     }
                 );
                 
@@ -5815,8 +5811,7 @@ bot.on('message', async (ctx) => {
                         reply_markup: new InlineKeyboard()
                             .text('✅ Я отправил', `client_paid_notification`)
                             .text('💬 Связаться с оператором', `support_contact`)
-                            .row()
-                            .text('📋 Копировать адрес', `copy_address_${address}`)
+
                     }
                 );
                 
