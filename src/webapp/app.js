@@ -1093,6 +1093,12 @@ function updateCalculationDisplay(fromAmount, toAmount, exchangeRate, fee) {
         const ethToUsdtRate = (currentPair === 'USDT/ETH') ? exchangeRate : (1 / exchangeRate);
         rateText = `1 ETH = ${formatCurrencyAmount(ethToUsdtRate)} USDT`;
         console.log(`📊 USDT/ETH СПЕЦ: ${currentPair}, курс ${exchangeRate} → показываем 1 ETH = ${ethToUsdtRate} USDT`);
+    }
+    // 🔥 ОСОБАЯ ЛОГИКА ДЛЯ RUB/USDT - ВСЕГДА ПОКАЗЫВАЕМ 1 USDT = X RUB
+    else if (currentPair === 'RUB/USDT' || currentPair === 'USDT/RUB') {
+        const usdtToRubRate = (currentPair === 'RUB/USDT') ? exchangeRate : (1 / exchangeRate);
+        rateText = `1 USDT = ${formatCurrencyAmount(usdtToRubRate)} RUB`;
+        console.log(`📊 RUB/USDT СПЕЦ: ${currentPair}, курс ${exchangeRate} → показываем 1 USDT = ${usdtToRubRate} RUB`);
     } else if (isSpecialPair && exchangeRate < 0.01) {
         // Для других специальных пар с маленьким курсом - инвертируем
         const normalRate = 1 / exchangeRate;
