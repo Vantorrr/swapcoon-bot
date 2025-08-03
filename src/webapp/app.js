@@ -920,6 +920,11 @@ function calculateExchange() {
     
     // 🔥 ДЛЯ ОТОБРАЖЕНИЯ ИСПОЛЬЗУЕМ ИСХОДНЫЙ КУРС ИЗ ТАБЛИЦЫ
     const displayRate = pairData.originalRate || exchangeRate;
+    console.log(`🔍 DEBUG ОТОБРАЖЕНИЕ:
+    - Расчетный курс: ${exchangeRate}
+    - Исходный курс: ${pairData.originalRate}
+    - Передаем: ${displayRate}
+    - Пара: ${fromCurrency}→${toCurrency}`);
     updateCalculationDisplay(fromAmount, finalAmount, displayRate, fee);
     document.getElementById('continue-button').disabled = false;
 }
@@ -1037,8 +1042,19 @@ function reverseCalculateExchange() {
 
 // Обновление отображения расчета
 function updateCalculationDisplay(fromAmount, toAmount, exchangeRate, fee) {
+    console.log(`🔍 updateCalculationDisplay получил:
+    - fromAmount: ${fromAmount}
+    - toAmount: ${toAmount}  
+    - exchangeRate: ${exchangeRate}
+    - fromCurrency: ${fromCurrency}
+    - toCurrency: ${toCurrency}`);
+    
     document.getElementById('to-amount').value = formatCurrencyAmount(toAmount);
-    document.getElementById('exchange-rate').textContent = `1 ${fromCurrency} = ${formatCurrencyAmount(exchangeRate)} ${toCurrency}`;
+    
+    const rateText = `1 ${fromCurrency} = ${formatCurrencyAmount(exchangeRate)} ${toCurrency}`;
+    console.log(`📊 ОТОБРАЖАЕМ КУРС: ${rateText}`);
+    document.getElementById('exchange-rate').textContent = rateText;
+    
     document.getElementById('final-amount').textContent = `${formatCurrencyAmount(toAmount)} ${toCurrency}`;
 }
 
