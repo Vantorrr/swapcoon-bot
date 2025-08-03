@@ -871,9 +871,10 @@ function calculateExchange() {
                 pairData = {
                     pair: `${fromCurrency}/${toCurrency}`,
                     sellRate: 1 / reversePair.buyRate,
-                    buyRate: 1 / reversePair.sellRate
+                    buyRate: 1 / reversePair.sellRate,
+                    originalRate: reversePair.sellRate // 🔥 СОХРАНЯЕМ ИСХОДНЫЙ КУРС
                 };
-                console.log(`📊 ИНВЕРТИРОВАННАЯ ПАРА: ${pairData.sellRate}/${pairData.buyRate}`);
+                console.log(`📊 ИНВЕРТИРОВАННАЯ ПАРА: ${pairData.sellRate}/${pairData.buyRate}, ИСХОДНЫЙ: ${pairData.originalRate}`);
             }
         }
     }
@@ -917,7 +918,9 @@ function calculateExchange() {
         toCurrency
     };
     
-    updateCalculationDisplay(fromAmount, finalAmount, exchangeRate, fee);
+    // 🔥 ДЛЯ ОТОБРАЖЕНИЯ ИСПОЛЬЗУЕМ ИСХОДНЫЙ КУРС ИЗ ТАБЛИЦЫ
+    const displayRate = pairData.originalRate || exchangeRate;
+    updateCalculationDisplay(fromAmount, finalAmount, displayRate, fee);
     document.getElementById('continue-button').disabled = false;
 }
 
