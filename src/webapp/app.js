@@ -886,10 +886,25 @@ function calculateExchange() {
         return;
     }
     
-    // Простой расчет: используем sell rate пары
+    // 🔥 ПРАВИЛЬНАЯ ЛОГИКА РАСЧЕТА - ПРОВЕРЯЕМ НАПРАВЛЕНИЕ ОБМЕНА
     const exchangeRate = pairData.sellRate;
-    const toAmount = fromAmount * exchangeRate;
-    console.log(`📊 ПРЯМОЙ РАСЧЕТ: ${fromAmount} * ${pairData.sellRate} = ${toAmount}`);
+    let toAmount;
+    
+    // Определяем направление обмена по названию пары
+    const [pairFromCurrency, pairToCurrency] = pairData.pair.split('/');
+    
+    if (fromCurrency === pairFromCurrency && toCurrency === pairToCurrency) {
+        // Прямое направление пары: BTC/RUB, обмениваем BTC → RUB
+        toAmount = fromAmount * exchangeRate;
+        console.log(`📊 ПРЯМОЕ НАПРАВЛЕНИЕ: ${fromAmount} ${fromCurrency} * ${exchangeRate} = ${toAmount} ${toCurrency}`);
+    } else if (fromCurrency === pairToCurrency && toCurrency === pairFromCurrency) {
+        // Обратное направление пары: RUB/BTC, но пара BTC/RUB, обмениваем RUB → BTC
+        toAmount = fromAmount / exchangeRate;
+        console.log(`📊 ОБРАТНОЕ НАПРАВЛЕНИЕ: ${fromAmount} ${fromCurrency} / ${exchangeRate} = ${toAmount} ${toCurrency}`);
+    } else {
+        console.error(`❌ Ошибка направления! Пара: ${pairData.pair}, обмен: ${fromCurrency}→${toCurrency}`);
+        toAmount = fromAmount * exchangeRate; // fallback
+    }
     const fee = 0;
     const finalAmount = toAmount;
     
@@ -994,7 +1009,24 @@ function reverseCalculateExchange() {
     const exchangeRate = pairData.sellRate;
     const fee = 0; // Комиссия убрана
     const grossAmount = toAmount; // Без комиссии
-    const fromAmount = grossAmount / exchangeRate;
+    
+    // 🔥 ПРАВИЛЬНАЯ ЛОГИКА ОБРАТНОГО РАСЧЕТА
+    let fromAmount;
+    
+    // Определяем направление обмена по названию пары
+    const [pairFromCurrency, pairToCurrency] = pairData.pair ? pairData.pair.split('/') : [fromCurrency, toCurrency];
+    
+    if (fromCurrency === pairFromCurrency && toCurrency === pairToCurrency) {
+        // Прямое направление пары: BTC/RUB, обратный расчет RUB → BTC
+        fromAmount = grossAmount / exchangeRate;
+        console.log(`📊 ОБРАТНЫЙ ПРЯМОЙ: ${grossAmount} ${toCurrency} / ${exchangeRate} = ${fromAmount} ${fromCurrency}`);
+    } else if (fromCurrency === pairToCurrency && toCurrency === pairFromCurrency) {
+        // Обратное направление пары: RUB/BTC через пару BTC/RUB, обратный расчет BTC → RUB
+        fromAmount = grossAmount * exchangeRate;
+        console.log(`📊 ОБРАТНЫЙ ОБРАТНЫЙ: ${grossAmount} ${toCurrency} * ${exchangeRate} = ${fromAmount} ${fromCurrency}`);
+    } else {
+        fromAmount = grossAmount / exchangeRate; // fallback
+    }
     
     document.getElementById('from-amount').value = formatCurrencyAmount(fromAmount);
     calculateExchange();
