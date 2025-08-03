@@ -1051,16 +1051,27 @@ function updateCalculationDisplay(fromAmount, toAmount, exchangeRate, fee) {
     // Для криптовалют показываем как основную валюту
     const cryptoCurrencies = ['BTC', 'ETH', 'USDT', 'USDC', 'BNB', 'ADA', 'DOT', 'LINK', 'LTC', 'XRP', 'SOL', 'MATIC', 'AVAX', 'BCH'];
     
-    // 🔥 ПРОСТАЯ ЛОГИКА: ЕСЛИ КУРС ОЧЕНЬ МАЛЕНЬКИЙ - ИНВЕРТИРУЕМ!
-    if (exchangeRate < 0.01) {
-        // Курс типа 0.00000011 - инвертируем чтобы показать нормально
+    // 🔥 СПЕЦИАЛЬНЫЕ ПАРЫ ДЛЯ ИНВЕРСИИ ОТОБРАЖЕНИЯ
+    const specialInvertPairs = [
+        'RUB/BTC', 'BTC/RUB',
+        'RUB/ETH', 'ETH/RUB', 
+        'USDT/BTC', 'BTC/USDT',
+        'USDT/ETH', 'ETH/USDT',
+        'ARS/UAH', 'UAH/ARS'
+    ];
+    
+    const currentPair = `${fromCurrency}/${toCurrency}`;
+    const isSpecialPair = specialInvertPairs.includes(currentPair);
+    
+    if (isSpecialPair && exchangeRate < 0.01) {
+        // Для специальных пар с маленьким курсом - инвертируем
         const normalRate = 1 / exchangeRate;
         rateText = `1 ${fromCurrency} = ${formatCurrencyAmount(normalRate)} ${toCurrency}`;
-        console.log(`📊 ИНВЕРТИРОВАЛИ МАЛЕНЬКИЙ КУРС: ${exchangeRate} → ${normalRate}`);
+        console.log(`📊 СПЕЦ ПАРА ${currentPair}: ИНВЕРТИРОВАЛИ ${exchangeRate} → ${normalRate}`);
     } else {
         // Обычный курс - показываем как есть
         rateText = `1 ${fromCurrency} = ${formatCurrencyAmount(exchangeRate)} ${toCurrency}`;
-        console.log(`📊 ОБЫЧНЫЙ КУРС: ${rateText}`);
+        console.log(`📊 ОБЫЧНЫЙ КУРС для ${currentPair}: ${exchangeRate}`);
     }
     
     document.getElementById('exchange-rate').textContent = rateText;
