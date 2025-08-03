@@ -859,22 +859,26 @@ function calculateExchange() {
     
     // Пытаемся найти прямую пару FROM/TO
     if (window.rawPairData) {
-        pairData = window.rawPairData.find(p => p.pair === `${fromCurrency}/${toCurrency}`);
-        if (pairData) {
-            console.log(`📊 НАЙДЕНА ПРЯМАЯ ПАРА: ${pairData.pair} = ${pairData.sellRate}/${pairData.buyRate}`);
+        // 🔥 СНАЧАЛА ИЩЕМ ОБРАТНУЮ ПАРУ ДЛЯ ПРАВИЛЬНЫХ КУРСОВ!
+        const reversePair = window.rawPairData.find(p => p.pair === `${toCurrency}/${fromCurrency}`);
+        if (reversePair) {
+            console.log(`📊 НАЙДЕНА ОБРАТНАЯ ПАРА (ПРИОРИТЕТ): ${reversePair.pair} = ${reversePair.sellRate}/${reversePair.buyRate}`);
+            originalRate = reversePair.sellRate; // 🔥 СОХРАНЯЕМ ИСХОДНЫЙ КУРС ИЗ ТАБЛИЦЫ
+            isReversePair = true; // 🔥 ОБРАТНАЯ ПАРА!
+            // Инвертируем для расчета
+            pairData = {
+                pair: `${fromCurrency}/${toCurrency}`,
+                sellRate: 1 / reversePair.buyRate,
+                buyRate: 1 / reversePair.sellRate,
+                originalRate: reversePair.sellRate // 🔥 СОХРАНЯЕМ ИСХОДНЫЙ КУРС
+            };
+            console.log(`📊 ИНВЕРТИРОВАННАЯ ПАРА: ${pairData.sellRate}/${pairData.buyRate}, ИСХОДНЫЙ: ${pairData.originalRate}`);
         } else {
-            // Ищем обратную пару TO/FROM
-            const reversePair = window.rawPairData.find(p => p.pair === `${toCurrency}/${fromCurrency}`);
-            if (reversePair) {
-                console.log(`📊 НАЙДЕНА ОБРАТНАЯ ПАРА: ${reversePair.pair} = ${reversePair.sellRate}/${reversePair.buyRate}`);
-                // Инвертируем для расчета
-                pairData = {
-                    pair: `${fromCurrency}/${toCurrency}`,
-                    sellRate: 1 / reversePair.buyRate,
-                    buyRate: 1 / reversePair.sellRate,
-                    originalRate: reversePair.sellRate // 🔥 СОХРАНЯЕМ ИСХОДНЫЙ КУРС
-                };
-                console.log(`📊 ИНВЕРТИРОВАННАЯ ПАРА: ${pairData.sellRate}/${pairData.buyRate}, ИСХОДНЫЙ: ${pairData.originalRate}`);
+            // Только если нет обратной - ищем прямую пару FROM/TO
+            pairData = window.rawPairData.find(p => p.pair === `${fromCurrency}/${toCurrency}`);
+            if (pairData) {
+                console.log(`📊 НАЙДЕНА ПРЯМАЯ ПАРА (ЗАПАСНОЙ ВАРИАНТ): ${pairData.pair} = ${pairData.sellRate}/${pairData.buyRate}`);
+                originalRate = pairData.sellRate; // Сохраняем исходный курс
             }
         }
     }
