@@ -894,14 +894,33 @@ function calculateExchange() {
     // Определяем направление обмена по названию пары
     const [pairFromCurrency, pairToCurrency] = pairData.pair.split('/');
     
+    // 🔥 СПЕЦИАЛЬНЫЕ ПАРЫ ДЛЯ ИНВЕРСИИ ЛОГИКИ РАСЧЕТА
+    const specialCalcPairs = ['ARS/UAH', 'UAH/ARS'];
+    const currentCalcPair = `${fromCurrency}/${toCurrency}`;
+    const isSpecialCalc = specialCalcPairs.includes(currentCalcPair);
+    
     if (fromCurrency === pairFromCurrency && toCurrency === pairToCurrency) {
-        // Прямое направление пары: BTC/RUB, обмениваем BTC → RUB
-        toAmount = fromAmount / exchangeRate;
-        console.log(`📊 ПРЯМОЕ НАПРАВЛЕНИЕ: ${fromAmount} ${fromCurrency} / ${exchangeRate} = ${toAmount} ${toCurrency}`);
+        // Прямое направление пары
+        if (isSpecialCalc) {
+            // Для специальных пар - умножаем вместо деления
+            toAmount = fromAmount * exchangeRate;
+            console.log(`📊 СПЕЦ ПРЯМОЕ (×): ${fromAmount} ${fromCurrency} * ${exchangeRate} = ${toAmount} ${toCurrency}`);
+        } else {
+            // Обычная логика - делим  
+            toAmount = fromAmount / exchangeRate;
+            console.log(`📊 ПРЯМОЕ НАПРАВЛЕНИЕ (/): ${fromAmount} ${fromCurrency} / ${exchangeRate} = ${toAmount} ${toCurrency}`);
+        }
     } else if (fromCurrency === pairToCurrency && toCurrency === pairFromCurrency) {
-        // Обратное направление пары: RUB/BTC, но пара BTC/RUB, обмениваем RUB → BTC
-        toAmount = fromAmount * exchangeRate;
-        console.log(`📊 ОБРАТНОЕ НАПРАВЛЕНИЕ: ${fromAmount} ${fromCurrency} * ${exchangeRate} = ${toAmount} ${toCurrency}`);
+        // Обратное направление пары
+        if (isSpecialCalc) {
+            // Для специальных пар - делим вместо умножения
+            toAmount = fromAmount / exchangeRate;
+            console.log(`📊 СПЕЦ ОБРАТНОЕ (/): ${fromAmount} ${fromCurrency} / ${exchangeRate} = ${toAmount} ${toCurrency}`);
+        } else {
+            // Обычная логика - умножаем
+            toAmount = fromAmount * exchangeRate;
+            console.log(`📊 ОБРАТНОЕ НАПРАВЛЕНИЕ (×): ${fromAmount} ${fromCurrency} * ${exchangeRate} = ${toAmount} ${toCurrency}`);
+        }
     } else {
         console.error(`❌ Ошибка направления! Пара: ${pairData.pair}, обмен: ${fromCurrency}→${toCurrency}`);
         toAmount = fromAmount * exchangeRate; // fallback
