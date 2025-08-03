@@ -1082,8 +1082,13 @@ function updateCalculationDisplay(fromAmount, toAmount, exchangeRate, fee) {
     const currentPair = `${fromCurrency}/${toCurrency}`;
     const isSpecialPair = specialInvertPairs.includes(currentPair);
     
-    if (isSpecialPair && exchangeRate < 0.01) {
-        // Для специальных пар с маленьким курсом - инвертируем
+    // 🔥 ОСОБАЯ ЛОГИКА ДЛЯ USDT/BTC - ВСЕГДА ПОКАЗЫВАЕМ 1 BTC = X USDT
+    if (currentPair === 'USDT/BTC' || currentPair === 'BTC/USDT') {
+        const btcToUsdtRate = (currentPair === 'USDT/BTC') ? exchangeRate : (1 / exchangeRate);
+        rateText = `1 BTC = ${formatCurrencyAmount(btcToUsdtRate)} USDT`;
+        console.log(`📊 USDT/BTC СПЕЦ: ${currentPair}, курс ${exchangeRate} → показываем 1 BTC = ${btcToUsdtRate} USDT`);
+    } else if (isSpecialPair && exchangeRate < 0.01) {
+        // Для других специальных пар с маленьким курсом - инвертируем
         const normalRate = 1 / exchangeRate;
         rateText = `1 ${fromCurrency} = ${formatCurrencyAmount(normalRate)} ${toCurrency}`;
         console.log(`📊 СПЕЦ ПАРА ${currentPair}: ИНВЕРТИРОВАЛИ ${exchangeRate} → ${normalRate}`);
