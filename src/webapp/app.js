@@ -1060,10 +1060,28 @@ function updateCalculationDisplay(fromAmount, toAmount, exchangeRate, fee) {
     
     document.getElementById('to-amount').value = formatCurrencyAmount(toAmount);
     
-    const rateText = `1 ${fromCurrency} = ${formatCurrencyAmount(exchangeRate)} ${toCurrency}`;
-    console.log(`📊 ОТОБРАЖАЕМ КУРС: ${rateText}`);
-    document.getElementById('exchange-rate').textContent = rateText;
+    // 🔥 ПРАВИЛЬНАЯ ЛОГИКА ОТОБРАЖЕНИЯ КУРСА
+    let rateText;
     
+    // Для криптовалют показываем как основную валюту
+    const cryptoCurrencies = ['BTC', 'ETH', 'USDT', 'USDC', 'BNB', 'ADA', 'DOT', 'LINK', 'LTC', 'XRP', 'SOL', 'MATIC', 'AVAX', 'BCH'];
+    
+    if (cryptoCurrencies.includes(fromCurrency) && !cryptoCurrencies.includes(toCurrency)) {
+        // BTC → RUB: показываем 1 BTC = X RUB (используем exchangeRate как есть)
+        rateText = `1 ${fromCurrency} = ${formatCurrencyAmount(exchangeRate)} ${toCurrency}`;
+        console.log(`📊 КРИПТО→ФИАТ: ${rateText}`);
+    } else if (!cryptoCurrencies.includes(fromCurrency) && cryptoCurrencies.includes(toCurrency)) {
+        // RUB → BTC: показываем 1 BTC = X RUB (инвертируем курс)
+        const invertedRate = 1 / exchangeRate;
+        rateText = `1 ${toCurrency} = ${formatCurrencyAmount(invertedRate)} ${fromCurrency}`;
+        console.log(`📊 ФИАТ→КРИПТО: ${rateText}`);
+    } else {
+        // Обычные пары
+        rateText = `1 ${fromCurrency} = ${formatCurrencyAmount(exchangeRate)} ${toCurrency}`;
+        console.log(`📊 ОБЫЧНАЯ ПАРА: ${rateText}`);
+    }
+    
+    document.getElementById('exchange-rate').textContent = rateText;
     document.getElementById('final-amount').textContent = `${formatCurrencyAmount(toAmount)} ${toCurrency}`;
 }
 
