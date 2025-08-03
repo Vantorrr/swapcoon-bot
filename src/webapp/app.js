@@ -895,12 +895,12 @@ function calculateExchange() {
     
     if (fromCurrency === pairFromCurrency && toCurrency === pairToCurrency) {
         // Прямое направление пары: BTC/RUB, обмениваем BTC → RUB
-        toAmount = fromAmount * exchangeRate;
-        console.log(`📊 ПРЯМОЕ НАПРАВЛЕНИЕ: ${fromAmount} ${fromCurrency} * ${exchangeRate} = ${toAmount} ${toCurrency}`);
+        toAmount = fromAmount / exchangeRate;
+        console.log(`📊 ПРЯМОЕ НАПРАВЛЕНИЕ: ${fromAmount} ${fromCurrency} / ${exchangeRate} = ${toAmount} ${toCurrency}`);
     } else if (fromCurrency === pairToCurrency && toCurrency === pairFromCurrency) {
         // Обратное направление пары: RUB/BTC, но пара BTC/RUB, обмениваем RUB → BTC
-        toAmount = fromAmount / exchangeRate;
-        console.log(`📊 ОБРАТНОЕ НАПРАВЛЕНИЕ: ${fromAmount} ${fromCurrency} / ${exchangeRate} = ${toAmount} ${toCurrency}`);
+        toAmount = fromAmount * exchangeRate;
+        console.log(`📊 ОБРАТНОЕ НАПРАВЛЕНИЕ: ${fromAmount} ${fromCurrency} * ${exchangeRate} = ${toAmount} ${toCurrency}`);
     } else {
         console.error(`❌ Ошибка направления! Пара: ${pairData.pair}, обмен: ${fromCurrency}→${toCurrency}`);
         toAmount = fromAmount * exchangeRate; // fallback
@@ -1018,12 +1018,12 @@ function reverseCalculateExchange() {
     
     if (fromCurrency === pairFromCurrency && toCurrency === pairToCurrency) {
         // Прямое направление пары: BTC/RUB, обратный расчет RUB → BTC
-        fromAmount = grossAmount / exchangeRate;
-        console.log(`📊 ОБРАТНЫЙ ПРЯМОЙ: ${grossAmount} ${toCurrency} / ${exchangeRate} = ${fromAmount} ${fromCurrency}`);
+        fromAmount = grossAmount * exchangeRate;
+        console.log(`📊 ОБРАТНЫЙ ПРЯМОЙ: ${grossAmount} ${toCurrency} * ${exchangeRate} = ${fromAmount} ${fromCurrency}`);
     } else if (fromCurrency === pairToCurrency && toCurrency === pairFromCurrency) {
         // Обратное направление пары: RUB/BTC через пару BTC/RUB, обратный расчет BTC → RUB
-        fromAmount = grossAmount * exchangeRate;
-        console.log(`📊 ОБРАТНЫЙ ОБРАТНЫЙ: ${grossAmount} ${toCurrency} * ${exchangeRate} = ${fromAmount} ${fromCurrency}`);
+        fromAmount = grossAmount / exchangeRate;
+        console.log(`📊 ОБРАТНЫЙ ОБРАТНЫЙ: ${grossAmount} ${toCurrency} / ${exchangeRate} = ${fromAmount} ${fromCurrency}`);
     } else {
         fromAmount = grossAmount / exchangeRate; // fallback
     }
