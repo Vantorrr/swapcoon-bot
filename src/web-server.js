@@ -320,3 +320,44 @@ app.post('/api/create-order', async (req, res) => {
         });
     }
 });
+
+// API для получения реферальной ссылки
+app.get('/api/referral/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const referralLink = `https://t.me/${process.env.BOT_USERNAME || 'ExMachinaX_bot'}?start=${userId}`;
+        
+        res.json({ success: true, data: { referralLink } });
+    } catch (error) {
+        console.error('Ошибка получения реферальной ссылки:', error);
+        res.status(500).json({ success: false, error: 'Ошибка получения реферальной ссылки' });
+    }
+});
+
+// API для получения статистики рефералов
+app.get('/api/referral-stats/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        
+        // Получаем список рефералов
+        const referrals = await db.getReferralList(userId);
+        const stats = await db.getReferralStats(userId);
+        
+        res.json({ 
+            success: true, 
+            data: { 
+                stats,
+                referrals
+            }
+        });
+    } catch (error) {
+        console.error('Ошибка получения статистики рефералов:', error);
+        res.status(500).json({ success: false, error: 'Ошибка получения статистики рефералов' });
+    }
+});
+
+// Запуск сервера
+app.listen(PORT, () => {
+    console.log(`🌐 Веб-сервер запущен на порту ${PORT}`);
+    console.log(`🔗 Локальный доступ: http://localhost:${PORT}`);
+});

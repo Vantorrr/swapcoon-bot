@@ -211,7 +211,7 @@ app.get('/api/profile/:userId', async (req, res) => {
 app.get('/api/referral/:userId', async (req, res) => {
     try {
         const { userId } = req.params;
-        const referralLink = `https://t.me/${process.env.BOT_USERNAME || 'exmachinax_bot'}?start=${userId}`;
+        const referralLink = `https://t.me/${process.env.BOT_USERNAME || 'ExMachinaX_bot'}?start=${userId}`;
         
         res.json({ success: true, data: { referralLink } });
     } catch (error) {

@@ -980,8 +980,8 @@ function reverseCalculateExchange() {
             const reversePair = window.rawPairData.find(p => p.pair === `${toCurrency}/${fromCurrency}`);
             if (reversePair) {
                 pairData = {
-                    sellRate: 1 / reversePair.sellRate,
-                    buyRate: 1 / reversePair.buyRate
+                    sellRate: 1 / reversePair.buyRate,
+                    buyRate: 1 / reversePair.sellRate
                 };
             }
         }
@@ -4211,8 +4211,8 @@ function generateReferralLink() {
             currentUserId = 123456789;
         }
         
-        // Генерируем реферальную ссылку
-        const referralLink = `https://t.me/ExMachinaXBot?start=ref_${currentUserId}`;
+            // Генерируем реферальную ссылку
+    const referralLink = `https://t.me/ExMachinaX_bot?start=${currentUserId}`;
         console.log('🔗 Сгенерирована реферальная ссылка:', referralLink);
         
         // Заполняем поле
