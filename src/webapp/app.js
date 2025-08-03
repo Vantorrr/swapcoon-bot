@@ -922,13 +922,18 @@ function calculateExchange() {
         toCurrency
     };
     
-    // 🔥 ДЛЯ ОТОБРАЖЕНИЯ ИСПОЛЬЗУЕМ ИСХОДНЫЙ КУРС ИЗ ТАБЛИЦЫ
-    const displayRate = pairData.originalRate || exchangeRate;
-    console.log(`🔍 DEBUG ОТОБРАЖЕНИЕ:
-    - Расчетный курс: ${exchangeRate}
-    - Исходный курс: ${pairData.originalRate}
-    - Передаем: ${displayRate}
-    - Пара: ${fromCurrency}→${toCurrency}`);
+    // 🔥 ПРАВИЛЬНЫЙ КУРС ДЛЯ ОТОБРАЖЕНИЯ
+    let displayRate;
+    if (isReversePair) {
+        // Если используем обратную пару RUB/BTC для расчета BTC→RUB
+        // То для отображения инвертируем: 1 BTC = originalRate RUB
+        displayRate = pairData.originalRate;
+        console.log(`🔍 ОБРАТНАЯ ПАРА: ${fromCurrency}→${toCurrency}, показываем ${displayRate} (исходный курс)`);
+    } else {
+        // Прямая пара - используем как есть
+        displayRate = exchangeRate;
+        console.log(`🔍 ПРЯМАЯ ПАРА: ${fromCurrency}→${toCurrency}, показываем ${displayRate}`);
+    }
     updateCalculationDisplay(fromAmount, finalAmount, displayRate, fee);
     document.getElementById('continue-button').disabled = false;
 }
