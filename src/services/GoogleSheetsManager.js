@@ -543,10 +543,29 @@ class GoogleSheetsManager {
                     
                     // Проверяем что это ручной курс с валидными числами
                     if (status === 'MANUAL' && !isNaN(sellPrice) && !isNaN(buyPrice) && sellPrice > 0 && buyPrice > 0) {
+                        // 🔥 АВТОМАТИЧЕСКОЕ ПЕРЕВОРАЧИВАНИЕ ПАР ДЛЯ КРИПТО-ВАЛЮТ
+                        let finalPair = pair;
+                        let finalSellRate = sellPrice;
+                        let finalBuyRate = buyPrice;
+                        
+                        // Список крипто-валют которые должны быть ПЕРВЫМИ в парах
+                        const cryptoFirst = ['BTC', 'ETH', 'USDT', 'USDC', 'BNB', 'ADA', 'DOT', 'LINK', 'LTC', 'XRP', 'SOL', 'MATIC', 'AVAX', 'BCH'];
+                        
+                        // Разбираем пару на валюты
+                        const [fromCurrency, toCurrency] = pair.split('/');
+                        
+                        // Если первая валюта НЕ крипто, а вторая крипто - переворачиваем пару
+                        if (!cryptoFirst.includes(fromCurrency) && cryptoFirst.includes(toCurrency)) {
+                            finalPair = `${toCurrency}/${fromCurrency}`;
+                            finalSellRate = 1 / buyPrice; // Инвертируем курсы
+                            finalBuyRate = 1 / sellPrice;
+                            console.log(`🔄 ПЕРЕВЕРНУЛИ ПАРУ: ${pair} → ${finalPair} (курсы инвертированы)`);
+                        }
+                        
                         manualRates.push({
-                            pair: pair,
-                            sellRate: sellPrice,
-                            buyRate: buyPrice,
+                            pair: finalPair,
+                            sellRate: finalSellRate,
+                            buyRate: finalBuyRate,
                             spread: parseFloat(spread) || 0,
                             lastUpdated: lastUpdated,
                             status: status,

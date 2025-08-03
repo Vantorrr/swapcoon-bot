@@ -980,8 +980,8 @@ function reverseCalculateExchange() {
             const reversePair = window.rawPairData.find(p => p.pair === `${toCurrency}/${fromCurrency}`);
             if (reversePair) {
                 pairData = {
-                    sellRate: 1 / reversePair.buyRate,
-                    buyRate: 1 / reversePair.sellRate
+                    sellRate: 1 / reversePair.sellRate,
+                    buyRate: 1 / reversePair.buyRate
                 };
             }
         }
