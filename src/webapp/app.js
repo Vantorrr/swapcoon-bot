@@ -1111,6 +1111,16 @@ function updateCalculationDisplay(fromAmount, toAmount, exchangeRate, fee) {
         const ethToRubRate = (currentPair === 'RUB/ETH') ? exchangeRate : (1 / exchangeRate);
         rateText = `1 ETH = ${formatCurrencyAmount(ethToRubRate)} RUB`;
         console.log(`📊 RUB/ETH СПЕЦ: ${currentPair}, курс ${exchangeRate} → показываем 1 ETH = ${ethToRubRate} RUB`);
+    }
+    // 🔥 ОСОБАЯ ЛОГИКА ДЛЯ RUB/UAH - ИНВЕРТИРУЕМ ОТОБРАЖЕНИЕ
+    else if (currentPair === 'RUB/UAH' || currentPair === 'UAH/RUB') {
+        const invertedRate = 1 / exchangeRate;
+        if (currentPair === 'RUB/UAH') {
+            rateText = `1 RUB = ${formatCurrencyAmount(invertedRate)} UAH`;
+        } else {
+            rateText = `1 UAH = ${formatCurrencyAmount(invertedRate)} RUB`;
+        }
+        console.log(`📊 RUB/UAH СПЕЦ: ${currentPair}, курс ${exchangeRate} → инвертируем ${invertedRate}`);
     } else if (isSpecialPair && exchangeRate < 0.01) {
         // Для других специальных пар с маленьким курсом - инвертируем
         const normalRate = 1 / exchangeRate;
