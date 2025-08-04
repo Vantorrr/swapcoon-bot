@@ -1105,6 +1105,12 @@ function updateCalculationDisplay(fromAmount, toAmount, exchangeRate, fee) {
         const btcToRubRate = (currentPair === 'RUB/BTC') ? exchangeRate : (1 / exchangeRate);
         rateText = `1 BTC = ${formatCurrencyAmount(btcToRubRate)} RUB`;
         console.log(`📊 RUB/BTC СПЕЦ: ${currentPair}, курс ${exchangeRate} → показываем 1 BTC = ${btcToRubRate} RUB`);
+    }
+    // 🔥 ОСОБАЯ ЛОГИКА ДЛЯ RUB/ETH - ВСЕГДА ПОКАЗЫВАЕМ 1 ETH = X RUB
+    else if (currentPair === 'RUB/ETH' || currentPair === 'ETH/RUB') {
+        const ethToRubRate = (currentPair === 'RUB/ETH') ? exchangeRate : (1 / exchangeRate);
+        rateText = `1 ETH = ${formatCurrencyAmount(ethToRubRate)} RUB`;
+        console.log(`📊 RUB/ETH СПЕЦ: ${currentPair}, курс ${exchangeRate} → показываем 1 ETH = ${ethToRubRate} RUB`);
     } else if (isSpecialPair && exchangeRate < 0.01) {
         // Для других специальных пар с маленьким курсом - инвертируем
         const normalRate = 1 / exchangeRate;
