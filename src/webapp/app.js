@@ -1099,6 +1099,12 @@ function updateCalculationDisplay(fromAmount, toAmount, exchangeRate, fee) {
         const usdtToRubRate = (currentPair === 'RUB/USDT') ? exchangeRate : (1 / exchangeRate);
         rateText = `1 USDT = ${formatCurrencyAmount(usdtToRubRate)} RUB`;
         console.log(`📊 RUB/USDT СПЕЦ: ${currentPair}, курс ${exchangeRate} → показываем 1 USDT = ${usdtToRubRate} RUB`);
+    }
+    // 🔥 ОСОБАЯ ЛОГИКА ДЛЯ RUB/BTC - ВСЕГДА ПОКАЗЫВАЕМ 1 BTC = X RUB
+    else if (currentPair === 'RUB/BTC' || currentPair === 'BTC/RUB') {
+        const btcToRubRate = (currentPair === 'RUB/BTC') ? exchangeRate : (1 / exchangeRate);
+        rateText = `1 BTC = ${formatCurrencyAmount(btcToRubRate)} RUB`;
+        console.log(`📊 RUB/BTC СПЕЦ: ${currentPair}, курс ${exchangeRate} → показываем 1 BTC = ${btcToRubRate} RUB`);
     } else if (isSpecialPair && exchangeRate < 0.01) {
         // Для других специальных пар с маленьким курсом - инвертируем
         const normalRate = 1 / exchangeRate;
