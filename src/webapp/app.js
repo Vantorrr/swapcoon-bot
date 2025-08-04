@@ -895,7 +895,7 @@ function calculateExchange() {
     const [pairFromCurrency, pairToCurrency] = pairData.pair.split('/');
     
     // 🔥 СПЕЦИАЛЬНЫЕ ПАРЫ ДЛЯ ИНВЕРСИИ ЛОГИКИ РАСЧЕТА
-    const specialCalcPairs = ['ARS/UAH', 'UAH/ARS', 'RUB/ARS', 'ARS/RUB', 'RUB/KZT', 'KZT/RUB', 'USDT/ARS', 'ARS/USDT'];
+    const specialCalcPairs = ['ARS/UAH', 'UAH/ARS', 'RUB/ARS', 'ARS/RUB', 'RUB/KZT', 'KZT/RUB', 'USDT/ARS', 'ARS/USDT', 'USDT/KZT', 'KZT/USDT'];
     const currentCalcPair = `${fromCurrency}/${toCurrency}`;
     const isSpecialCalc = specialCalcPairs.includes(currentCalcPair);
     
