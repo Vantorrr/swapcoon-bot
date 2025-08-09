@@ -956,26 +956,26 @@ class Database {
                     (SELECT COUNT(*) FROM orders WHERE status IN ('pending','processing','payment_details_sent','payment_waiting')) as pendingOrders,
                     (SELECT COUNT(*) FROM orders WHERE status IN ('processing','payment_received','payment_confirmed','sending')) as processingOrders,
                     (
-                        SELECT COALESCE(SUM(
+                        SELECT COALESCE(SUM(CAST(
                             CASE 
                                 WHEN to_currency IN ('USDT','USD') THEN to_amount
                                 WHEN from_currency IN ('USDT','USD') THEN from_amount
                                 ELSE 0
-                            END
-                        ), 0)
+                            END AS REAL
+                        )), 0)
                         FROM orders 
                         WHERE status = 'completed'
                     ) as totalVolume,
                     (
-                        SELECT COALESCE(SUM(
+                        SELECT COALESCE(SUM(CAST(
                             CASE 
                                 WHEN to_currency IN ('USDT','USD') THEN to_amount
                                 WHEN from_currency IN ('USDT','USD') THEN from_amount
                                 ELSE 0
-                            END
-                        ), 0)
+                            END AS REAL
+                        )), 0)
                         FROM orders 
-                        WHERE date(created_at) = date('now')
+                        WHERE datetime(created_at) >= datetime('now', '-24 hours')
                     ) as volumeToday,
                     (SELECT COUNT(*) FROM referrals) as totalReferrals,
                     (SELECT COALESCE(SUM(commission), 0) FROM referrals) as totalCommissions,
