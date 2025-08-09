@@ -818,22 +818,37 @@ app.get('/api/profile/:userId', async (req, res) => {
         const { userId } = req.params;
         console.log('👤 Запрос профиля пользователя:', userId);
         
-        // Имитация профиля пользователя
-        const userProfile = {
-            id: userId,
-            first_name: 'Пользователь',
-            last_name: '',
-            username: `user${userId}`,
-            level: 1,
-            experience: 0,
-            total_volume: 0,
-            successful_orders: 0,
-            avatar: null,
-            created_at: new Date().toISOString()
+        // Получаем базовую инфу о пользователе
+        const user = await db.getUser ? await db.getUser(userId) : null;
+        
+        // Получаем статистику сделок
+        const stats = await db.getUserStats ? await db.getUserStats(userId) : {
+            ordersCount: 0,
+            totalVolume: 0,
+            completedOrders: 0,
+            avgOrderValue: 0
         };
         
-        console.log('✅ Профиль отправлен:', userProfile);
-        res.json({ success: true, data: userProfile });
+        // Достижения и уровень
+        const achievements = await db.getUserAchievements ? await db.getUserAchievements(userId) : [];
+        
+        const profile = {
+            id: userId,
+            first_name: user?.first_name || 'Пользователь',
+            last_name: user?.last_name || '',
+            username: user?.username || `user${userId}`,
+            created_at: user?.created_at || null,
+            stats: {
+                ordersCount: stats.ordersCount || 0,
+                completedOrders: stats.completedOrders || 0,
+                totalVolume: Number(stats.totalVolume || 0),
+                avgOrderValue: Number(stats.avgOrderValue || 0)
+            },
+            achievements
+        };
+        
+        console.log('✅ Профиль отправлен:', profile);
+        res.json({ success: true, data: profile });
     } catch (error) {
         console.error('❌ Ошибка получения профиля:', error.message);
         res.status(500).json({ success: false, error: 'Ошибка получения профиля' });
