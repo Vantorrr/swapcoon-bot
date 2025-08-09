@@ -831,6 +831,9 @@ app.get('/api/profile/:userId', async (req, res) => {
         
         // Достижения и уровень
         const achievements = await db.getUserAchievements ? await db.getUserAchievements(userId) : [];
+        // Реферальная статистика
+        const referralStats = await db.getReferralStats ? await db.getReferralStats(userId) : { total_referrals: 0, total_commission: 0, successful_orders: 0 };
+        const referrals = await db.getReferralList ? await db.getReferralList(userId) : [];
         
         const profile = {
             id: userId,
@@ -844,7 +847,9 @@ app.get('/api/profile/:userId', async (req, res) => {
                 totalVolume: Number(stats.totalVolume || 0),
                 avgOrderValue: Number(stats.avgOrderValue || 0)
             },
-            achievements
+            achievements,
+            referralStats,
+            referrals
         };
         
         console.log('✅ Профиль отправлен:', profile);
