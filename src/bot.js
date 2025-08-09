@@ -1671,6 +1671,10 @@ bot.on('callback_query:data', async (ctx) => {
             
             await ctx.answerCallbackQuery('✅ Оплата подтверждена!');
             await ctx.reply(`✅ Оплата для заказа #${orderId} подтверждена!\n\n${result.message}`);
+            // Автопереход к управлению заказом для шага отправки
+            await ctx.callbackQuery.message?.reply(`⚙️ Открываю управление заказом #${orderId}...`);
+            ctx.update.callback_query.data = `manage_order_${orderId}`;
+            await bot.handleUpdate(ctx.update);
             
         } catch (error) {
             console.error('Ошибка подтверждения оплаты:', error);
@@ -1721,6 +1725,12 @@ bot.on('callback_query:data', async (ctx) => {
             console.log(`📱 Отправляем callback и ответ оператору...`);
             await ctx.answerCallbackQuery('✅ Статус обновлен!');
             await ctx.reply(`✅ Статус заказа #${orderId} обновлен!\n\n${result.message}`);
+            // Предложение сразу завершить заказ / перейти к чату
+            await ctx.reply('➡️ Что дальше сделаем?', {
+                reply_markup: new InlineKeyboard()
+                    .text('🎉 Завершить заказ', `complete_order_${orderId}`)
+                    .text('💬 Написать клиенту', `chat_with_client_${orderId}`)
+            });
             console.log(`🎉 ВСЕ УСПЕШНО! Кнопка средства отправлены сработала!`);
             
         } catch (error) {
@@ -6081,7 +6091,7 @@ async function notifyOperators(orderData) {
             addressSection +
             amlSection +
             `⏰ <b>Создан:</b> ${new Date().toLocaleString('ru-RU', {
-                timeZone: 'Europe/Moscow',
+                timeZone: process.env.TZ || 'Europe/Moscow',
                 year: 'numeric',
                 month: '2-digit',
                 day: '2-digit',
