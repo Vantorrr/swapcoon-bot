@@ -2774,6 +2774,22 @@ function updateProfileDisplay() {
         console.log('⚠️ Элемент profile-username не найден');
     }
     
+    // Рефералы: баланс и количество
+    try {
+        if (userProfile?.referralStats) {
+            const earningsEl = document.getElementById('referral-earnings');
+            const countEl = document.getElementById('referral-count');
+            if (earningsEl) earningsEl.textContent = `$${formatNumber(userProfile.referralStats.total_commission || 0)}`;
+            if (countEl) countEl.textContent = userProfile.referralStats.total_referrals || 0;
+        }
+        const referralInput = document.getElementById('referral-link-input');
+        if (referralInput && !referralInput.value) {
+            referralInput.value = generateReferralLink();
+        }
+    } catch (e) {
+        console.log('⚠️ Не удалось отрисовать реферал-виджеты:', e.message);
+    }
+    
     // Обновляем статус профиля
     const profileStatus = document.querySelector('.profile-status');
     if (profileStatus) {
