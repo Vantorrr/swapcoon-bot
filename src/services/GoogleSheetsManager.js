@@ -232,7 +232,7 @@ class GoogleSheetsManager {
                 orderData.from_amount || orderData.fromAmount || 0,
                 orderData.to_currency || orderData.toCurrency || '',
                 orderData.to_amount || orderData.toAmount || 0,
-                orderData.exchange_rate || orderData.exchangeRate || 0,
+                orderData.exchange_rate || orderData.exchangeRate || (orderData.fromAmount && orderData.toAmount ? (orderData.toAmount / orderData.fromAmount) : 0),
                 orderData.fee || 0,
                 orderData.status || 'pending',
                 '', // operator
