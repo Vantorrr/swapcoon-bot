@@ -1137,15 +1137,14 @@ function updateCalculationDisplay(fromAmount, toAmount, exchangeRate, fee) {
         }
         console.log(`📊 RUB/UAH СПЕЦ: ${currentPair}, курс ${exchangeRate} → инвертируем ${invertedRate}`);
     }
-    // 🔥 ОСОБАЯ ЛОГИКА ДЛЯ ARS/UAH - ИНВЕРТИРУЕМ ОТОБРАЖЕНИЕ
+    // 🔥 ОСОБАЯ ЛОГИКА ДЛЯ ARS/UAH — показываем в направлении ввода
     else if (currentPair === 'ARS/UAH' || currentPair === 'UAH/ARS') {
-        const invertedRate = 1 / exchangeRate;
         if (currentPair === 'ARS/UAH') {
-        rateText = `1 UAH = ${formatAmountByCurrency(invertedRate, 'ARS')} ARS`;
+            rateText = `1 ARS = ${formatAmountByCurrency(exchangeRate, 'UAH')} UAH`;
         } else {
-        rateText = `1 ARS = ${formatAmountByCurrency(invertedRate, 'UAH')} UAH`;
+            rateText = `1 UAH = ${formatAmountByCurrency(exchangeRate, 'ARS')} ARS`;
         }
-        console.log(`📊 ARS/UAH СПЕЦ: ${currentPair}, курс ${exchangeRate} → инвертируем ${invertedRate}`);
+        console.log(`📊 ARS/UAH СПЕЦ: ${currentPair}, курс для отображения ${exchangeRate}`);
     } else if (isSpecialPair && exchangeRate < 0.01) {
         // Для других специальных пар с маленьким курсом - инвертируем
         const normalRate = 1 / exchangeRate;
