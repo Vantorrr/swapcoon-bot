@@ -1049,7 +1049,7 @@ function reverseCalculateExchange() {
         fromAmount = grossAmount / exchangeRate; // fallback
     }
     
-    document.getElementById('from-amount').value = formatCurrencyAmount(fromAmount);
+    document.getElementById('from-amount').value = formatAmountByCurrency(fromAmount, fromCurrency);
     calculateExchange();
 }
 
@@ -1062,7 +1062,7 @@ function updateCalculationDisplay(fromAmount, toAmount, exchangeRate, fee) {
     - fromCurrency: ${fromCurrency}
     - toCurrency: ${toCurrency}`);
     
-    document.getElementById('to-amount').value = formatCurrencyAmount(toAmount);
+    document.getElementById('to-amount').value = formatAmountByCurrency(toAmount, toCurrency);
     
     // 🔥 ПРАВИЛЬНАЯ ЛОГИКА ОТОБРАЖЕНИЯ КУРСА
     let rateText;
@@ -1085,40 +1085,40 @@ function updateCalculationDisplay(fromAmount, toAmount, exchangeRate, fee) {
     // 🔥 ОСОБАЯ ЛОГИКА ДЛЯ USDT/BTC - ВСЕГДА ПОКАЗЫВАЕМ 1 BTC = X USDT
     if (currentPair === 'USDT/BTC' || currentPair === 'BTC/USDT') {
         const btcToUsdtRate = (currentPair === 'USDT/BTC') ? exchangeRate : (1 / exchangeRate);
-        rateText = `1 BTC = ${formatCurrencyAmount(btcToUsdtRate)} USDT`;
+        rateText = `1 BTC = ${formatAmountByCurrency(btcToUsdtRate, 'USDT')} USDT`;
         console.log(`📊 USDT/BTC СПЕЦ: ${currentPair}, курс ${exchangeRate} → показываем 1 BTC = ${btcToUsdtRate} USDT`);
     } 
     // 🔥 ОСОБАЯ ЛОГИКА ДЛЯ USDT/ETH - ВСЕГДА ПОКАЗЫВАЕМ 1 ETH = X USDT
     else if (currentPair === 'USDT/ETH' || currentPair === 'ETH/USDT') {
         const ethToUsdtRate = (currentPair === 'USDT/ETH') ? exchangeRate : (1 / exchangeRate);
-        rateText = `1 ETH = ${formatCurrencyAmount(ethToUsdtRate)} USDT`;
+        rateText = `1 ETH = ${formatAmountByCurrency(ethToUsdtRate, 'USDT')} USDT`;
         console.log(`📊 USDT/ETH СПЕЦ: ${currentPair}, курс ${exchangeRate} → показываем 1 ETH = ${ethToUsdtRate} USDT`);
     }
     // 🔥 ОСОБАЯ ЛОГИКА ДЛЯ RUB/USDT - ВСЕГДА ПОКАЗЫВАЕМ 1 USDT = X RUB
     else if (currentPair === 'RUB/USDT' || currentPair === 'USDT/RUB') {
         const usdtToRubRate = (currentPair === 'RUB/USDT') ? exchangeRate : (1 / exchangeRate);
-        rateText = `1 USDT = ${formatCurrencyAmount(usdtToRubRate)} RUB`;
+        rateText = `1 USDT = ${formatAmountByCurrency(usdtToRubRate, 'RUB')} RUB`;
         console.log(`📊 RUB/USDT СПЕЦ: ${currentPair}, курс ${exchangeRate} → показываем 1 USDT = ${usdtToRubRate} RUB`);
     }
     // 🔥 ОСОБАЯ ЛОГИКА ДЛЯ RUB/BTC - ВСЕГДА ПОКАЗЫВАЕМ 1 BTC = X RUB
     else if (currentPair === 'RUB/BTC' || currentPair === 'BTC/RUB') {
         const btcToRubRate = (currentPair === 'RUB/BTC') ? exchangeRate : (1 / exchangeRate);
-        rateText = `1 BTC = ${formatCurrencyAmount(btcToRubRate)} RUB`;
+        rateText = `1 BTC = ${formatAmountByCurrency(btcToRubRate, 'RUB')} RUB`;
         console.log(`📊 RUB/BTC СПЕЦ: ${currentPair}, курс ${exchangeRate} → показываем 1 BTC = ${btcToRubRate} RUB`);
     }
     // 🔥 ОСОБАЯ ЛОГИКА ДЛЯ RUB/ETH - ВСЕГДА ПОКАЗЫВАЕМ 1 ETH = X RUB
     else if (currentPair === 'RUB/ETH' || currentPair === 'ETH/RUB') {
         const ethToRubRate = (currentPair === 'RUB/ETH') ? exchangeRate : (1 / exchangeRate);
-        rateText = `1 ETH = ${formatCurrencyAmount(ethToRubRate)} RUB`;
+        rateText = `1 ETH = ${formatAmountByCurrency(ethToRubRate, 'RUB')} RUB`;
         console.log(`📊 RUB/ETH СПЕЦ: ${currentPair}, курс ${exchangeRate} → показываем 1 ETH = ${ethToRubRate} RUB`);
     }
     // 🔥 ОСОБАЯ ЛОГИКА ДЛЯ RUB/UAH - ИНВЕРТИРУЕМ ОТОБРАЖЕНИЕ
     else if (currentPair === 'RUB/UAH' || currentPair === 'UAH/RUB') {
         const invertedRate = 1 / exchangeRate;
         if (currentPair === 'RUB/UAH') {
-            rateText = `1 RUB = ${formatCurrencyAmount(invertedRate)} UAH`;
+        rateText = `1 RUB = ${formatAmountByCurrency(invertedRate, 'UAH')} UAH`;
         } else {
-            rateText = `1 UAH = ${formatCurrencyAmount(invertedRate)} RUB`;
+        rateText = `1 UAH = ${formatAmountByCurrency(invertedRate, 'RUB')} RUB`;
         }
         console.log(`📊 RUB/UAH СПЕЦ: ${currentPair}, курс ${exchangeRate} → инвертируем ${invertedRate}`);
     }
@@ -1126,24 +1126,24 @@ function updateCalculationDisplay(fromAmount, toAmount, exchangeRate, fee) {
     else if (currentPair === 'ARS/UAH' || currentPair === 'UAH/ARS') {
         const invertedRate = 1 / exchangeRate;
         if (currentPair === 'ARS/UAH') {
-            rateText = `1 UAH = ${formatCurrencyAmount(invertedRate)} ARS`;
+        rateText = `1 UAH = ${formatAmountByCurrency(invertedRate, 'ARS')} ARS`;
         } else {
-            rateText = `1 ARS = ${formatCurrencyAmount(invertedRate)} UAH`;
+        rateText = `1 ARS = ${formatAmountByCurrency(invertedRate, 'UAH')} UAH`;
         }
         console.log(`📊 ARS/UAH СПЕЦ: ${currentPair}, курс ${exchangeRate} → инвертируем ${invertedRate}`);
     } else if (isSpecialPair && exchangeRate < 0.01) {
         // Для других специальных пар с маленьким курсом - инвертируем
         const normalRate = 1 / exchangeRate;
-        rateText = `1 ${fromCurrency} = ${formatCurrencyAmount(normalRate)} ${toCurrency}`;
+        rateText = `1 ${fromCurrency} = ${formatAmountByCurrency(normalRate, toCurrency)} ${toCurrency}`;
         console.log(`📊 СПЕЦ ПАРА ${currentPair}: ИНВЕРТИРОВАЛИ ${exchangeRate} → ${normalRate}`);
     } else {
         // Обычный курс - показываем как есть
-        rateText = `1 ${fromCurrency} = ${formatCurrencyAmount(exchangeRate)} ${toCurrency}`;
+        rateText = `1 ${fromCurrency} = ${formatAmountByCurrency(exchangeRate, toCurrency)} ${toCurrency}`;
         console.log(`📊 ОБЫЧНЫЙ КУРС для ${currentPair}: ${exchangeRate}`);
     }
     
     document.getElementById('exchange-rate').textContent = rateText;
-    document.getElementById('final-amount').textContent = `${formatCurrencyAmount(toAmount)} ${toCurrency}`;
+    document.getElementById('final-amount').textContent = `${formatAmountByCurrency(toAmount, toCurrency)} ${toCurrency}`;
 }
 
 // Переключение валют
@@ -3661,6 +3661,36 @@ function formatCurrencyAmount(amount) {
         const formatted = amount.toFixed(8).replace(/\.?0+$/, '');
         return formatted === '0' ? amount.toExponential(2) : formatted;
     }
+}
+
+// Форматирование с учётом валюты (копеек нет для RUB, есть для ARS, crypto до 8 знаков)
+function formatAmountByCurrency(amount, currency) {
+    if (amount === 0 || isNaN(amount)) return '0';
+    const upper = String(currency || '').toUpperCase();
+    const isCrypto = ['BTC','ETH','USDT','USDC','BNB','ADA','DOT','LINK','LTC','XRP','SOL','MATIC','AVAX','BCH'].includes(upper);
+    const isRub = upper === 'RUB';
+    const isArs = upper === 'ARS';
+
+    // Правила:
+    // - RUB: без копеек (0 знаков)
+    // - ARS: до 2 знаков
+    // - UAH/KZT/fiat: до 2 знаков
+    // - Crypto: динамично как formatCurrencyAmount, но не обрезаем до 0 знаков
+    if (isRub) {
+        return Math.round(amount).toString();
+    }
+
+    if (isCrypto) {
+        // Используем гибкую функцию, но ограничим максимум 8 знаков
+        const abs = Math.abs(amount);
+        if (abs >= 1) return amount.toFixed(6).replace(/\.0+$/, '').replace(/\.?0+$/, '');
+        if (abs >= 0.000001) return amount.toFixed(8).replace(/\.?0+$/, '');
+        return amount.toExponential(2);
+    }
+
+    // ARS и прочий фиат (UAH, KZT и т.д.)
+    const decimals = isArs ? 2 : 2;
+    return amount.toFixed(decimals).replace(/\.?0+$/, '');
 }
 
 function formatDate(dateString) {
