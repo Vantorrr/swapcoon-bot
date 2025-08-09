@@ -1629,7 +1629,13 @@ bot.on('callback_query:data', async (ctx) => {
             );
             
             await ctx.answerCallbackQuery('✅ Статус обновлен!');
+            // Сразу открываем управление заказом для продолжения (без лишней навигации)
             await ctx.reply(`✅ Статус заказа #${orderId} обновлен!\n\n${result.message}`);
+            await ctx.callbackQuery.message?.reply(`⚙️ Открываю управление заказом #${orderId}...`);
+            // Триггерим существующий хендлер управления
+            ctx.update.callback_query.data = `manage_order_${orderId}`;
+            // Симулируем повторный вызов обработчика
+            await bot.handleUpdate(ctx.update);
             
         } catch (error) {
             console.error('Ошибка обновления статуса:', error);
