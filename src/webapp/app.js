@@ -4429,6 +4429,27 @@ function generateReferralLink() {
     }
 }
 
+// Кнопка "Списать реф. баланс" → открывает поддержку
+function requestReferralPayout() {
+    const supportUsername = 'ExMachinaXSupport';
+    if (window.Telegram?.WebApp?.openTelegramLink) {
+        window.Telegram.WebApp.openTelegramLink(`https://t.me/${supportUsername}`);
+    } else {
+        window.open(`https://t.me/${supportUsername}`, '_blank');
+    }
+    showNotification('Напишите в поддержку запрос на вывод реферального баланса', 'info');
+}
+
+// Универсальная кнопка связи с оператором
+function contactOperator() {
+    const supportUsername = 'ExMachinaXSupport';
+    if (window.Telegram?.WebApp?.openTelegramLink) {
+        window.Telegram.WebApp.openTelegramLink(`https://t.me/${supportUsername}`);
+    } else {
+        window.open(`https://t.me/${supportUsername}`, '_blank');
+    }
+}
+
 // 📋 КОПИРОВАНИЕ РЕФЕРАЛЬНОЙ ССЫЛКИ
 function copyReferralLink() {
     try {
