@@ -214,7 +214,7 @@ class GoogleSheetsManager {
 
     // ПРОСТОЕ логирование заказа - без создания листов, прямо в существующий
     async logOrder(orderData) {
-        console.log('📊 ПРОСТОЕ ЛОГИРОВАНИЕ ЗАКАЗА В GOOGLE SHEETS...');
+        console.log('📊 ЛОГИРОВАНИЕ ЗАКАЗА В GOOGLE SHEETS (вставка вверху)...');
         
         if (!this.isConnected) {
             console.log('❌ Google Sheets не подключен');
@@ -222,7 +222,7 @@ class GoogleSheetsManager {
         }
 
         try {
-            // Простые данные заказа
+            // Подготовка строки
             const rowData = [
                 orderData.id || 'unknown',
                 new Date().toLocaleString('ru'),
@@ -243,23 +243,74 @@ class GoogleSheetsManager {
                 ''  // priority (removed)
             ];
 
-            // ПРЯМАЯ запись в лист Orders через API
-            const response = await this.sheets.spreadsheets.values.append({
+            // 1) Вставляем пустую строку на позицию 2 (после заголовков), чтобы новые заказы были сверху
+            const sheetId = await this.getSheetId('Orders');
+            if (sheetId) {
+                await this.sheets.spreadsheets.batchUpdate({
+                    spreadsheetId: this.spreadsheetId,
+                    resource: {
+                        requests: [
+                            {
+                                insertDimension: {
+                                    range: {
+                                        sheetId: sheetId,
+                                        dimension: 'ROWS',
+                                        startIndex: 1,
+                                        endIndex: 2
+                                    },
+                                    inheritFromBefore: false
+                                }
+                            }
+                        ]
+                    }
+                });
+            }
+
+            // 2) Записываем значения в только что вставленную строку A2:Q2
+            await this.sheets.spreadsheets.values.update({
                 spreadsheetId: this.spreadsheetId,
-                range: 'Orders!A:Q',
+                range: 'Orders!A2:Q2',
                 valueInputOption: 'USER_ENTERED',
-                insertDataOption: 'INSERT_ROWS',
                 resource: {
                     values: [rowData]
                 }
             });
 
-            console.log(`✅ ЗАКАЗ #${orderData.id} ЗАПИСАН В GOOGLE SHEETS!`);
+            console.log(`✅ ЗАКАЗ #${orderData.id} записан вверху листа Orders`);
             return true;
         } catch (error) {
-            console.error('❌ ОШИБКА ЗАПИСИ В GOOGLE SHEETS:', error.message);
+            console.error('❌ Ошибка вставки вверху:', error.message);
             console.error('   Stack:', error.stack);
-            return false;
+            // Fallback: обычный append в конец, чтобы не потерять запись
+            try {
+                await this.sheets.spreadsheets.values.append({
+                    spreadsheetId: this.spreadsheetId,
+                    range: 'Orders!A:Q',
+                    valueInputOption: 'USER_ENTERED',
+                    insertDataOption: 'INSERT_ROWS',
+                    resource: { values: [
+                        [
+                            orderData.id || 'unknown',
+                            new Date().toLocaleString('ru'),
+                            orderData.user_id || orderData.userId || 'unknown',
+                            orderData.userName || 'User',
+                            orderData.from_currency || orderData.fromCurrency || '',
+                            orderData.from_amount || orderData.fromAmount || 0,
+                            orderData.to_currency || orderData.toCurrency || '',
+                            orderData.to_amount || orderData.toAmount || 0,
+                            orderData.exchange_rate || orderData.exchangeRate || 0,
+                            orderData.fee || 0,
+                            orderData.status || 'pending',
+                            '', '', 0, '', 0, ''
+                        ]
+                    ] }
+                });
+                console.log(`ℹ️ Fallback: заказ #${orderData.id} добавлен в конец листа`);
+                return true;
+            } catch (appendError) {
+                console.error('💥 Ошибка fallback append:', appendError.message);
+                return false;
+            }
         }
     }
 
