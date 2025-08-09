@@ -1060,15 +1060,15 @@ bot.on('callback_query:data', async (ctx) => {
             `📅 ${currentTime}\n\n` +
             `🚀 <b>Заявки с сайта:</b>\n` +
             `• Новых заявок: ${stats.ordersToday || 0}\n` +
-            `• Общий оборот: $${(stats.volumeToday || 0).toFixed(2)}\n` +
+            `• Оборот за 24ч: $${(stats.volumeToday || 0).toFixed(2)}\n` +
             `• В ожидании: ${stats.pendingOrders || 0}\n` +
             `• В процессе: ${stats.processingOrders || 0}\n\n` +
             `👥 <b>Пользователи:</b>\n` +
             `• Новых регистраций: ${stats.newUsersToday || 0}\n` +
             `• Всего активных: ${stats.totalUsers || 0}\n\n` +
             `💰 <b>Доходность:</b>\n` +
-            `• Комиссии за день: $${((stats.volumeToday || 0) * 0.03).toFixed(2)}\n` +
-            `• Реферальные выплаты: $${((stats.volumeToday || 0) * 0.002).toFixed(2)}\n\n` +
+            `• Комиссии за 24ч: $${((stats.volumeToday || 0) * 0.03).toFixed(2)}\n` +
+            `• Реферальные выплаты (24ч): $${((stats.volumeToday || 0) * 0.002).toFixed(2)}\n\n` +
             `🎯 <b>Эффективность:</b>\n` +
             `• Конверсия заявок: ${stats.ordersToday > 0 ? Math.round((stats.completedOrders || 0) / stats.ordersToday * 100) : 0}%\n` +
             `• Средний чек: $${stats.ordersToday > 0 ? ((stats.volumeToday || 0) / stats.ordersToday).toFixed(0) : 0}`,

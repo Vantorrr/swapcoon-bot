@@ -69,6 +69,7 @@ class Database {
                     from_address TEXT,
                     to_address TEXT,
                     exchange_rate REAL,
+                    usd_equiv REAL DEFAULT 0,
                     fee REAL,
                     aml_status TEXT,
                     status TEXT DEFAULT 'pending',
@@ -282,6 +283,19 @@ class Database {
             }
         });
 
+        // Добавляем поле usd_equiv для нормализации оборота
+        this.db.run(`ALTER TABLE orders ADD COLUMN usd_equiv REAL DEFAULT 0`, (err) => {
+            if (err) {
+                if (err.message.includes('duplicate column')) {
+                    console.log('✅ Колонка usd_equiv уже существует');
+                } else {
+                    console.error('❌ Ошибка добавления колонки usd_equiv:', err.message);
+                }
+            } else {
+                console.log('✅ Добавлена колонка usd_equiv в таблицу orders');
+            }
+        });
+
         // Добавляем поля rating и rating_date для оценок
         this.db.run(`ALTER TABLE orders ADD COLUMN rating INTEGER`, (err) => {
             if (err) {
@@ -391,11 +405,11 @@ class Database {
             const sql = `
                 INSERT INTO orders 
                 (user_id, from_currency, to_currency, from_amount, to_amount, 
-                 from_address, to_address, exchange_rate, fee, aml_status, status, bank, network)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 from_address, to_address, exchange_rate, usd_equiv, fee, aml_status, status, bank, network)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `;
             const params = [userId, fromCurrency, toCurrency, fromAmount, toAmount, 
-                           fromAddress, toAddress, exchangeRate, fee, amlStatus, status, bank, network];
+                           fromAddress, toAddress, exchangeRate, (orderData.usdEquiv || 0), fee, amlStatus, status, bank, network];
 
             console.log('📝 SQL запрос:', sql);
             console.log('📋 Параметры:', params);
@@ -955,28 +969,8 @@ class Database {
                     (SELECT COUNT(*) FROM orders WHERE status = 'completed') as completedOrders,
                     (SELECT COUNT(*) FROM orders WHERE status IN ('pending','processing','payment_details_sent','payment_waiting')) as pendingOrders,
                     (SELECT COUNT(*) FROM orders WHERE status IN ('processing','payment_received','payment_confirmed','sending')) as processingOrders,
-                    (
-                        SELECT COALESCE(SUM(CAST(
-                            CASE 
-                                WHEN to_currency IN ('USDT','USD') THEN to_amount
-                                WHEN from_currency IN ('USDT','USD') THEN from_amount
-                                ELSE 0
-                            END AS REAL
-                        )), 0)
-                        FROM orders 
-                        WHERE status = 'completed'
-                    ) as totalVolume,
-                    (
-                        SELECT COALESCE(SUM(CAST(
-                            CASE 
-                                WHEN to_currency IN ('USDT','USD') THEN to_amount
-                                WHEN from_currency IN ('USDT','USD') THEN from_amount
-                                ELSE 0
-                            END AS REAL
-                        )), 0)
-                        FROM orders 
-                        WHERE datetime(created_at) >= datetime('now', '-24 hours')
-                    ) as volumeToday,
+                    (SELECT COALESCE(SUM(usd_equiv), 0) FROM orders WHERE status = 'completed') as totalVolume,
+                    (SELECT COALESCE(SUM(usd_equiv), 0) FROM orders WHERE datetime(created_at) >= datetime('now', '-24 hours')) as volumeToday,
                     (SELECT COUNT(*) FROM referrals) as totalReferrals,
                     (SELECT COALESCE(SUM(commission), 0) FROM referrals) as totalCommissions,
                     (SELECT COUNT(*) FROM staff WHERE is_active = 1) as activeStaff,

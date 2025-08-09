@@ -943,6 +943,26 @@ app.post('/api/create-order', async (req, res) => {
         let realOrderId = null; // будет установлен после создания в базе
         if (db && db.createOrder) {
             try {
+                // Нормализуем оборот в USD/USDT ноге для метрик
+                let usdEquiv = 0;
+                try {
+                    const RatesService = require('./services/RatesService');
+                    const ratesService = new RatesService();
+                    if (toCurrency === 'USDT' || toCurrency === 'USD') {
+                        usdEquiv = parseFloat(toAmount) || 0;
+                    } else if (fromCurrency === 'USDT' || fromCurrency === 'USD') {
+                        usdEquiv = parseFloat(fromAmount) || 0;
+                    } else {
+                        // Попробуем через USDT как мост
+                        const toToUsdt = await ratesService.getExchangeRate(toCurrency, 'USDT');
+                        if (toToUsdt && isFinite(toToUsdt)) {
+                            usdEquiv = (parseFloat(toAmount) || 0) * toToUsdt;
+                        }
+                    }
+                } catch (e) {
+                    console.log('⚠️ Не удалось посчитать usdEquiv:', e.message);
+                }
+
                 const order = await db.createOrder({
                     userId: userId,                    // ← ИСПРАВЛЕНО: camelCase
                     fromCurrency: fromCurrency,       // ← ИСПРАВЛЕНО: camelCase
@@ -952,6 +972,7 @@ app.post('/api/create-order', async (req, res) => {
                     fromAddress: fromAddress || '',   // ← ИСПРАВЛЕНО: camelCase
                     toAddress: toAddress || '',       // ← ИСПРАВЛЕНО: camelCase
                     exchangeRate: exchangeRate,       // ← ИСПРАВЛЕНО: camelCase
+                    usdEquiv: usdEquiv,
                     fee: fee || 0,
                     amlStatus: JSON.stringify({ from: amlFromResult, to: amlToResult }),  // ← ИСПРАВЛЕНО: camelCase
                     status: 'pending',
