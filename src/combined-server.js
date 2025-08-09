@@ -860,6 +860,18 @@ app.get('/api/profile/:userId', async (req, res) => {
     }
 });
 
+// API для истории пользователя (для веб-приложения)
+app.get('/api/history/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const history = await db.getUserHistory ? await db.getUserHistory(userId) : [];
+        res.json({ success: true, data: history });
+    } catch (error) {
+        console.error('❌ Ошибка получения истории:', error.message);
+        res.status(500).json({ success: false, error: 'Ошибка получения истории' });
+    }
+});
+
 // API для создания заявки
 app.post('/api/create-order', async (req, res) => {
     console.log('🔥🔥🔥 ВХОД В ENDPOINT /api/create-order');
