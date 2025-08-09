@@ -1932,6 +1932,11 @@ function updateOrderSummary() {
          }
      }
     
+    // Корректный курс для отображения: считаем из расчёта суммы (устойчиво к инверсии)
+    const displayRate = (currentCalculation.fromAmount && currentCalculation.fromAmount > 0)
+        ? (currentCalculation.toAmount / currentCalculation.fromAmount)
+        : currentCalculation.exchangeRate;
+    
     summary.innerHTML = `
         <h3>Сводка обмена</h3>
         <div class="info-row">
@@ -1944,7 +1949,7 @@ function updateOrderSummary() {
         </div>
         <div class="info-row">
             <span>Курс обмена</span>
-            <span>1 ${currentCalculation.fromCurrency} = ${formatCurrencyAmount(currentCalculation.exchangeRate)} ${currentCalculation.toCurrency}</span>
+            <span>1 ${currentCalculation.fromCurrency} = ${formatAmountByCurrency(displayRate, currentCalculation.toCurrency)} ${currentCalculation.toCurrency}</span>
         </div>
         ${addressSection}
     `;
