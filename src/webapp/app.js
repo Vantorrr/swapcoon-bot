@@ -1798,7 +1798,9 @@ function updateOrderInterfaceForPairType(pairType) {
              (currentCalculation.fromCurrency === 'ARS' && currentCalculation.toCurrency === 'RUB') ||
              (currentCalculation.fromCurrency === 'RUB' && currentCalculation.toCurrency === 'KZT') ||
              (currentCalculation.fromCurrency === 'RUB' && currentCalculation.toCurrency === 'UAH') ||
-             (currentCalculation.fromCurrency === 'UAH' && currentCalculation.toCurrency === 'RUB')
+             (currentCalculation.fromCurrency === 'UAH' && currentCalculation.toCurrency === 'RUB') ||
+             // Доп: для USDT → ARS сразу просим CVU/Alias
+             (currentCalculation.fromCurrency === 'USDT' && currentCalculation.toCurrency === 'ARS')
          );
          
          if (isSpecialCase) {
@@ -1819,6 +1821,10 @@ function updateOrderInterfaceForPairType(pairType) {
                  if (addressLabel) addressLabel.textContent = 'Реквизиты для получения рублей';
                  if (addressInput) addressInput.placeholder = 'Номер карты или банковские реквизиты';
                  if (inputHelp) inputHelp.textContent = 'Укажите реквизиты для получения рублей на карту';
+             } else if (currentCalculation.fromCurrency === 'USDT' && currentCalculation.toCurrency === 'ARS') {
+                 if (addressLabel) addressLabel.textContent = 'Номер счета (CVU/Alias)';
+                 if (addressInput) addressInput.placeholder = 'Укажите номер CVU или Alias';
+                 if (inputHelp) inputHelp.textContent = 'Для получения ARS укажите номер счета (CVU) или Alias получателя';
              }
          } else {
              // Обычные фиатные пары (ARS → BRL, etc.)
