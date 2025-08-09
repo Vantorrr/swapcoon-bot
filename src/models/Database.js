@@ -886,7 +886,12 @@ class Database {
                 LEFT JOIN users u ON o.user_id = u.telegram_id
                 LEFT JOIN order_assignments oa ON o.id = oa.order_id
                 WHERE oa.order_id IS NULL 
-                AND o.status IN ('pending', 'processing')
+                AND o.status IN (
+                    'pending',
+                    'processing',
+                    'payment_details_sent',
+                    'payment_waiting'
+                )
                 ORDER BY o.created_at DESC
                 LIMIT 20
             `, (err, rows) => {
@@ -948,8 +953,8 @@ class Database {
                     (SELECT COUNT(*) FROM orders) as totalOrders,
                     (SELECT COUNT(*) FROM orders WHERE date(created_at) = date('now')) as ordersToday,
                     (SELECT COUNT(*) FROM orders WHERE status = 'completed') as completedOrders,
-                    (SELECT COUNT(*) FROM orders WHERE status = 'pending') as pendingOrders,
-                    (SELECT COUNT(*) FROM orders WHERE status = 'processing') as processingOrders,
+                    (SELECT COUNT(*) FROM orders WHERE status IN ('pending','processing','payment_details_sent','payment_waiting')) as pendingOrders,
+                    (SELECT COUNT(*) FROM orders WHERE status IN ('processing','payment_received','payment_confirmed','sending')) as processingOrders,
                     (SELECT COALESCE(SUM(to_amount), 0) FROM orders WHERE status = 'completed') as totalVolume,
                     (SELECT COALESCE(SUM(to_amount), 0) FROM orders WHERE date(created_at) = date('now')) as volumeToday,
                     (SELECT COUNT(*) FROM referrals) as totalReferrals,
@@ -1400,7 +1405,15 @@ class Database {
                 LEFT JOIN users u ON o.user_id = u.telegram_id
                 LEFT JOIN order_assignments oa ON o.id = oa.order_id
                 LEFT JOIN staff s ON oa.operator_id = s.telegram_id
-                WHERE o.status IN ('pending', 'processing', 'payment_waiting', 'payment_received')
+                WHERE o.status IN (
+                    'pending',
+                    'processing',
+                    'payment_details_sent',
+                    'payment_waiting',
+                    'payment_received',
+                    'payment_confirmed',
+                    'sending'
+                )
                 ORDER BY o.created_at DESC
                 LIMIT 20
             `, (err, rows) => {
