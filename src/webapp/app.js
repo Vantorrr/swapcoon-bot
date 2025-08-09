@@ -851,6 +851,17 @@ function calculateExchange() {
         return;
     }
     
+    // Если одна из валют не выбрана — не показываем всплывающие ошибки, только мягкую подсказку
+    if (!fromCurrency || !toCurrency) {
+        const rateEl = document.getElementById('exchange-rate');
+        const finalEl = document.getElementById('final-amount');
+        if (rateEl) rateEl.textContent = 'Выберите вторую валюту';
+        if (finalEl) finalEl.textContent = '—';
+        document.getElementById('to-amount').value = '';
+        document.getElementById('continue-button').disabled = true;
+        return;
+    }
+    
     // 🔥 ИЩЕМ ПРЯМУЮ ПАРУ В ДАННЫХ ОТ API
     console.log(`📊 ПРЯМОЙ ПОИСК ПАРЫ ${fromCurrency}/${toCurrency} в данных...`);
     
@@ -881,8 +892,12 @@ function calculateExchange() {
     
     if (!pairData) {
         console.error(`❌ Пара ${fromCurrency}/${toCurrency} НЕ НАЙДЕНА в Google Sheets!`);
-        showNotification(`Пара ${fromCurrency}/${toCurrency} недоступна`, 'error');
-        updateCalculationDisplay(0, 0, 0, 0);
+        // Не спамим тостами — показываем тихую подсказку в блоке курса
+        const rateEl = document.getElementById('exchange-rate');
+        const finalEl = document.getElementById('final-amount');
+        if (rateEl) rateEl.textContent = `Пара ${fromCurrency}/${toCurrency} недоступна`;
+        if (finalEl) finalEl.textContent = '—';
+        document.getElementById('to-amount').value = '';
         document.getElementById('continue-button').disabled = true;
         return;
     }
