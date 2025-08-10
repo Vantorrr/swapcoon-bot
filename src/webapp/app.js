@@ -2727,6 +2727,13 @@ async function loadUserProfile() {
         
         if (data.success) {
             userProfile = data.data;
+            // Отрисуем мини-статистику сразу
+            try {
+                const ordersEl = document.getElementById('profile-orders');
+                const volumeEl = document.getElementById('profile-volume');
+                if (ordersEl) ordersEl.textContent = userProfile?.stats?.ordersCount || 0;
+                if (volumeEl) volumeEl.textContent = `$${formatNumber(userProfile?.stats?.totalVolume || 0)}`;
+            } catch (_) {}
             console.log('✅ Профиль пользователя загружен');
         } else {
             console.log('ℹ️ Профиль не найден, создается новый пользователь');
@@ -2784,6 +2791,14 @@ function updateProfileDisplay() {
         console.log('⚠️ Элемент profile-username не найден');
     }
     
+    // Мини-статистика профиля (обменов/объем)
+    try {
+        const ordersEl = document.getElementById('profile-orders');
+        const volumeEl = document.getElementById('profile-volume');
+        if (ordersEl) ordersEl.textContent = userProfile?.stats?.ordersCount || 0;
+        if (volumeEl) volumeEl.textContent = `$${formatNumber(userProfile?.stats?.totalVolume || 0)}`;
+    } catch (_) {}
+
     // Рефералы: баланс и количество
     try {
         if (userProfile?.referralStats) {
@@ -2964,13 +2979,36 @@ function calculateLevelProgress(currentLevel, stats) {
 // Загрузка данных дашборда
 async function loadDashboardData(period = '7d') {
     try {
-        // Загружаем статистику пользователя
-        const statsResponse = await fetch(`/api/stats/${currentUserId}?period=${period}`);
-        const statsData = await statsResponse.json();
+        // Если сервер не имеет /api/stats, собираем упрощенную сводку из профиля
+        let summary = null;
+        try {
+            const statsResponse = await fetch(`/api/stats/${currentUserId}?period=${period}`);
+            if (statsResponse.ok) {
+                const statsData = await statsResponse.json();
+                if (statsData.success) {
+                    summary = statsData.data.summary;
+                    updateDashboardMetrics(statsData.data.summary);
+                    updateCharts(statsData.data.charts);
+                }
+            }
+        } catch (_) {}
         
-        if (statsData.success) {
-            updateDashboardMetrics(statsData.data.summary);
-            updateCharts(statsData.data.charts);
+        if (!summary) {
+            // Фолбэк: используем stats из профиля
+            if (!userProfile) {
+                await loadUserProfile();
+            }
+            const fallbackSummary = {
+                totalVolume: userProfile?.stats?.totalVolume || 0,
+                totalOrders: userProfile?.stats?.ordersCount || 0,
+                totalFees: (userProfile?.stats?.totalVolume || 0) * 0.03
+            };
+            updateDashboardMetrics(fallbackSummary);
+            // Простые графики-заглушки на основе одного значения
+            updateCharts({
+                volume: { labels: ['Всего'], data: [fallbackSummary.totalVolume] },
+                orders: { labels: ['Всего'], data: [fallbackSummary.totalOrders] }
+            });
         }
         
         // Загружаем рыночные данные
@@ -3790,10 +3828,6 @@ function displayHistory(history) {
                 <div class="history-detail">
                     <span>Получил:</span>
                     <span>${order.to_amount} ${order.to_currency}</span>
-                </div>
-                <div class="history-detail">
-                    <span>Курс:</span>
-                    <span>${order.exchange_rate?.toFixed(4) || 'N/A'}</span>
                 </div>
             </div>
             <div class="history-status ${order.status}">
