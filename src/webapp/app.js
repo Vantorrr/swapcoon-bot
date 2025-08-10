@@ -103,6 +103,11 @@ document.addEventListener('DOMContentLoaded', async function() {
     initEventListeners();
     loadFavorites(); // Загружаем избранные валюты
     try { await loadInitialData(); } catch (_) {}
+    // Убираем автозаполнение '0' в поле Получаю
+    const toAmountEl = document.getElementById('to-amount');
+    if (toAmountEl && (toAmountEl.value === '0' || toAmountEl.value === '0.00')) {
+        toAmountEl.value = '';
+    }
     
     // 🧪 ГЛОБАЛЬНАЯ ОТЛАДОЧНАЯ ФУНКЦИЯ ДЛЯ КОНСОЛИ
     window.debugCreateButton = function() {
@@ -1093,7 +1098,13 @@ function updateCalculationDisplay(fromAmount, toAmount, exchangeRate, fee) {
     - fromCurrency: ${fromCurrency}
     - toCurrency: ${toCurrency}`);
     
-    document.getElementById('to-amount').value = formatAmountByCurrency(toAmount, toCurrency);
+    const toAmountInputEl = document.getElementById('to-amount');
+    const isTypingInTo = document.activeElement === toAmountInputEl;
+    // Не перезаписываем ввод пользователя на '0' во время набора
+    if (!(isTypingInTo && (!toAmount || toAmount === 0))) {
+        const formattedTo = (!toAmount || toAmount === 0) ? '' : formatAmountByCurrency(toAmount, toCurrency);
+        toAmountInputEl.value = formattedTo;
+    }
     
     // 🔥 ПРАВИЛЬНАЯ ЛОГИКА ОТОБРАЖЕНИЯ КУРСА
     let rateText;
