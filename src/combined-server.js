@@ -1026,7 +1026,8 @@ app.post('/api/create-order', async (req, res) => {
                             exchangeRate: exchangeRate,
                             fee: fee || 0,
                             status: 'pending',
-                            aml_status: JSON.stringify({ from: amlFromResult, to: amlToResult })
+                            aml_status: JSON.stringify({ from: amlFromResult, to: amlToResult }),
+                            referralCommission: 0
                         });
                         console.log('✅ РЕЗУЛЬТАТ ЗАПИСИ В GOOGLE SHEETS (COMBINED):', result);
                     } catch (error) {

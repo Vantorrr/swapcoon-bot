@@ -40,7 +40,7 @@ class GoogleSheetsManager {
         const worksheets = [
             {
                 title: 'Orders',
-                headers: ['ID заказа', 'Дата создания', 'Пользователь ID', 'Username', 'От валюты', 'Сумма отправки', 'К валюте', 'Сумма получения', 'Курс обмена', 'Комиссия ($)', 'Статус', 'Оператор ID', 'Оператор', 'Время обработки', 'AML статус', 'Прибыль ($)', 'Приоритет']
+                headers: ['ID заказа', 'Дата создания', 'Пользователь ID', 'Username', 'От валюты', 'Сумма отправки', 'К валюте', 'Сумма получения', 'Курс обмена', 'Комиссия ($)', 'Статус', 'Оператор ID', 'Оператор', 'Время обработки', 'AML статус', 'Прибыль ($)', 'Приоритет', 'Реф. комиссия ($)']
             },
             {
                 title: 'Staff',
@@ -52,7 +52,7 @@ class GoogleSheetsManager {
             },
             {
                 title: 'Users',
-                headers: ['User ID', 'Username', 'Имя', 'Фамилия', 'Дата регистрации', 'Всего заказов', 'Общая сумма ($)', 'Последний заказ', 'Статус', 'Реферал от', 'Привел рефералов']
+                headers: ['User ID', 'Username', 'Имя', 'Фамилия', 'Дата регистрации', 'Всего заказов', 'Общая сумма ($)', 'Последний заказ', 'Статус', 'Реферал от', 'Привел рефералов', 'Заработано на рефералах ($)']
             },
             {
                 title: 'Manual_Rates',
@@ -223,6 +223,7 @@ class GoogleSheetsManager {
 
         try {
             // Подготовка строки
+            const commission = orderData.referralCommission || 0;
             const rowData = [
                 orderData.id || 'unknown',
                 new Date().toLocaleString('ru'),
@@ -240,7 +241,8 @@ class GoogleSheetsManager {
                 0,  // processing time
                 '', // aml
                 0,  // profit
-                ''  // priority (removed)
+                '',  // priority (removed)
+                commission // Referral commission USD
             ];
 
             // 1) Вставляем пустую строку на позицию 2 (после заголовков), чтобы новые заказы были сверху
@@ -269,7 +271,7 @@ class GoogleSheetsManager {
             // 2) Записываем значения в только что вставленную строку A2:Q2
             await this.sheets.spreadsheets.values.update({
                 spreadsheetId: this.spreadsheetId,
-                range: 'Orders!A2:Q2',
+                range: 'Orders!A2:R2',
                 valueInputOption: 'USER_ENTERED',
                 resource: {
                     values: [rowData]
@@ -301,7 +303,8 @@ class GoogleSheetsManager {
                             orderData.exchange_rate || orderData.exchangeRate || 0,
                             orderData.fee || 0,
                             orderData.status || 'pending',
-                            '', '', 0, '', 0, ''
+                            '', '', 0, '', 0, '',
+                            commission
                         ]
                     ] }
                 });
@@ -425,7 +428,8 @@ class GoogleSheetsManager {
                 user.last_order_date ? new Date(user.last_order_date).toLocaleDateString('ru') : '',
                 user.is_active ? 'Активен' : 'Неактивен',
                 user.referred_by || '',
-                user.referrals_count || 0
+                user.referrals_count || 0,
+                parseFloat(user.total_commission || 0)
             ]);
 
             await this.clearSheet('Users');

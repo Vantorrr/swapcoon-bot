@@ -1768,6 +1768,19 @@ bot.on('callback_query:data', async (ctx) => {
                         commission
                     });
                     await db.updateUserCommission(refUser.referred_by);
+                    // Обновляем Google Sheets: Users totals
+                    try {
+                        if (global.googleSheetsManager && global.googleSheetsManager.isReady()) {
+                            // Обновим строку пользователя в Users (упрощенно: перезапишем экспорт)
+                            // В проде можно сделать адресное обновление.
+                            // Здесь достаточно триггера полного экспорта Users для актуализации колонки.
+                            if (typeof global.googleSheetsManager.exportUsers === 'function') {
+                                await global.googleSheetsManager.exportUsers(db);
+                            }
+                        }
+                    } catch (sheetErr) {
+                        console.log('⚠️ Не удалось обновить Users в Google Sheets:', sheetErr.message);
+                    }
                 }
             } catch (refErr) {
                 console.log('⚠️ Ошибка начисления реферальной комиссии:', refErr.message);
