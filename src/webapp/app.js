@@ -1157,6 +1157,12 @@ function updateCalculationDisplay(fromAmount, toAmount, exchangeRate, fee) {
         rateText = `1 BTC = ${formatAmountByCurrency(btcToUsdtRate, 'USDT')} USDT`;
         console.log(`📊 USDT/BTC СПЕЦ: ${currentPair}, курс ${exchangeRate} → показываем 1 BTC = ${btcToUsdtRate} USDT`);
     } 
+    // 🔥 ОСОБАЯ ЛОГИКА ДЛЯ USDT/ARS - ВСЕГДА ПОКАЗЫВАЕМ 1 USDT = X ARS
+    else if (currentPair === 'USDT/ARS' || currentPair === 'ARS/USDT') {
+        const usdtToArsRate = (currentPair === 'USDT/ARS') ? exchangeRate : (1 / exchangeRate);
+        rateText = `1 USDT = ${formatAmountByCurrency(usdtToArsRate, 'ARS')} ARS`;
+        console.log(`📊 USDT/ARS СПЕЦ: ${currentPair}, курс ${exchangeRate} → показываем 1 USDT = ${usdtToArsRate} ARS`);
+    }
     // 🔥 ОСОБАЯ ЛОГИКА ДЛЯ USDT/ETH - ВСЕГДА ПОКАЗЫВАЕМ 1 ETH = X USDT
     else if (currentPair === 'USDT/ETH' || currentPair === 'ETH/USDT') {
         const ethToUsdtRate = (currentPair === 'USDT/ETH') ? exchangeRate : (1 / exchangeRate);
