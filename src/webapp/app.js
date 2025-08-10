@@ -98,11 +98,11 @@ function isFavorite(currency) {
 }
 
 // Инициализация приложения
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     initTelegramWebApp();
     initEventListeners();
     loadFavorites(); // Загружаем избранные валюты
-    loadInitialData();
+    try { await loadInitialData(); } catch (_) {}
     
     // 🧪 ГЛОБАЛЬНАЯ ОТЛАДОЧНАЯ ФУНКЦИЯ ДЛЯ КОНСОЛИ
     window.debugCreateButton = function() {
@@ -717,9 +717,9 @@ async function loadInitialData() {
     
     // 🚀 МГНОВЕННАЯ ПАРАЛЛЕЛЬНАЯ ЗАГРУЗКА ПРОФИЛЯ
     if (currentUserId && currentUserId !== 123456789) {
-        loadUserProfile().catch(error => {
+        try { await loadUserProfile(); } catch (error) {
             console.error('❌ Ошибка загрузки профиля:', error);
-        });
+        }
     }
 }
 
@@ -3613,7 +3613,7 @@ function filterHistory() {
 
 
 // Переключение экранов с дополнительной логикой
-function showScreen(screenId) {
+async function showScreen(screenId) {
     // Скрываем все экраны
     const screens = document.querySelectorAll('.screen');
     screens.forEach(screen => screen.classList.remove('active'));
@@ -3639,7 +3639,7 @@ function showScreen(screenId) {
         if (screenId === 'history-screen') {
             loadHistory();
         } else if (screenId === 'profile-screen' && currentUserId) {
-            await loadUserProfile();
+            try { await loadUserProfile(); } catch (_) {}
             try { updateProfileDisplay(); } catch (_) {}
         } else if (screenId === 'dashboard-screen') {
             loadDashboardData();
