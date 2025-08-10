@@ -108,6 +108,10 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (toAmountEl && (toAmountEl.value === '0' || toAmountEl.value === '0.00')) {
         toAmountEl.value = '';
     }
+    // Разрешаем обратный ввод: пересчитывать from при каждом изменении to
+    if (toAmountEl) {
+        toAmountEl.addEventListener('input', reverseCalculateExchange);
+    }
     
     // 🧪 ГЛОБАЛЬНАЯ ОТЛАДОЧНАЯ ФУНКЦИЯ ДЛЯ КОНСОЛИ
     window.debugCreateButton = function() {
@@ -1106,8 +1110,8 @@ function updateCalculationDisplay(fromAmount, toAmount, exchangeRate, fee) {
     
     const toAmountInputEl = document.getElementById('to-amount');
     const isTypingInTo = document.activeElement === toAmountInputEl;
-    // Не перезаписываем ввод пользователя на '0' во время набора
-    if (!(isTypingInTo && (!toAmount || toAmount === 0))) {
+    // Пока пользователь печатает в поле "Получаю" — вообще не трогаем его значение
+    if (!isTypingInTo) {
         const formattedTo = (!toAmount || toAmount === 0) ? '' : formatAmountByCurrency(toAmount, toCurrency);
         toAmountInputEl.value = formattedTo;
     }
