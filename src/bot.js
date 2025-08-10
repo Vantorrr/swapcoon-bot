@@ -1760,7 +1760,13 @@ bot.on('callback_query:data', async (ctx) => {
             try {
                 const refUser = await db.getUser(order.user_id);
                 if (refUser && refUser.referred_by) {
-                    const commission = Number(order.usd_equiv || order.to_amount || 0) * 0.002;
+                    // База для комиссии: USD эквивалент; если его нет — берем ту ногу, что в USDT/USD
+                    const baseUsd = Number(
+                        order.usd_equiv ||
+                        ((order.to_currency === 'USDT' || order.to_currency === 'USD') ? order.to_amount :
+                         (order.from_currency === 'USDT' || order.from_currency === 'USD') ? order.from_amount : 0)
+                    ) || 0;
+                    const commission = baseUsd * 0.002;
                     await db.addReferralCommission({
                         referrerId: refUser.referred_by,
                         refereeId: order.user_id,
@@ -4499,7 +4505,12 @@ bot.on('callback_query:data', async (ctx) => {
             try {
                 const refUser = await db.getUser(order.user_id);
                 if (refUser && refUser.referred_by) {
-                    const commission = Number(order.usd_equiv || order.to_amount || 0) * 0.002;
+                    const baseUsd = Number(
+                        order.usd_equiv ||
+                        ((order.to_currency === 'USDT' || order.to_currency === 'USD') ? order.to_amount :
+                         (order.from_currency === 'USDT' || order.from_currency === 'USD') ? order.from_amount : 0)
+                    ) || 0;
+                    const commission = baseUsd * 0.002;
                     await db.addReferralCommission({
                         referrerId: refUser.referred_by,
                         refereeId: order.user_id,
