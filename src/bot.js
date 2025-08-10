@@ -6115,7 +6115,13 @@ async function notifyOperators(orderData) {
             `🚨 <b>НОВАЯ ЗАЯВКА С САЙТА #${orderData.id}</b>\n\n` +
             `👤 <b>Пользователь:</b> ${orderData.userName || 'Неизвестен'}\n` +
             `💱 <b>Обмен:</b> ${orderData.fromAmount} ${orderData.fromCurrency} → ${orderData.toAmount ? orderData.toAmount + ' ' : ''}${orderData.toCurrency}\n` +
-            (orderData.exchangeRate ? `📊 <b>Курс:</b> 1 ${orderData.fromCurrency} = ${Number(orderData.exchangeRate).toFixed(2)} ${orderData.toCurrency}\n` : '') +
+            (orderData.exchangeRate ? (() => {
+                const rate = Number(orderData.exchangeRate);
+                // Для рубля показываем без копеек, для ARS с 2 знаками, иначе до 6 знаков при необходимости
+                const precision = orderData.toCurrency === 'RUB' ? 0 : (orderData.toCurrency === 'ARS' ? 2 : 6);
+                const shown = rate.toFixed(precision).replace(/\.0+$/, '');
+                return `📊 <b>Курс:</b> 1 ${orderData.fromCurrency} = ${shown} ${orderData.toCurrency}\n`;
+            })() : '') +
             networkSection +  // ← ДОБАВЛЯЕМ ИНФОРМАЦИЮ О СЕТИ!
             bankSection +     // ← ДОБАВЛЯЕМ ИНФОРМАЦИЮ О БАНКЕ!
             `${pairTypeIcon} <b>Тип пары:</b> ${pairTypeText}\n` +
