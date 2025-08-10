@@ -402,7 +402,8 @@ app.post('/api/support-ticket', async (req, res) => {
 // Функция обработки реферального бонуса
 async function processReferralBonus(referrerId, order) {
     try {
-        const commission = order.toAmount * 0.002; // 0.2% комиссия рефереру
+        const baseUsd = Number(order.usdEquiv || order.toAmount || 0);
+        const commission = baseUsd * 0.002; // 0.2% комиссия в USDT/USD
         
         await db.addReferralCommission({
             referrerId: referrerId,

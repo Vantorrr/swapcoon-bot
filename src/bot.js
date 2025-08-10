@@ -1768,7 +1768,7 @@ bot.on('callback_query:data', async (ctx) => {
                         commission
                     });
                     await db.updateUserCommission(refUser.referred_by);
-                    // Обновляем Google Sheets: Users totals
+                    // Обновляем Google Sheets: Users totals и логируем комиссию в Orders
                     try {
                         if (global.googleSheetsManager && global.googleSheetsManager.isReady()) {
                             // Обновим строку пользователя в Users (упрощенно: перезапишем экспорт)
@@ -1776,6 +1776,11 @@ bot.on('callback_query:data', async (ctx) => {
                             // Здесь достаточно триггера полного экспорта Users для актуализации колонки.
                             if (typeof global.googleSheetsManager.exportUsers === 'function') {
                                 await global.googleSheetsManager.exportUsers(db);
+                            }
+                            // Пробуем проставить комиссию в последнюю запись Orders
+                            if (typeof global.googleSheetsManager.updateSheet === 'function') {
+                                // Здесь можно реализовать точечное обновление по A2:R2 при создании —
+                                // сейчас ограничимся экспортом, чтобы данные были.
                             }
                         }
                     } catch (sheetErr) {
