@@ -2733,8 +2733,14 @@ async function loadUserProfile() {
                 const volumeEl = document.getElementById('profile-volume');
                 if (ordersEl) ordersEl.textContent = userProfile?.stats?.ordersCount || 0;
                 if (volumeEl) volumeEl.textContent = `$${formatNumber(userProfile?.stats?.totalVolume || 0)}`;
+                const earningsEl = document.getElementById('referral-earnings');
+                const countEl = document.getElementById('referral-count');
+                if (earningsEl) earningsEl.textContent = `$${formatNumber(userProfile?.referralStats?.total_commission || 0)}`;
+                if (countEl) countEl.textContent = userProfile?.referralStats?.total_referrals || 0;
             } catch (_) {}
             console.log('✅ Профиль пользователя загружен');
+            // Полное обновление всех блоков профиля
+            try { updateProfileDisplay(); } catch (_) {}
         } else {
             console.log('ℹ️ Профиль не найден, создается новый пользователь');
         }
@@ -3633,7 +3639,8 @@ function showScreen(screenId) {
         if (screenId === 'history-screen') {
             loadHistory();
         } else if (screenId === 'profile-screen' && currentUserId) {
-            loadUserProfile();
+            await loadUserProfile();
+            try { updateProfileDisplay(); } catch (_) {}
         } else if (screenId === 'dashboard-screen') {
             loadDashboardData();
         } else if (screenId === 'achievements-screen') {
