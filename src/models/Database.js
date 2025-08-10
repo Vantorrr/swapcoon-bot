@@ -345,16 +345,24 @@ class Database {
         console.log('🎯 Миграции завершены');
     }
 
-    // Создание или обновление пользователя
+    // Создание или обновление пользователя (с сохранением referral)
     async upsertUser(userData) {
         return new Promise((resolve, reject) => {
             const { telegramId, username, firstName, lastName, referredBy } = userData;
-            
-            this.db.run(`
-                INSERT OR REPLACE INTO users 
-                (telegram_id, username, first_name, last_name, referred_by, updated_at)
+
+            // SQLite: сохраняем существующий referred_by, если он уже установлен (не перетираем на NULL)
+            const sql = `
+                INSERT INTO users (telegram_id, username, first_name, last_name, referred_by, updated_at)
                 VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-            `, [telegramId, username, firstName, lastName, referredBy], function(err) {
+                ON CONFLICT(telegram_id) DO UPDATE SET
+                    username = excluded.username,
+                    first_name = excluded.first_name,
+                    last_name = excluded.last_name,
+                    updated_at = CURRENT_TIMESTAMP,
+                    referred_by = COALESCE(users.referred_by, excluded.referred_by)
+            `;
+
+            this.db.run(sql, [telegramId, username, firstName, lastName, (referredBy ?? null)], function(err) {
                 if (err) {
                     reject(err);
                 } else {
@@ -504,7 +512,7 @@ class Database {
             const { referrerId, refereeId, orderId, commission } = data;
             
             this.db.run(`
-                INSERT INTO referrals (referrer_id, referee_id, order_id, commission)
+                INSERT OR IGNORE INTO referrals (referrer_id, referee_id, order_id, commission)
                 VALUES (?, ?, ?, ?)
             `, [referrerId, refereeId, orderId, commission], function(err) {
                 if (err) {
