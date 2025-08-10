@@ -1256,7 +1256,7 @@ html {
 }
 
 .referral-link {
-    margin-bottom: var(--spacing-md);
+    margin-bottom: var(--spacing-lg); /* больше пространства до кнопок */
 }
 
 .referral-link label {
@@ -1284,6 +1284,7 @@ html {
     background: var(--background-color);
     border-radius: var(--radius-md);
     padding: var(--spacing-md);
+    margin-top: var(--spacing-md); /* отступ сверху, чтобы не накладывалось на кнопки */
 }
 
 .referral-info p {
