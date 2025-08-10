@@ -4228,13 +4228,14 @@ function startLoadingSequence() {
             
             currentStage++;
             
+            const timeout = Math.min(stage.duration, 1000); // fail-safe
             if (currentStage < loadingStages.length) {
-                setTimeout(nextStage, stage.duration);
+                setTimeout(nextStage, timeout);
             } else {
-                // Финальный этап - скрываем заставку
+                // Финальный этап - скрываем заставку с fail-safe
                 setTimeout(() => {
-                    hideLoadingScreen();
-                }, stage.duration);
+                    try { hideLoadingScreen(); } catch (_) {}
+                }, 200);
             }
         }
     }
@@ -4337,7 +4338,7 @@ function setupFullscreenMode() {
 // Автозапуск заставки при загрузке страницы
 document.addEventListener('DOMContentLoaded', () => {
     // setupFullscreenMode вызывается теперь из initTelegramWebApp
-    startLoadingSequence();
+    try { startLoadingSequence(); } catch (_) { hideLoadingScreen(); }
 });
 
 // 🌐 ФУНКЦИЯ ДЛЯ ПОКАЗА СООБЩЕНИЯ О САЙТЕ В РАЗРАБОТКЕ
