@@ -1278,7 +1278,7 @@ bot.on('callback_query:data', async (ctx) => {
                     const toAmountText = order.to_amount ? ` → <b>${order.to_amount} ${order.to_currency}</b>` : ` → ${order.to_currency}`;
                     await ctx.api.sendMessage(order.user_id,
                         `✅ <b>Ваш заказ принят оператором!</b>\n\n` +
-                        `🆔 Заказ #${orderId}\n` +
+                        `` +
                         `💱 ${order.from_amount} ${order.from_currency}${toAmountText}\n\n` +
                         `👨‍💼 С вами свяжется оператор в ближайшее время для завершения обмена.`,
                         { parse_mode: 'HTML' }
@@ -1526,7 +1526,7 @@ bot.on('callback_query:data', async (ctx) => {
             // Отправляем реквизиты клиенту
             await ctx.api.sendMessage(order.client_id,
                 `💳 <b>АДРЕС ДЛЯ ПЕРЕВОДА</b>\n\n` +
-                `🆔 Заказ #${orderId}\n` +
+                `` +
                 `💰 К переводу: <b>${order.from_amount} ${order.from_currency}</b>\n` +
                 (order.to_amount ? `💵 К получению: <b>${order.to_amount} ${order.to_currency}</b>\n\n` : `\n`) +
                 `${details.emoji} <b>${details.name}</b>\n` +
@@ -5206,7 +5206,7 @@ bot.on('message', async (ctx) => {
                 // Отправляем адрес клиенту
                 await ctx.api.sendMessage(order.client_id,
                     `💳 <b>АДРЕС ДЛЯ ПЕРЕВОДА</b>\n\n` +
-                    `🆔 Заказ #${orderId}\n` +
+                    `` +
                     `💰 К переводу: <b>${order.from_amount} ${order.from_currency}</b>\n` +
                     (order.to_amount ? `💵 К получению: <b>${order.to_amount} ${order.to_currency}</b>\n\n` : `\n`) +
                     `🏦 <b>${networkName}</b>\n` +
