@@ -1026,7 +1026,13 @@ async function calculateExchangeViaAPI(fromAmount) {
 
 // Обратный расчет обмена
 function reverseCalculateExchange() {
-    let toAmount = parseFloat(document.getElementById('to-amount').value.replace(',', '.')) || 0;
+    const raw = (document.getElementById('to-amount').value || '').trim();
+    // Разрешаем ввод "0", "0.", "0,", не рушим парсинг
+    if (raw === '' || raw === '0' || raw === '0.' || raw === '0,') {
+        // Не пересчитываем пока пользователь набирает ведущий 0
+        return;
+    }
+    let toAmount = parseFloat(raw.replace(',', '.')) || 0;
     
     if (toAmount <= 0) {
         document.getElementById('from-amount').value = '';

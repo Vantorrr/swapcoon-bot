@@ -143,7 +143,7 @@
                     <div class="currency-block">
                         <label>Получаю</label>
                         <div class="currency-input">
-                            <input type="number" id="to-amount" placeholder="Результат" step="any" inputmode="decimal">
+                            <input type="text" id="to-amount" placeholder="Результат" inputmode="decimal" pattern="[0-9]*[\.,]?[0-9]*" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
                         </div>
                         <button class="currency-button" id="to-currency" onclick="openCurrencyModal('to')">
                             <div class="currency-icon">💰</div>
