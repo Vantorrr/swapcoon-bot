@@ -837,7 +837,7 @@ app.get('/api/profile/:userId', async (req, res) => {
 
         // Страховка: пересчёт total_commission по факту таблицы referrals
         try {
-            if (db.updateUserCommission) {
+            if (db.updateUserCommission && db.getReferralStats) {
                 await db.updateUserCommission(userId);
                 const freshRefStats = await db.getReferralStats(userId);
                 referralStats.total_commission = freshRefStats.total_commission;

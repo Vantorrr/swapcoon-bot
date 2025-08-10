@@ -463,12 +463,15 @@ class Database {
         return new Promise((resolve, reject) => {
             this.db.get(`
                 SELECT 
-                    COUNT(DISTINCT referee_id) as total_referrals,
-                    COALESCE(SUM(commission), 0) as total_commission,
-                    COUNT(DISTINCT order_id) as successful_orders
-                FROM referrals
-                WHERE referrer_id = ?
-            `, [telegramId], (err, row) => {
+                    -- Всего приглашенных по реф. ссылке
+                    (SELECT COUNT(*) FROM users WHERE referred_by = ?) AS total_referrals,
+                    -- Фактически начисленная комиссия
+                    COALESCE(SUM(r.commission), 0) AS total_commission,
+                    -- Кол-во успешных заказов у рефералов
+                    COUNT(DISTINCT r.order_id) AS successful_orders
+                FROM referrals r
+                WHERE r.referrer_id = ?
+            `, [telegramId, telegramId], (err, row) => {
                 if (err) {
                     reject(err);
                 } else {
