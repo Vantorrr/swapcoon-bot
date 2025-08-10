@@ -1696,15 +1696,16 @@ class Database {
             this.db.all(`
                 SELECT 
                     u.*,
-                    COUNT(o.id) as total_orders,
+                    COALESCE(COUNT(o.id), 0) as total_orders,
                     COALESCE(SUM(o.from_amount), 0) as total_amount,
                     MAX(o.created_at) as last_order_date,
                     1 as is_active,
                     u.referred_by,
-                    (SELECT COUNT(*) FROM users WHERE referred_by = u.telegram_id) as referrals_count
+                    (SELECT COUNT(*) FROM users WHERE referred_by = u.telegram_id) as referrals_count,
+                    COALESCE(u.total_commission, 0) as total_commission
                 FROM users u
                 LEFT JOIN orders o ON u.telegram_id = o.user_id
-                GROUP BY u.telegram_id
+                GROUP BY u.telegram_id, u.telegram_id, u.username, u.first_name, u.last_name, u.created_at, u.updated_at, u.referred_by, u.total_commission
                 ORDER BY u.created_at DESC
             `, (err, rows) => {
                 if (err) {
