@@ -6111,17 +6111,23 @@ async function notifyOperators(orderData) {
         // Добавляем информацию о банке если указан
         const bankSection = orderData.bank ? `🏦 <b>Банк:</b> ${orderData.bank}\n` : '';
         
+        // Вычисляем человекочитаемый курс из сумм, чтобы не зависеть от ориентации exchangeRate
+        const numericFrom = Number(orderData.fromAmount);
+        const numericTo = Number(orderData.toAmount);
+        let humanRate = Number(orderData.exchangeRate);
+        if (isFinite(numericFrom) && isFinite(numericTo) && numericFrom > 0) {
+            humanRate = numericTo / numericFrom;
+        }
+        const precisionByCurrency = (cur) => cur === 'RUB' ? 0 : (cur === 'ARS' ? 2 : 6);
+        const formattedRate = isFinite(humanRate)
+            ? humanRate.toFixed(precisionByCurrency(orderData.toCurrency)).replace(/\.0+$/, '')
+            : '—';
+
         const message = 
             `🚨 <b>НОВАЯ ЗАЯВКА С САЙТА #${orderData.id}</b>\n\n` +
             `👤 <b>Пользователь:</b> ${orderData.userName || 'Неизвестен'}\n` +
             `💱 <b>Обмен:</b> ${orderData.fromAmount} ${orderData.fromCurrency} → ${orderData.toAmount ? orderData.toAmount + ' ' : ''}${orderData.toCurrency}\n` +
-            (orderData.exchangeRate ? (() => {
-                const rate = Number(orderData.exchangeRate);
-                // Для рубля показываем без копеек, для ARS с 2 знаками, иначе до 6 знаков при необходимости
-                const precision = orderData.toCurrency === 'RUB' ? 0 : (orderData.toCurrency === 'ARS' ? 2 : 6);
-                const shown = rate.toFixed(precision).replace(/\.0+$/, '');
-                return `📊 <b>Курс:</b> 1 ${orderData.fromCurrency} = ${shown} ${orderData.toCurrency}\n`;
-            })() : '') +
+            (isFinite(humanRate) ? `📊 <b>Курс:</b> 1 ${orderData.fromCurrency} = ${formattedRate} ${orderData.toCurrency}\n` : '') +
             networkSection +  // ← ДОБАВЛЯЕМ ИНФОРМАЦИЮ О СЕТИ!
             bankSection +     // ← ДОБАВЛЯЕМ ИНФОРМАЦИЮ О БАНКЕ!
             `${pairTypeIcon} <b>Тип пары:</b> ${pairTypeText}\n` +
