@@ -1021,7 +1021,7 @@ async function calculateExchangeViaAPI(fromAmount) {
 
 // Обратный расчет обмена
 function reverseCalculateExchange() {
-    const toAmount = parseFloat(document.getElementById('to-amount').value) || 0;
+    let toAmount = parseFloat(document.getElementById('to-amount').value.replace(',', '.')) || 0;
     
     if (toAmount <= 0) {
         document.getElementById('from-amount').value = '';
@@ -1051,6 +1051,14 @@ function reverseCalculateExchange() {
     
     const exchangeRate = pairData.sellRate;
     const fee = 0; // Комиссия убрана
+    // Округляем сумму получения согласно валюте-получателю (без копеек для RUB)
+    const isRubTo = (toCurrency === 'RUB');
+    const isArsTo = (toCurrency === 'ARS');
+    if (isRubTo) {
+        toAmount = Math.round(toAmount);
+    } else if (isArsTo) {
+        toAmount = Math.round(toAmount * 100) / 100;
+    }
     const grossAmount = toAmount; // Без комиссии
     
     // 🔥 ПРАВИЛЬНАЯ ЛОГИКА ОБРАТНОГО РАСЧЕТА
@@ -1071,6 +1079,7 @@ function reverseCalculateExchange() {
         fromAmount = grossAmount / exchangeRate; // fallback
     }
     
+    // Форматируем отдаваемую валюту (если отдаёт RUB — без копеек, если BTC — до 8 знаков)
     document.getElementById('from-amount').value = formatAmountByCurrency(fromAmount, fromCurrency);
     calculateExchange();
 }
