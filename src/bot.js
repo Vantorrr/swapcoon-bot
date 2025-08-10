@@ -1274,10 +1274,12 @@ bot.on('callback_query:data', async (ctx) => {
             const order = (await db.getOperatorOrders(userId)).find(o => o.id === orderId);
             if (order) {
                 try {
+                    // Покажем клиенту, сколько он получит по заявке
+                    const toAmountText = order.to_amount ? ` → <b>${order.to_amount} ${order.to_currency}</b>` : ` → ${order.to_currency}`;
                     await ctx.api.sendMessage(order.user_id,
                         `✅ <b>Ваш заказ принят оператором!</b>\n\n` +
                         `🆔 Заказ #${orderId}\n` +
-                        `💱 ${order.from_amount} ${order.from_currency} → ${order.to_currency}\n\n` +
+                        `💱 ${order.from_amount} ${order.from_currency}${toAmountText}\n\n` +
                         `👨‍💼 С вами свяжется оператор в ближайшее время для завершения обмена.`,
                         { parse_mode: 'HTML' }
                     );
@@ -1525,7 +1527,8 @@ bot.on('callback_query:data', async (ctx) => {
             await ctx.api.sendMessage(order.client_id,
                 `💳 <b>АДРЕС ДЛЯ ПЕРЕВОДА</b>\n\n` +
                 `🆔 Заказ #${orderId}\n` +
-                `💰 К переводу: <b>${order.from_amount} ${order.from_currency}</b>\n\n` +
+                `💰 К переводу: <b>${order.from_amount} ${order.from_currency}</b>\n` +
+                (order.to_amount ? `💵 К получению: <b>${order.to_amount} ${order.to_currency}</b>\n\n` : `\n`) +
                 `${details.emoji} <b>${details.name}</b>\n` +
                 `🏦 Сеть: ${details.network}\n` +
                 `💎 Валюта: ${details.currency}\n` +
@@ -5204,7 +5207,8 @@ bot.on('message', async (ctx) => {
                 await ctx.api.sendMessage(order.client_id,
                     `💳 <b>АДРЕС ДЛЯ ПЕРЕВОДА</b>\n\n` +
                     `🆔 Заказ #${orderId}\n` +
-                    `💰 К переводу: <b>${order.from_amount} ${order.from_currency}</b>\n\n` +
+                    `💰 К переводу: <b>${order.from_amount} ${order.from_currency}</b>\n` +
+                    (order.to_amount ? `💵 К получению: <b>${order.to_amount} ${order.to_currency}</b>\n\n` : `\n`) +
                     `🏦 <b>${networkName}</b>\n` +
                     `📍 Адрес: <code>${address}</code>\n` +
                     `🏛️ Сеть: ${networkDescription}\n` +
@@ -5694,7 +5698,8 @@ bot.on('message', async (ctx) => {
                 await ctx.api.sendMessage(order.client_id,
                     `💳 <b>АДРЕС ДЛЯ ПЕРЕВОДА</b>\n\n` +
                     `🆔 Заказ #${orderId}\n` +
-                    `💰 К переводу: <b>${order.from_amount} ${order.from_currency}</b>\n\n` +
+                    `💰 К переводу: <b>${order.from_amount} ${order.from_currency}</b>\n` +
+                    (order.to_amount ? `💵 К получению: <b>${order.to_amount} ${order.to_currency}</b>\n\n` : `\n`) +
                     `🏦 <b>${networkName}</b>\n` +
                     `📍 Адрес: <code>${address}</code>\n` +
                     `🏛️ Сеть: ${networkDescription}\n` +
