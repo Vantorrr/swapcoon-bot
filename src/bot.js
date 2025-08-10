@@ -6115,7 +6115,7 @@ async function notifyOperators(orderData) {
             `🚨 <b>НОВАЯ ЗАЯВКА С САЙТА #${orderData.id}</b>\n\n` +
             `👤 <b>Пользователь:</b> ${orderData.userName || 'Неизвестен'}\n` +
             `💱 <b>Обмен:</b> ${orderData.fromAmount} ${orderData.fromCurrency} → ${orderData.toAmount ? orderData.toAmount + ' ' : ''}${orderData.toCurrency}\n` +
-            (orderData.exchangeRate ? `📊 <b>Курс:</b> 1 ${orderData.fromCurrency} = ${orderData.exchangeRate} ${orderData.toCurrency}\n` : '') +
+            (orderData.exchangeRate ? `📊 <b>Курс:</b> 1 ${orderData.fromCurrency} = ${Number(orderData.exchangeRate).toFixed(2)} ${orderData.toCurrency}\n` : '') +
             networkSection +  // ← ДОБАВЛЯЕМ ИНФОРМАЦИЮ О СЕТИ!
             bankSection +     // ← ДОБАВЛЯЕМ ИНФОРМАЦИЮ О БАНКЕ!
             `${pairTypeIcon} <b>Тип пары:</b> ${pairTypeText}\n` +
