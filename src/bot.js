@@ -5186,62 +5186,26 @@ bot.on('message', async (ctx) => {
                     return;
                 }
                 
-                const networkName = lines[0];
-                const address = lines[1];
-                const networkDescription = lines[2] || 'Блокчейн';
-                const currency = lines[3] || 'USDT';
+                const networkName = lines[0] || 'Реквизиты';
+                const descriptionBlock = customDetailsText;
                 
                 console.log('✅ ДАННЫЕ ОБРАБОТАНЫ:', { networkName, address, networkDescription, currency });
                 
-                // Базовая валидация адреса: не менее 10 символов, запрещаем совсем произвольный текст
-                if (address.length < 10) {
-                    await ctx.reply(
-                        `❌ <b>Слишком короткий адрес</b> (минимум 10 символов).\n` +
-                        `Проверьте и введите корректные реквизиты.`,
-                        { parse_mode: 'HTML' }
-                    );
-                    return;
-                }
-                // Если валюта USDT и сеть содержит TRC или ERC/BEP — проверим алфавит и длину по маске
-                const net = networkName.toUpperCase();
-                if (currency.toUpperCase() === 'USDT') {
-                    if (net.includes('TRC')) {
-                        const ok = /^T[1-9A-HJ-NP-Za-km-z]{25,34}$/.test(address);
-                        if (!ok) {
-                            await ctx.reply('❌ Адрес TRC-20 выглядит неверно. Начинается с T и длина ~34. Попробуйте снова.');
-                            return;
-                        }
-                    } else if (net.includes('ERC') || net.includes('ETH')) {
-                        const ok = /^0x[a-fA-F0-9]{40}$/.test(address);
-                        if (!ok) {
-                            await ctx.reply('❌ Адрес ERC-20 (ETH) должен начинаться с 0x и иметь 42 символа.');
-                            return;
-                        }
-                    } else if (net.includes('BEP') || net.includes('BSC')) {
-                        const ok = /^0x[a-fA-F0-9]{40}$/.test(address);
-                        if (!ok) {
-                            await ctx.reply('❌ Адрес BEP-20 должен начинаться с 0x и иметь 42 символа.');
-                            return;
-                        }
-                    }
-                }
+                // Никакой строгой валидации — оператор отвечает за корректность реквизитов
                 
                 // Обновляем статус заказа
                 const result = await db.updateOrderStatusWithMessage(orderId, 'payment_details_sent', userId, 
-                    `💳 Новый адрес (${networkName}) отправлен клиенту. Ожидаем поступления средств.`);
+                    `💳 Реквизиты отправлены клиенту. Ожидаем поступления средств.`);
                 
                 const order = await db.getOrderWithClient(orderId);
                 
-                // Отправляем адрес клиенту
+                // Отправляем реквизиты клиенту (raw-текст)
                 await ctx.api.sendMessage(order.client_id,
                     `💳 <b>АДРЕС ДЛЯ ПЕРЕВОДА</b>\n\n` +
                     `` +
                     `💰 К переводу: <b>${order.from_amount} ${order.from_currency}</b>\n` +
                     (order.to_amount ? `💵 К получению: <b>${order.to_amount} ${order.to_currency}</b>\n\n` : `\n`) +
-                    `🏦 <b>${networkName}</b>\n` +
-                    `📍 Адрес: <code>${address}</code>\n` +
-                    `🏛️ Сеть: ${networkDescription}\n` +
-                    `💎 Валюта: ${currency}\n\n` +
+                    `${descriptionBlock}\n\n` +
                     `⚠️ <b>ВАЖНО:</b>\n` +
                     `• Переводите ТОЧНУЮ сумму: ${order.from_amount} ${order.from_currency}\n` +
                     `• Проверьте сеть перевода!\n` +
