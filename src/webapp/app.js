@@ -1082,14 +1082,16 @@ function reverseCalculateExchange() {
     // Определяем направление обмена по названию пары
     const [pairFromCurrency, pairToCurrency] = pairData.pair ? pairData.pair.split('/') : [fromCurrency, toCurrency];
     
+    const isReceiveARS = toCurrency === 'ARS';
     if (fromCurrency === pairFromCurrency && toCurrency === pairToCurrency) {
-        // Для прямой пары FROM/TO при обратном вводе считаем FROM = TO / rate
-        fromAmount = grossAmount / exchangeRate;
-        console.log(`📊 ОБРАТНЫЙ (прямая пара): ${grossAmount} ${toCurrency} / ${exchangeRate} = ${fromAmount} ${fromCurrency}`);
+        // Общая формула (как обратная к прямому расчёту to = from / rate): from = to * rate
+        // Исключение: если получаем ARS — используем инверсию (from = to / rate)
+        fromAmount = isReceiveARS ? (grossAmount / exchangeRate) : (grossAmount * exchangeRate);
+        console.log(`📊 ОБРАТНЫЙ (прямая пара, ARS=${isReceiveARS}): ${grossAmount} ${toCurrency} → ${fromAmount} ${fromCurrency}`);
     } else if (fromCurrency === pairToCurrency && toCurrency === pairFromCurrency) {
-        // Для обратной пары считаем FROM = TO * rate
-        fromAmount = grossAmount * exchangeRate;
-        console.log(`📊 ОБРАТНЫЙ (обратная пара): ${grossAmount} ${toCurrency} * ${exchangeRate} = ${fromAmount} ${fromCurrency}`);
+        // Для обратной пары (в данных TO/FROM): базово from = to / rate, для ARS меняем на умножение
+        fromAmount = isReceiveARS ? (grossAmount * exchangeRate) : (grossAmount / exchangeRate);
+        console.log(`📊 ОБРАТНЫЙ (обратная пара, ARS=${isReceiveARS}): ${grossAmount} ${toCurrency} → ${fromAmount} ${fromCurrency}`);
     } else {
         fromAmount = grossAmount / exchangeRate; // fallback
     }
