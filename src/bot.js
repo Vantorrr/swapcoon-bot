@@ -1753,6 +1753,22 @@ bot.on('callback_query:data', async (ctx) => {
                 '🎉 Заказ успешно завершен! Спасибо за использование ExMachinaX!');
             
             const order = await db.getOrderWithClient(orderId);
+            // Реферальная комиссия 0.2% при завершении
+            try {
+                const refUser = await db.getUser(order.user_id);
+                if (refUser && refUser.referred_by) {
+                    const commission = Number(order.to_amount || 0) * 0.002;
+                    await db.addReferralCommission({
+                        referrerId: refUser.referred_by,
+                        refereeId: order.user_id,
+                        orderId: orderId,
+                        commission
+                    });
+                    await db.updateUserCommission(refUser.referred_by);
+                }
+            } catch (refErr) {
+                console.log('⚠️ Ошибка начисления реферальной комиссии:', refErr.message);
+            }
             
             await ctx.api.sendMessage(order.client_id,
                 `🎉 <b>Заказ завершен!</b>\n\n` +
