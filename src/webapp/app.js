@@ -3007,16 +3007,17 @@ async function loadDashboardData(period = '7d') {
             if (!userProfile) {
                 await loadUserProfile();
             }
-            const fallbackSummary = {
-                totalVolume: userProfile?.stats?.totalVolume || 0,
-                totalOrders: userProfile?.stats?.ordersCount || 0,
-                totalFees: (userProfile?.stats?.totalVolume || 0) * 0.03
-            };
+            const volumeByCurrency = userProfile?.volumeByCurrency || [];
+            const totalOrders = userProfile?.stats?.ordersCount || 0;
+            const usd = volumeByCurrency.find(v => v.currency === 'USDT' || v.currency === 'USD')?.amount || 0;
+            const rub = volumeByCurrency.find(v => v.currency === 'RUB')?.amount || 0;
+            const btc = volumeByCurrency.find(v => v.currency === 'BTC')?.amount || 0;
+            const fallbackSummary = { usd, rub, btc, totalOrders };
             updateDashboardMetrics(fallbackSummary);
             // Простые графики-заглушки на основе одного значения
             updateCharts({
-                volume: { labels: ['Всего'], data: [fallbackSummary.totalVolume] },
-                orders: { labels: ['Всего'], data: [fallbackSummary.totalOrders] }
+                volume: { labels: ['USDT','RUB','BTC'], data: [usd, rub, btc] },
+                orders: { labels: ['Всего'], data: [totalOrders] }
             });
         }
         
@@ -3035,9 +3036,16 @@ async function loadDashboardData(period = '7d') {
 
 // Обновление метрик дашборда
 function updateDashboardMetrics(summary) {
-    document.getElementById('total-volume').textContent = `$${formatNumber(summary.totalVolume || 0)}`;
+    const totalVolumeEl = document.getElementById('total-volume');
+    if (summary.usd !== undefined || summary.rub !== undefined || summary.btc !== undefined) {
+        // Показываем комбинированно: USDT / RUB / BTC
+        totalVolumeEl.textContent = `USDT ${formatNumber(summary.usd || 0)} · RUB ${formatNumber(summary.rub || 0)} · BTC ${formatNumber(summary.btc || 0)}`;
+    } else {
+        totalVolumeEl.textContent = `$${formatNumber(summary.totalVolume || 0)}`;
+    }
     document.getElementById('total-orders').textContent = summary.totalOrders || 0;
-    document.getElementById('total-fees').textContent = `$${formatNumber(summary.totalFees || 0)}`;
+    // Комиссию не считаем на дашборде, убираем
+    document.getElementById('total-fees').textContent = '$0';
     
     if (userProfile?.referralStats) {
         const dashEarn = document.getElementById('referral-earnings-dashboard');

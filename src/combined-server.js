@@ -834,6 +834,8 @@ app.get('/api/profile/:userId', async (req, res) => {
         // Реферальная статистика
         const referralStats = await db.getReferralStats ? await db.getReferralStats(userId) : { total_referrals: 0, total_commission: 0, successful_orders: 0 };
         const referrals = await db.getReferralList ? await db.getReferralList(userId) : [];
+        // Разбивка объема по валютам
+        const volumeByCurrency = await db.getUserVolumeByCurrency ? await db.getUserVolumeByCurrency(userId) : [];
 
         // Страховка: пересчёт total_commission по факту таблицы referrals
         try {
@@ -860,7 +862,8 @@ app.get('/api/profile/:userId', async (req, res) => {
             },
             achievements,
             referralStats,
-            referrals
+            referrals,
+            volumeByCurrency
         };
         
         console.log('✅ Профиль отправлен:', profile);

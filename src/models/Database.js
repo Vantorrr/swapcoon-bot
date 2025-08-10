@@ -1210,6 +1210,25 @@ class Database {
         });
     }
 
+    // Разбивка объема по валютам (по полученной стороне)
+    async getUserVolumeByCurrency(telegramId) {
+        return new Promise((resolve, reject) => {
+            this.db.all(`
+                SELECT to_currency as currency, COALESCE(SUM(to_amount), 0) as amount
+                FROM orders
+                WHERE user_id = ?
+                GROUP BY to_currency
+                ORDER BY amount DESC
+            `, [telegramId], (err, rows) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(rows || []);
+                }
+            });
+        });
+    }
+
     // Проверка наличия достижения у пользователя
     async hasAchievement(telegramId, achievementId) {
         return new Promise((resolve, reject) => {
