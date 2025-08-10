@@ -1834,10 +1834,17 @@ function updateOrderInterfaceForPairType(pairType) {
                  if (inputHelp) inputHelp.textContent = 'Для получения ARS укажите номер счета (CVU) или Alias получателя';
              }
          } else {
-             // Обычные фиатные пары (ARS → BRL, etc.)
-             if (addressLabel) addressLabel.textContent = 'Номер счета (CVU/Alias)';
-             if (addressInput) addressInput.placeholder = 'Введите номер счета';
-             if (inputHelp) inputHelp.textContent = 'Проверьте правильность номера счета перед отправкой';
+             // Любая фиатная пара, где получаем ARS — просим CVU/Alias
+             if (currentCalculation?.toCurrency === 'ARS') {
+                 if (addressLabel) addressLabel.textContent = 'Номер счета (CVU/Alias)';
+                 if (addressInput) addressInput.placeholder = 'Укажите номер CVU или Alias';
+                 if (inputHelp) inputHelp.textContent = 'Для получения ARS укажите номер счета (CVU) или Alias получателя';
+             } else {
+                 // Прочие фиатные пары
+                 if (addressLabel) addressLabel.textContent = 'Номер счета';
+                 if (addressInput) addressInput.placeholder = 'Введите номер счета';
+                 if (inputHelp) inputHelp.textContent = 'Проверьте правильность номера счета перед отправкой';
+             }
          }
          
          if (amlSection) {
