@@ -903,7 +903,7 @@ function calculateExchange() {
     }
     
     // 🔥 ПРАВИЛЬНАЯ ЛОГИКА РАСЧЕТА - ПРОВЕРЯЕМ НАПРАВЛЕНИЕ ОБМЕНА
-    const exchangeRate = pairData.sellRate;
+    let exchangeRate = pairData.sellRate;
     let toAmount;
     
     // Определяем направление обмена по названию пары
@@ -914,7 +914,14 @@ function calculateExchange() {
     const currentCalcPair = `${fromCurrency}/${toCurrency}`;
     const isSpecialCalc = specialCalcPairs.includes(currentCalcPair);
     
-    if (fromCurrency === pairFromCurrency && toCurrency === pairToCurrency) {
+    // Жесткая корректировка для UAH→ARS: всегда умножаем на корректный курс
+    if (fromCurrency === 'UAH' && toCurrency === 'ARS') {
+        const rate = exchangeRate < 1 ? (1 / exchangeRate) : exchangeRate;
+        toAmount = fromAmount * rate;
+        exchangeRate = rate;
+        console.log(`📊 UAH→ARS ФИКС: ${fromAmount} * ${rate} = ${toAmount}`);
+    }
+    else if (fromCurrency === pairFromCurrency && toCurrency === pairToCurrency) {
         // Прямое направление пары
         if (isSpecialCalc) {
             // Для специальных пар - умножаем вместо деления
