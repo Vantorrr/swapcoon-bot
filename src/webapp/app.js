@@ -1083,20 +1083,32 @@ function reverseCalculateExchange() {
     const [pairFromCurrency, pairToCurrency] = pairData.pair ? pairData.pair.split('/') : [fromCurrency, toCurrency];
     
     if (fromCurrency === pairFromCurrency && toCurrency === pairToCurrency) {
-        // Прямое направление пары: BTC/RUB, обратный расчет RUB → BTC
-        fromAmount = grossAmount * exchangeRate;
-        console.log(`📊 ОБРАТНЫЙ ПРЯМОЙ: ${grossAmount} ${toCurrency} * ${exchangeRate} = ${fromAmount} ${fromCurrency}`);
-    } else if (fromCurrency === pairToCurrency && toCurrency === pairFromCurrency) {
-        // Обратное направление пары: RUB/BTC через пару BTC/RUB, обратный расчет BTC → RUB
+        // Для прямой пары FROM/TO при обратном вводе считаем FROM = TO / rate
         fromAmount = grossAmount / exchangeRate;
-        console.log(`📊 ОБРАТНЫЙ ОБРАТНЫЙ: ${grossAmount} ${toCurrency} / ${exchangeRate} = ${fromAmount} ${fromCurrency}`);
+        console.log(`📊 ОБРАТНЫЙ (прямая пара): ${grossAmount} ${toCurrency} / ${exchangeRate} = ${fromAmount} ${fromCurrency}`);
+    } else if (fromCurrency === pairToCurrency && toCurrency === pairFromCurrency) {
+        // Для обратной пары считаем FROM = TO * rate
+        fromAmount = grossAmount * exchangeRate;
+        console.log(`📊 ОБРАТНЫЙ (обратная пара): ${grossAmount} ${toCurrency} * ${exchangeRate} = ${fromAmount} ${fromCurrency}`);
     } else {
         fromAmount = grossAmount / exchangeRate; // fallback
     }
-    
-    // Форматируем отдаваемую валюту (если отдаёт RUB — без копеек, если BTC — до 8 знаков)
+
+    // Обновляем состояние и UI без повторного прямого перерасчёта
+    currentCalculation = {
+        fromAmount,
+        toAmount,
+        exchangeRate,
+        fee,
+        fromCurrency,
+        toCurrency
+    };
+
+    // Пишем рассчитанную сумму в поле "Отдаю"
     document.getElementById('from-amount').value = formatAmountByCurrency(fromAmount, fromCurrency);
-    calculateExchange();
+    // Обновляем блоки курса и "К получению" (оставляем введённое пользователем значение)
+    updateCalculationDisplay(fromAmount, toAmount, exchangeRate, fee);
+    document.getElementById('continue-button').disabled = false;
 }
 
 // Обновление отображения расчета
