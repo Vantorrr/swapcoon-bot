@@ -2734,8 +2734,11 @@ async function loadUserProfile() {
                 if (ordersEl) ordersEl.textContent = userProfile?.stats?.ordersCount || 0;
                 if (volumeEl) volumeEl.textContent = `$${formatNumber(userProfile?.stats?.totalVolume || 0)}`;
                 const earningsEl = document.getElementById('referral-earnings');
+                const earningsDash = document.getElementById('referral-earnings-dashboard');
                 const countEl = document.getElementById('referral-count');
-                if (earningsEl) earningsEl.textContent = `$${formatNumber(userProfile?.referralStats?.total_commission || 0)}`;
+                const earned = userProfile?.referralStats?.total_commission || 0;
+                if (earningsEl) earningsEl.textContent = `$${formatNumber(earned)}`;
+                if (earningsDash) earningsDash.textContent = `$${formatNumber(earned)}`;
                 if (countEl) countEl.textContent = userProfile?.referralStats?.total_referrals || 0;
             } catch (_) {}
             console.log('✅ Профиль пользователя загружен');
@@ -3037,7 +3040,8 @@ function updateDashboardMetrics(summary) {
     document.getElementById('total-fees').textContent = `$${formatNumber(summary.totalFees || 0)}`;
     
     if (userProfile?.referralStats) {
-        document.getElementById('referral-earnings').textContent = `$${formatNumber(userProfile.referralStats.total_commission || 0)}`;
+        const dashEarn = document.getElementById('referral-earnings-dashboard');
+        if (dashEarn) dashEarn.textContent = `$${formatNumber(userProfile.referralStats.total_commission || 0)}`;
     }
 }
 
