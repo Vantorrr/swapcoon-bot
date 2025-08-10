@@ -1082,16 +1082,19 @@ function reverseCalculateExchange() {
     // Определяем направление обмена по названию пары
     const [pairFromCurrency, pairToCurrency] = pairData.pair ? pairData.pair.split('/') : [fromCurrency, toCurrency];
     
-    const isReceiveARS = toCurrency === 'ARS';
+    // Логика как в прямом расчёте: для спец-пар (включая ARS/USDT, UAH/ARS и др.) прямой расчёт умножает — значит обратный должен делить
+    const specialCalcPairs = ['ARS/UAH', 'UAH/ARS', 'RUB/ARS', 'ARS/RUB', 'RUB/KZT', 'KZT/RUB', 'USDT/ARS', 'ARS/USDT', 'USDT/KZT', 'KZT/USDT', 'BTC/ETH', 'ETH/BTC', 'BTC/ARS', 'ARS/BTC', 'BTC/KZT', 'KZT/BTC', 'BTC/UAH', 'UAH/BTC', 'ETH/ARS', 'ARS/ETH', 'ETH/UAH', 'UAH/ETH', 'KZT/UAH', 'UAH/KZT', 'KZT/ARS', 'ARS/KZT'];
+    const currentPair = `${fromCurrency}/${toCurrency}`;
+    const isSpecialCalc = specialCalcPairs.includes(currentPair);
+
     if (fromCurrency === pairFromCurrency && toCurrency === pairToCurrency) {
-        // Общая формула (как обратная к прямому расчёту to = from / rate): from = to * rate
-        // Исключение: если получаем ARS — используем инверсию (from = to / rate)
-        fromAmount = isReceiveARS ? (grossAmount / exchangeRate) : (grossAmount * exchangeRate);
-        console.log(`📊 ОБРАТНЫЙ (прямая пара, ARS=${isReceiveARS}): ${grossAmount} ${toCurrency} → ${fromAmount} ${fromCurrency}`);
+        // Если в прямом расчёте умножали (спец-пары) — здесь делим, иначе умножаем
+        fromAmount = isSpecialCalc ? (grossAmount / exchangeRate) : (grossAmount * exchangeRate);
+        console.log(`📊 ОБРАТНЫЙ (прямая пара, special=${isSpecialCalc}): ${grossAmount} ${toCurrency} → ${fromAmount} ${fromCurrency}`);
     } else if (fromCurrency === pairToCurrency && toCurrency === pairFromCurrency) {
-        // Для обратной пары (в данных TO/FROM): базово from = to / rate, для ARS меняем на умножение
-        fromAmount = isReceiveARS ? (grossAmount * exchangeRate) : (grossAmount / exchangeRate);
-        console.log(`📊 ОБРАТНЫЙ (обратная пара, ARS=${isReceiveARS}): ${grossAmount} ${toCurrency} → ${fromAmount} ${fromCurrency}`);
+        // Для обратной пары — инвертируем правило
+        fromAmount = isSpecialCalc ? (grossAmount * exchangeRate) : (grossAmount / exchangeRate);
+        console.log(`📊 ОБРАТНЫЙ (обратная пара, special=${isSpecialCalc}): ${grossAmount} ${toCurrency} → ${fromAmount} ${fromCurrency}`);
     } else {
         fromAmount = grossAmount / exchangeRate; // fallback
     }
