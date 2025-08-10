@@ -1768,13 +1768,22 @@ bot.on('callback_query:data', async (ctx) => {
                     await db.updateUserCommission(refUser.referred_by);
                     // Обновляем Google Sheets: Users totals и логируем комиссию в Orders
                     try {
+                        console.log('🔄 Обновляем Google Sheets после комиссии...');
                         if (global.googleSheetsManager && global.googleSheetsManager.isReady()) {
+                            console.log('✅ Google Sheets Manager готов, запускаем exportUsers');
                             // Обновим строку пользователя в Users (упрощенно: перезапишем экспорт)
                             // В проде можно сделать адресное обновление.
                             // Здесь достаточно триггера полного экспорта Users для актуализации колонки.
                             if (typeof global.googleSheetsManager.exportUsers === 'function') {
+                                console.log('📊 Экспортируем Users в Google Sheets...');
                                 await global.googleSheetsManager.exportUsers(db);
+                                console.log('✅ Users экспорт завершен');
+                            } else {
+                                console.log('❌ exportUsers функция недоступна');
                             }
+                        } else {
+                            console.log('❌ Google Sheets Manager недоступен или не готов');
+                        }
                             // Пробуем проставить комиссию в последнюю запись Orders
                             if (typeof global.googleSheetsManager.updateSheet === 'function') {
                                 // Здесь можно реализовать точечное обновление по A2:R2 при создании —
@@ -4510,6 +4519,25 @@ bot.on('callback_query:data', async (ctx) => {
                         commission
                     });
                     await db.updateUserCommission(refUser.referred_by);
+                    
+                    // Обновляем Google Sheets: Users totals
+                    try {
+                        console.log('🔄 Обновляем Google Sheets после комиссии (client_received)...');
+                        if (global.googleSheetsManager && global.googleSheetsManager.isReady()) {
+                            console.log('✅ Google Sheets Manager готов, запускаем exportUsers');
+                            if (typeof global.googleSheetsManager.exportUsers === 'function') {
+                                console.log('📊 Экспортируем Users в Google Sheets...');
+                                await global.googleSheetsManager.exportUsers(db);
+                                console.log('✅ Users экспорт завершен');
+                            } else {
+                                console.log('❌ exportUsers функция недоступна');
+                            }
+                        } else {
+                            console.log('❌ Google Sheets Manager недоступен или не готов');
+                        }
+                    } catch (gsErr) {
+                        console.log('⚠️ Ошибка обновления Google Sheets (client_received):', gsErr.message);
+                    }
                 }
             } catch (refErr) {
                 console.log('⚠️ Ошибка начисления реферальной комиссии (client_received):', refErr.message);
