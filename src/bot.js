@@ -19,6 +19,10 @@ bot.catch((err) => {
 // Инициализация базы данных
 const db = new Database();
 
+// Инициализация сервиса бэкапов
+const BackupService = require('./services/BackupService');
+const backupService = new BackupService(db);
+
 // 🛡️ ХАРДКОД АДМИНОВ - НИКОГДА НЕ ПОТЕРЯЮТСЯ!
 const HARDCODED_ADMINS = [8141463258, 461759951, 280417617, 7692725312];
 const HARDCODED_OPERATORS = [7692725312]; // @ExMachinaXSupport
@@ -141,6 +145,10 @@ async function initGoogleSheets() {
                 
                 // 🌍 УСТАНАВЛИВАЕМ ГЛОБАЛЬНО
                 global.googleSheetsManager = googleSheetsManager;
+                
+                // 💾 ЗАПУСКАЕМ АВТОМАТИЧЕСКИЕ БЭКАПЫ
+                console.log('💾 Запуск автоматических бэкапов...');
+                backupService.startAutoBackup();
                 console.log('🌍 Google Sheets Manager установлен глобально!');
                 
                 // Запускаем автоматический экспорт
@@ -1783,12 +1791,6 @@ bot.on('callback_query:data', async (ctx) => {
                             }
                         } else {
                             console.log('❌ Google Sheets Manager недоступен или не готов');
-                        }
-                            // Пробуем проставить комиссию в последнюю запись Orders
-                            if (typeof global.googleSheetsManager.updateSheet === 'function') {
-                                // Здесь можно реализовать точечное обновление по A2:R2 при создании —
-                                // сейчас ограничимся экспортом, чтобы данные были.
-                            }
                         }
                     } catch (sheetErr) {
                         console.log('⚠️ Не удалось обновить Users в Google Sheets:', sheetErr.message);

@@ -5,7 +5,8 @@ const path = require('path');
 class Database {
     constructor() {
         // Фиксированный путь к базе данных с реальными данными
-        this.dbPath = process.env.DB_PATH || '/Users/pavelgalante/swapcoon/data/database.sqlite';
+        // В Railway используем постоянный том /app/data, локально - старый путь
+        this.dbPath = process.env.DB_PATH || (process.env.RAILWAY_ENVIRONMENT ? '/app/data/database.sqlite' : '/Users/pavelgalante/swapcoon/data/database.sqlite');
         this.ensureDirectoryExists();
         this.init();
     }
@@ -1741,6 +1742,32 @@ class Database {
                     reject(err);
                 } else {
                     resolve(rows);
+                }
+            });
+        });
+    }
+
+    // Получение всех заказов для бэкапа
+    async getAllOrders() {
+        return new Promise((resolve, reject) => {
+            this.db.all(`SELECT * FROM orders ORDER BY created_at DESC`, (err, rows) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(rows || []);
+                }
+            });
+        });
+    }
+
+    // Получение всех рефералов для бэкапа
+    async getAllReferrals() {
+        return new Promise((resolve, reject) => {
+            this.db.all(`SELECT * FROM referrals ORDER BY created_at DESC`, (err, rows) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(rows || []);
                 }
             });
         });
