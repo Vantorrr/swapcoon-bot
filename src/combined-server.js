@@ -945,6 +945,18 @@ app.post('/api/create-order', async (req, res) => {
                 const result = await db.upsertUser(userData);
                 console.log('✅ Пользователь зарегистрирован в боте:', userId);
                 console.log('✅ Результат регистрации:', result);
+
+                // 📊 Триггерим автоэкспорт Users в Google Sheets
+                try {
+                    if (global.googleSheetsManager && global.googleSheetsManager.isReady() && typeof global.googleSheetsManager.exportUsers === 'function') {
+                        console.log('📊 Автоэкспорт Users в Google Sheets после регистрации (combined-server)');
+                        global.googleSheetsManager.exportUsers(db).catch(err => console.log('⚠️ Ошибка автоэкспорта Users:', err.message));
+                    } else {
+                        console.log('ℹ️ Google Sheets Manager не готов — пропустили автоэкспорт Users');
+                    }
+                } catch (e) {
+                    console.log('⚠️ Исключение при автоэкспорте Users:', e.message);
+                }
             } catch (userError) {
                 console.error('❌ Ошибка регистрации пользователя:', userError.message);
                 console.error('❌ Полная ошибка:', userError);
@@ -1075,6 +1087,16 @@ app.post('/api/create-order', async (req, res) => {
                     referredBy: null
                 });
                 console.log('🆘 ЭКСТРЕННО ЗАРЕГИСТРИРОВАН:', userId, 'как', user.first_name || user.username);
+
+                // 📊 Автоэкспорт Users после экстренной регистрации
+                try {
+                    if (global.googleSheetsManager && global.googleSheetsManager.isReady() && typeof global.googleSheetsManager.exportUsers === 'function') {
+                        console.log('📊 Автоэкспорт Users в Google Sheets после экстренной регистрации');
+                        global.googleSheetsManager.exportUsers(db).catch(err => console.log('⚠️ Ошибка автоэкспорта Users:', err.message));
+                    }
+                } catch (e) {
+                    console.log('⚠️ Исключение при автоэкспорте Users:', e.message);
+                }
             } catch (err) {
                 console.error('🆘 Ошибка экстренной регистрации:', err.message);
             }

@@ -56,6 +56,15 @@ async function isOperator(userId) {
     }
 }
 
+// Форматирование суммы для отображения (только для USDT округляем до 2 знаков)
+function formatAmountForDisplay(amount, currency) {
+    const numericAmount = Number(amount);
+    if (currency === 'USDT' && Number.isFinite(numericAmount)) {
+        return numericAmount.toFixed(2);
+    }
+    return String(amount);
+}
+
 // Хранилище контекстов чата для операторов
 const chatContexts = new Map();
 
@@ -545,6 +554,19 @@ bot.command('start', async (ctx) => {
         lastName: lastName,
         referredBy: existingUser ? existingUser.referred_by : referralCode
     });
+
+    // Автоэкспорт пользователей в Google Sheets, чтобы новые сразу появлялись в листе Users
+    try {
+        if (global.googleSheetsManager && global.googleSheetsManager.isReady() && typeof global.googleSheetsManager.exportUsers === 'function') {
+            console.log('📊 Автоэкспорт Users в Google Sheets после регистрации через /start');
+            // Не ждём завершения, чтобы не блокировать ответ пользователю
+            global.googleSheetsManager.exportUsers(db).catch(err => console.log('⚠️ Ошибка автоэкспорта Users:', err.message));
+        } else {
+            console.log('ℹ️ Google Sheets Manager недоступен или не готов — пропускаю автоэкспорт Users');
+        }
+    } catch (e) {
+        console.log('⚠️ Исключение при автоэкспорте Users:', e.message);
+    }
 
     // Если новый пользователь пришел по реферальной ссылке, уведомляем реферера
     if (!existingUser && referralCode) {
@@ -1287,7 +1309,7 @@ bot.on('callback_query:data', async (ctx) => {
                     await ctx.api.sendMessage(order.user_id,
                         `✅ <b>Ваш заказ принят оператором!</b>\n\n` +
                         `` +
-                        `💱 ${order.from_amount} ${order.from_currency}${toAmountText}\n\n` +
+                        `💱 ${formatAmountForDisplay(order.from_amount, order.from_currency)} ${order.from_currency}${toAmountText}\n\n` +
                         `👨‍💼 С вами свяжется оператор в ближайшее время для завершения обмена.`,
                         { parse_mode: 'HTML' }
                     );
@@ -1535,14 +1557,14 @@ bot.on('callback_query:data', async (ctx) => {
             await ctx.api.sendMessage(order.client_id,
                 `💳 <b>АДРЕС ДЛЯ ПЕРЕВОДА</b>\n\n` +
                 `` +
-                `💰 К переводу: <b>${order.from_amount} ${order.from_currency}</b>\n` +
-                (order.to_amount ? `💵 К получению: <b>${order.to_amount} ${order.to_currency}</b>\n\n` : `\n`) +
+                `💰 К переводу: <b>${formatAmountForDisplay(order.from_amount, order.from_currency)} ${order.from_currency}</b>\n` +
+                (order.to_amount ? `💵 К получению: <b>${formatAmountForDisplay(order.to_amount, order.to_currency)} ${order.to_currency}</b>\n\n` : `\n`) +
                 `${details.emoji} <b>${details.name}</b>\n` +
                 `🏦 Сеть: ${details.network}\n` +
                 `💎 Валюта: ${details.currency}\n` +
                 `📍 Адрес: <code>${details.address}</code>\n\n` +
                 `⚠️ <b>ВАЖНО:</b>\n` +
-                `• Переводите ТОЧНУЮ сумму: ${order.from_amount} ${order.from_currency}\n` +
+                `• Переводите ТОЧНУЮ сумму: ${formatAmountForDisplay(order.from_amount, order.from_currency)} ${order.from_currency}\n` +
                 `• Проверьте сеть перевода!\n` +
                 `• После перевода нажмите "✅ Отправил"\n` +
                 `• Время зачисления: 5-30 минут\n\n` +
@@ -5201,11 +5223,11 @@ bot.on('message', async (ctx) => {
                 await ctx.api.sendMessage(order.client_id,
                     `💳 <b>АДРЕС ДЛЯ ПЕРЕВОДА</b>\n\n` +
                     `` +
-                    `💰 К переводу: <b>${order.from_amount} ${order.from_currency}</b>\n` +
-                    (order.to_amount ? `💵 К получению: <b>${order.to_amount} ${order.to_currency}</b>\n\n` : `\n`) +
+                    `💰 К переводу: <b>${formatAmountForDisplay(order.from_amount, order.from_currency)} ${order.from_currency}</b>\n` +
+                    (order.to_amount ? `💵 К получению: <b>${formatAmountForDisplay(order.to_amount, order.to_currency)} ${order.to_currency}</b>\n\n` : `\n`) +
                     `${descriptionBlock}\n\n` +
                     `⚠️ <b>ВАЖНО:</b>\n` +
-                    `• Переводите ТОЧНУЮ сумму: ${order.from_amount} ${order.from_currency}\n` +
+                    `• Переводите ТОЧНУЮ сумму: ${formatAmountForDisplay(order.from_amount, order.from_currency)} ${order.from_currency}\n` +
                     `• Проверьте сеть перевода!\n` +
                     `• После перевода нажмите "✅ Отправил"\n` +
                     `• Время зачисления: 5-30 минут\n\n` +
@@ -5658,11 +5680,11 @@ bot.on('message', async (ctx) => {
                 await ctx.api.sendMessage(order.client_id,
                     `💳 <b>АДРЕС ДЛЯ ПЕРЕВОДА</b>\n\n` +
                     `🆔 Заказ #${orderId}\n` +
-                    `💰 К переводу: <b>${order.from_amount} ${order.from_currency}</b>\n` +
-                    (order.to_amount ? `💵 К получению: <b>${order.to_amount} ${order.to_currency}</b>\n\n` : `\n`) +
+                    `💰 К переводу: <b>${formatAmountForDisplay(order.from_amount, order.from_currency)} ${order.from_currency}</b>\n` +
+                    (order.to_amount ? `💵 К получению: <b>${formatAmountForDisplay(order.to_amount, order.to_currency)} ${order.to_currency}</b>\n\n` : `\n`) +
                     `${descriptionBlock}\n\n` +
                     `⚠️ <b>ВАЖНО:</b>\n` +
-                    `• Переводите ТОЧНУЮ сумму: ${order.from_amount} ${order.from_currency}\n` +
+                    `• Переводите ТОЧНУЮ сумму: ${formatAmountForDisplay(order.from_amount, order.from_currency)} ${order.from_currency}\n` +
                     `• Проверьте сеть перевода!\n` +
                     `• После перевода нажмите "✅ Отправил"\n` +
                     `• Время зачисления: 5-30 минут\n\n` +

@@ -3845,6 +3845,11 @@ function formatAmountByCurrency(amount, currency) {
         return Math.round(amount).toString();
     }
 
+    // Спец-правило: USDT всегда с двумя знаками
+    if (upper === 'USDT') {
+        return Number(amount).toFixed(2);
+    }
+
     if (isCrypto) {
         // Используем гибкую функцию, но ограничим максимум 8 знаков
         const abs = Math.abs(amount);
