@@ -6143,7 +6143,7 @@ async function notifyOperators(orderData) {
         const message = 
             `🚨 <b>НОВАЯ ЗАЯВКА С САЙТА #${orderData.id}</b>\n\n` +
             `👤 <b>Пользователь:</b> ${orderData.userName || 'Неизвестен'}\n` +
-            `💱 <b>Обмен:</b> ${orderData.fromAmount} ${orderData.fromCurrency} → ${orderData.toAmount ? orderData.toAmount + ' ' : ''}${orderData.toCurrency}\n` +
+            `💱 <b>Обмен:</b> ${formatAmountForDisplay(orderData.fromAmount, orderData.fromCurrency)} ${orderData.fromCurrency} → ${orderData.toAmount ? formatAmountForDisplay(orderData.toAmount, orderData.toCurrency) + ' ' : ''}${orderData.toCurrency}\n` +
             (isFinite(humanRate) ? `📊 <b>Курс:</b> 1 ${orderData.fromCurrency} = ${formattedRate} ${orderData.toCurrency}\n` : '') +
             networkSection +  // ← ДОБАВЛЯЕМ ИНФОРМАЦИЮ О СЕТИ!
             bankSection +     // ← ДОБАВЛЯЕМ ИНФОРМАЦИЮ О БАНКЕ!
