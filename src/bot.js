@@ -59,10 +59,20 @@ async function isOperator(userId) {
 // Форматирование суммы для отображения (только для USDT округляем до 2 знаков)
 function formatAmountForDisplay(amount, currency) {
     const numericAmount = Number(amount);
-    if (currency === 'USDT' && Number.isFinite(numericAmount)) {
+    if (!Number.isFinite(numericAmount)) {
+        return String(amount);
+    }
+    const upper = String(currency || '').toUpperCase();
+    if (upper === 'USDT' || upper === 'ARS') {
         return numericAmount.toFixed(2);
     }
-    return String(amount);
+    if (upper === 'RUB') {
+        return String(Math.round(numericAmount));
+    }
+    if (Math.abs(numericAmount) >= 1) {
+        return numericAmount.toFixed(6).replace(/\.0+$/, '').replace(/\.?0+$/, '');
+    }
+    return numericAmount.toFixed(8).replace(/\.?0+$/, '');
 }
 
 // Хранилище контекстов чата для операторов
@@ -1226,7 +1236,7 @@ bot.on('callback_query:data', async (ctx) => {
         
         orders.slice(0, 3).forEach((order, i) => {
             ordersText += `🆔 <b>Заказ #${order.id}</b>\n`;
-            ordersText += `💱 ${order.from_amount} ${order.from_currency} → ${order.to_currency}\n`;
+            ordersText += `💱 ${formatAmountForDisplay(order.from_amount, order.from_currency)} ${order.from_currency} → ${order.to_currency}\n`;
             ordersText += `👤 ${order.first_name || order.username || 'Пользователь'}\n`;
             ordersText += `📅 ${new Date(order.created_at).toLocaleString('ru')}\n`;
             ordersText += `💰 Сумма: ~$${(order.to_amount || order.from_amount * 50000).toFixed(0)}\n\n`;
@@ -1269,7 +1279,7 @@ bot.on('callback_query:data', async (ctx) => {
             }[order.assignment_status] || '📋';
             
             ordersText += `${statusEmoji} <b>Заказ #${order.id}</b>\n`;
-            ordersText += `💱 ${order.from_amount} ${order.from_currency} → ${order.to_currency}\n`;
+            ordersText += `💱 ${formatAmountForDisplay(order.from_amount, order.from_currency)} ${order.from_currency} → ${order.to_currency}\n`;
             ordersText += `👤 ${order.first_name || order.username || 'Пользователь'}\n`;
             ordersText += `📅 ${new Date(order.assigned_at).toLocaleString('ru')}\n`;
             ordersText += `📊 Статус: ${order.assignment_status}\n\n`;
@@ -1399,7 +1409,7 @@ bot.on('callback_query:data', async (ctx) => {
             
             let orderText = `⚙️ <b>УПРАВЛЕНИЕ ЗАКАЗОМ #${order.id}</b>\n\n`;
             orderText += `👤 <b>Клиент:</b> ${order.client_first_name || order.client_username || 'Пользователь'}\n`;
-            orderText += `💱 <b>Обмен:</b> ${order.from_amount} ${order.from_currency} → ${order.to_amount} ${order.to_currency}\n`;
+            orderText += `💱 <b>Обмен:</b> ${formatAmountForDisplay(order.from_amount, order.from_currency)} ${order.from_currency} → ${formatAmountForDisplay(order.to_amount, order.to_currency)} ${order.to_currency}\n`;
             orderText += `📊 <b>Статус:</b> ${statusText}\n`;
             orderText += `🏦 <b>Адрес получения:</b> <code>${order.to_address}</code>\n`;
             orderText += `💳 <b>Адрес отправки:</b> <code>${order.from_address}</code>\n`;
@@ -1485,7 +1495,7 @@ bot.on('callback_query:data', async (ctx) => {
                 `💳 <b>ВЫБОР РЕКВИЗИТОВ</b>\n\n` +
                 `🆔 Заказ #${orderId}\n` +
                 `👤 Клиент: ${order.client_first_name || 'Пользователь'}\n` +
-                `💰 К оплате: ${order.from_amount} ${order.from_currency}\n\n` +
+                `💰 К оплате: ${formatAmountForDisplay(order.from_amount, order.from_currency)} ${order.from_currency}\n\n` +
                 `📋 Выберите готовые криптоадреса или введите новые:`,
                 {
                     parse_mode: 'HTML',
@@ -3826,7 +3836,7 @@ bot.on('callback_query:data', async (ctx) => {
             const orderText = 
                 `📋 <b>УПРАВЛЕНИЕ ЗАКАЗОМ #${order.id}</b>\n\n` +
                 `${statusEmoji} <b>Статус:</b> ${order.status}\n` +
-                `💱 <b>Обмен:</b> ${order.from_amount} ${order.from_currency} → ${order.to_currency}\n` +
+                `💱 <b>Обмен:</b> ${formatAmountForDisplay(order.from_amount, order.from_currency)} ${order.from_currency} → ${order.to_currency}\n` +
                 `👤 <b>Клиент:</b> ${order.username || 'Аноним'}\n` +
                 `👨‍💼 <b>Оператор:</b> ${operatorText}\n` +
                 `⏰ <b>Создан:</b> ${new Date(order.created_at).toLocaleString('ru')}\n\n` +
@@ -4118,7 +4128,7 @@ bot.on('callback_query:data', async (ctx) => {
                     await bot.api.sendMessage(order.user_id,
                         `📋 <b>Обновление заказа #${orderId}</b>\n\n` +
                         `${statusMessage}\n\n` +
-                        `💱 ${order.from_amount} ${order.from_currency} → ${order.to_currency}\n` +
+                        `💱 ${formatAmountForDisplay(order.from_amount, order.from_currency)} ${order.from_currency} → ${order.to_currency}\n` +
                         `⏰ ${new Date().toLocaleString('ru')}`,
                         { parse_mode: 'HTML' }
                     );
@@ -4160,7 +4170,7 @@ bot.on('callback_query:data', async (ctx) => {
             const detailsText = 
                 `👁️ <b>ПОДРОБНОСТИ ЗАКАЗА #${orderId}</b>\n\n` +
                 `📊 <b>Основная информация:</b>\n` +
-                `💱 Обмен: ${order.from_amount} ${order.from_currency} → ${order.to_amount || 'TBD'} ${order.to_currency}\n` +
+                `💱 Обмен: ${formatAmountForDisplay(order.from_amount, order.from_currency)} ${order.from_currency} → ${order.to_amount ? formatAmountForDisplay(order.to_amount, order.to_currency) : 'TBD'} ${order.to_currency}\n` +
                 `📌 Статус: ${order.status}\n` +
                 `📅 Создан: ${new Date(order.created_at).toLocaleString('ru')}\n` +
                 `📝 Обновлен: ${new Date(order.updated_at || order.completed_at || order.created_at).toLocaleString('ru')}\n` +
@@ -4173,8 +4183,8 @@ bot.on('callback_query:data', async (ctx) => {
                 `👨‍💼 <b>Оператор:</b>\n` +
                 `${operatorInfo}\n\n` +
                 `💰 <b>Финансы:</b>\n` +
-                `📥 Получаем: ${order.from_amount} ${order.from_currency}\n` +
-                `📤 Отправляем: ${order.to_amount || 'Не рассчитано'} ${order.to_currency}\n` +
+                `📥 Получаем: ${formatAmountForDisplay(order.from_amount, order.from_currency)} ${order.from_currency}\n` +
+                `📤 Отправляем: ${order.to_amount ? formatAmountForDisplay(order.to_amount, order.to_currency) : 'Не рассчитано'} ${order.to_currency}\n` +
                 `🎯 Адрес назначения: \n<code>${order.to_address || 'Не указан'}</code>\n\n` +
                 `🌐 <b>Источник:</b> ${order.source || 'bot'}`;
             
@@ -4293,7 +4303,7 @@ bot.on('callback_query:data', async (ctx) => {
                 `💰 <b>КЛИЕНТ ПОДТВЕРДИЛ ОПЛАТУ</b>\n\n` +
                 `🎫 Заявка #${orderId}\n` +
                 `👤 Клиент: ${clientName}\n` +
-                `💳 ${order.from_amount} ${order.from_currency}\n` +
+                `💳 ${formatAmountForDisplay(order.from_amount, order.from_currency)} ${order.from_currency}\n` +
                 `⏰ Время: ${new Date().toLocaleString('ru-RU')}\n\n` +
                 `🔍 <b>Проверьте поступление платежа</b>\n` +
                 `✅ Если средства получены - подтвердите транзакцию\n` +
@@ -4423,7 +4433,7 @@ bot.on('callback_query:data', async (ctx) => {
             const clientMessage = 
                 `✅ <b>ПЛАТЕЖ ПОДТВЕРЖДЕН</b>\n\n` +
                 `🎫 Заявка #${orderId}\n` +
-                `💰 ${order.from_amount} ${order.from_currency}\n` +
+                `💰 ${formatAmountForDisplay(order.from_amount, order.from_currency)} ${order.from_currency}\n` +
                 `👨‍💼 Оператор: ${operatorName}\n` +
                 `⏰ Время: ${new Date().toLocaleString('ru-RU')}\n\n` +
                 `🚀 Обработка вашей заявки начата!\n` +
@@ -4475,7 +4485,7 @@ bot.on('callback_query:data', async (ctx) => {
             const clientMessage = 
                 `⚠️ <b>СРЕДСТВА НЕ ПОЛУЧЕНЫ</b>\n\n` +
                 `🎫 Заявка #${orderId}\n` +
-                `💳 ${order.from_amount} ${order.from_currency}\n` +
+                `💳 ${formatAmountForDisplay(order.from_amount, order.from_currency)} ${order.from_currency}\n` +
                 `👨‍💼 Оператор: ${operatorName}\n\n` +
                 `❗ Платеж не поступил на наши реквизиты\n\n` +
                 `🔍 <b>Проверьте:</b>\n` +
